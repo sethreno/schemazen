@@ -21,7 +21,8 @@ namespace console
 			}
 			
 			// create dir tree
-			string[] dirs = { "data", "foreign_keys", "functions", "indexes", "procs", "tables", "triggers" };						
+			string[] dirs = { "data", "foreign_keys", "functions", 
+                              "indexes", "procs", "tables", "triggers" };
 			foreach (string dir in dirs) {
 				if (!Directory.Exists(args[2] + "/" + dir)) {
 					Directory.CreateDirectory(args[2] + "/" + dir);
@@ -43,16 +44,18 @@ namespace console
 				scr.Options.NoCollation = true;
 				scr.Options.DriIndexes = false;
 				scr.Options.DriDefaults = true;
-				ScriptToFile(scr, urns.ToArray(), String.Format("{0}/tables/{1}.sql", args[2], t.Name));
+				ScriptToFile(scr, urns.ToArray(), 
+                    String.Format("{0}/tables/{1}.sql", args[2], t.Name));
 
-				// foreign keys in seperate dir				
+				// foreign keys in seperate dir
 				urns.Clear();
-				foreach (ForeignKey fk in t.ForeignKeys) {					
-					urns.Add(fk.Urn);					
+				foreach (ForeignKey fk in t.ForeignKeys) {
+					urns.Add(fk.Urn);
 				}
 				if (urns.Count > 0) {
-					scr.Options.DriAll = true;					
-					ScriptToFile(scr,urns.ToArray(), String.Format("{0}/foreign_keys/{1}.sql", args[2], t.Name));
+					scr.Options.DriAll = true;
+					ScriptToFile(scr,urns.ToArray(), 
+                        String.Format("{0}/foreign_keys/{1}.sql", args[2], t.Name));
 				}
 
 				// triggers in seperate dir
@@ -62,7 +65,8 @@ namespace console
 				}
 				if (urns.Count > 0) {
 					scr.Options.DriAll = true;
-					ScriptToFile(scr, urns.ToArray(), String.Format("{0}/triggers/{1}.sql", args[2], t.Name));
+					ScriptToFile(scr, urns.ToArray(), 
+                        String.Format("{0}/triggers/{1}.sql", args[2], t.Name));
 				}
 
 				// indexes in seperate dir
@@ -72,7 +76,8 @@ namespace console
 				}
 				if (urns.Count > 0) {
 					scr.Options.DriAll = true;
-					ScriptToFile(scr, urns.ToArray(), String.Format("{0}/indexes/{1}.sql", args[2], t.Name));
+					ScriptToFile(scr, urns.ToArray(), 
+                        String.Format("{0}/indexes/{1}.sql", args[2], t.Name));
 				}
 			}
 
@@ -82,7 +87,8 @@ namespace console
 				urns.Clear();				
 				urns.Add(f.Urn);
 				scr.Options.DriAll = true;
-				ScriptToFile(scr, urns.ToArray(), String.Format("{0}/functions/{1}.sql", args[2], f.Name));
+				ScriptToFile(scr, urns.ToArray(), 
+                    String.Format("{0}/functions/{1}.sql", args[2], f.Name));
 			}			
 			
 			// procs
@@ -91,14 +97,15 @@ namespace console
 				urns.Clear();
 				urns.Add(p.Urn);
 				scr.Options.DriAll = true;
-				ScriptToFile(scr, urns.ToArray(), String.Format("{0}/procs/{1}.sql", args[2], p.Name));
+				ScriptToFile(scr, urns.ToArray(), 
+                    String.Format("{0}/procs/{1}.sql", args[2], p.Name));
 			}
 
 			// TODO data
 
 		}
 
-		static void ScriptToFile(Scripter scr, Urn[] urns, string fileName) {		
+		static void ScriptToFile(Scripter scr, Urn[] urns, string fileName) {
 			using (TextWriter tw = File.CreateText(fileName)) {
 				foreach (string line in scr.Script(urns)) {
 					tw.WriteLine(line);
