@@ -21,6 +21,7 @@ namespace console
 			}
 			
 			// create dir tree
+            Console.WriteLine("creating directory tree");
 			string[] dirs = { "data", "foreign_keys", "functions", 
                               "indexes", "procs", "tables", "triggers" };
 			foreach (string dir in dirs) {
@@ -33,7 +34,8 @@ namespace console
 			scr.Options.ScriptDrops = false;
 			List<Urn> urns = new List<Urn>();
 
-			// tables		
+			// tables
+            Console.WriteLine("scripting tables");
 			foreach (Table t in db.Tables){
 				if (t.IsSystemObject) continue;
 
@@ -81,7 +83,8 @@ namespace console
 				}
 			}
 
-			// functions			
+			// functions
+            Console.WriteLine("scripting functions");
 			foreach (UserDefinedFunction f in db.UserDefinedFunctions) {
 				if (f.IsSystemObject) continue;
 				urns.Clear();				
@@ -92,6 +95,7 @@ namespace console
 			}			
 			
 			// procs
+            Console.WriteLine("scripting stored procedures");
 			foreach (StoredProcedure p in db.StoredProcedures) {
 				if (p.IsSystemObject) continue;
 				urns.Clear();
@@ -103,6 +107,7 @@ namespace console
 
 			// TODO data
 
+            Console.WriteLine("success");
 		}
 
 		static void ScriptToFile(Scripter scr, Urn[] urns, string fileName) {
