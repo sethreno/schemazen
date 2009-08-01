@@ -40,7 +40,7 @@ namespace console
 				urns.Clear();
 				urns.Add(t.Urn);
 				scr.Options.WithDependencies = false;
-				scr.Options.DriPrimaryKey = true;
+				scr.Options.DriPrimaryKey = false;
 				scr.Options.NoCollation = true;
 				scr.Options.DriIndexes = false;
 				scr.Options.DriDefaults = true;
@@ -75,7 +75,7 @@ namespace console
 					urns.Add(idx.Urn);
 				}
 				if (urns.Count > 0) {
-					scr.Options.DriAll = true;
+                    scr.Options.DriAll = true;
 					ScriptToFile(scr, urns.ToArray(), 
                         String.Format("{0}/indexes/{1}.sql", args[2], t.Name));
 				}
