@@ -5,6 +5,8 @@
     Public IsNullable As Boolean
     Public Type As String
     Public Length As Integer
+    Public Precision As Byte
+    Public Scale As Integer
 
     Private ReadOnly Property IsNullableText() As String
         Get
@@ -13,10 +15,20 @@
         End Get
     End Property
 
-    Public Sub New(ByVal name As String, ByVal type As String, ByVal length As Integer)
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal null As Boolean)
         Me.Name = name
         Me.Type = type
+    End Sub
+
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal length As Integer, ByVal null As Boolean)
+        Me.New(name, type, null)
         Me.Length = length
+    End Sub
+
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal precision As Byte, ByVal scale As Integer, ByVal null As Boolean)
+        Me.New(name, type, null)
+        Me.Precision = precision
+        Me.Scale = scale
     End Sub
 
     Public Function Compare(ByVal c As Column) As ColumnDiff
@@ -25,8 +37,24 @@
 
     Public Function Script() As String
         Select Case Type
-            Case Else
+            Case "bigint", "bit", "datetime", "float", _
+                "image", "int", "money", "ntext", "real", _
+                "smalldatetime", "smallint", "smallmoney", _
+                "sql_variant", "text", "timestamp", "tinyint", _
+                "uniqueidentifier", "xml"
                 Return String.Format("[{0}] [{1}] {2}", Name, Type, IsNullableText)
+
+            Case "binary", "char", "nchar", _
+                 "nvarchar", "varbinary", "varchar"
+                Dim lengthString As String = Length.ToString()
+                If lengthString = "-1" Then lengthString = "max"
+                Return String.Format("[{0}] [{1}]({2}) {3}", Name, Type, lengthString, IsNullableText)
+
+            Case "decimal", "numeric"
+                Return String.Format("[{0}] [{1}]({2},{3}) {4}", Name, Type, Precision, Scale, IsNullableText)
+
+            Case Else
+                Throw New NotSupportedException("SQL data type " + Type + " is not supported.")
         End Select
     End Function
 End Class

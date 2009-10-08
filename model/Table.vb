@@ -41,7 +41,6 @@
         text.AppendFormat("CREATE TABLE [{0}].[{1}]({2}", Owner, Name, vbCrLf)
         text.Append(Columns.Script())
         text.AppendLine(")")
-        text.AppendLine("GO")
         text.AppendLine()
         Return text.ToString()
     End Function
