@@ -71,10 +71,11 @@ Public Class TableTester
         t.Columns.Add(New Column("x", "uniqueidentifier", False))
         t.Columns.Add(New Column("y", "varbinary", 50, False))
         t.Columns.Add(New Column("z", "varbinary", -1, False))
-        t.Columns.Add(New Column("aa", "varchar", 50, True))
+        t.Columns.Add(New Column("aa", "varchar", 50, True, New [Default]("DF_AllTypesTest_aa", "'asdf'")))
         t.Columns.Add(New Column("bb", "varchar", -1, True))
         t.Columns.Add(New Column("cc", "xml", True))
 
+        Console.WriteLine(t.Script())
 
         Dim appSettings As New Configuration.AppSettingsReader()
         Using cn As New Odbc.OdbcConnection(CStr(appSettings.GetValue("testdb_odbc", GetType(String))))

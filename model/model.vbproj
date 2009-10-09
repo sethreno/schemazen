@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Column.vb" />
     <Compile Include="ColumnList.vb" />
+    <Compile Include="Default.vb" />
     <Compile Include="ForeignKey.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">

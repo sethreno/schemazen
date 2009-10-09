@@ -1,7 +1,7 @@
 ﻿Public Class Column
     Public Name As String
     Public Position As Integer
-    Public [Default] As String
+    Public [Default] As [Default]
     Public IsNullable As Boolean
     Public Type As String
     Public Length As Integer
@@ -15,18 +15,26 @@
         End Get
     End Property
 
-    Public Sub New(ByVal name As String, ByVal type As String, ByVal null As Boolean)
+    Public ReadOnly Property DefaultText() As String
+        Get
+            If Me.Default Is Nothing Then Return ""
+            Return Me.Default.Script()
+        End Get
+    End Property
+
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal null As Boolean, Optional ByVal [default] As [Default] = Nothing)
         Me.Name = name
         Me.Type = type
+        Me.Default = [default]
     End Sub
 
-    Public Sub New(ByVal name As String, ByVal type As String, ByVal length As Integer, ByVal null As Boolean)
-        Me.New(name, type, null)
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal length As Integer, ByVal null As Boolean, Optional ByVal [default] As [Default] = Nothing)
+        Me.New(name, type, null, [default])
         Me.Length = length
     End Sub
 
-    Public Sub New(ByVal name As String, ByVal type As String, ByVal precision As Byte, ByVal scale As Integer, ByVal null As Boolean)
-        Me.New(name, type, null)
+    Public Sub New(ByVal name As String, ByVal type As String, ByVal precision As Byte, ByVal scale As Integer, ByVal null As Boolean, Optional ByVal [default] As [Default] = Nothing)
+        Me.New(name, type, null, [Default])
         Me.Precision = precision
         Me.Scale = scale
     End Sub
@@ -42,16 +50,16 @@
                 "smalldatetime", "smallint", "smallmoney", _
                 "sql_variant", "text", "timestamp", "tinyint", _
                 "uniqueidentifier", "xml"
-                Return String.Format("[{0}] [{1}] {2}", Name, Type, IsNullableText)
+                Return String.Format("[{0}] [{1}] {2} {3}", Name, Type, IsNullableText, DefaultText)
 
             Case "binary", "char", "nchar", _
                  "nvarchar", "varbinary", "varchar"
                 Dim lengthString As String = Length.ToString()
                 If lengthString = "-1" Then lengthString = "max"
-                Return String.Format("[{0}] [{1}]({2}) {3}", Name, Type, lengthString, IsNullableText)
+                Return String.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, DefaultText)
 
             Case "decimal", "numeric"
-                Return String.Format("[{0}] [{1}]({2},{3}) {4}", Name, Type, Precision, Scale, IsNullableText)
+                Return String.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, DefaultText)
 
             Case Else
                 Throw New NotSupportedException("SQL data type " + Type + " is not supported.")
@@ -68,11 +76,13 @@ Public Class ColumnDiff
     Public Target As Column
     Public ReadOnly Property IsDiff() As Boolean
         Get
-            Return Source.Default <> Target.Default _
+            Return Source.DefaultText <> Target.DefaultText _
               OrElse Source.IsNullable <> Target.IsNullable _
               OrElse Source.Length <> Target.Length _
               OrElse Source.Position <> Target.Position _
-              OrElse Source.Type <> Target.Type
+              OrElse Source.Type <> Target.Type _
+              OrElse Source.Precision <> Target.Precision _
+              OrElse Source.Scale <> Target.Scale
         End Get
     End Property
 
