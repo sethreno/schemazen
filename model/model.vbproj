@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Column.vb" />
     <Compile Include="ColumnList.vb" />
+    <Compile Include="ForeignKey.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -82,6 +83,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="PrimaryKey.vb" />
     <Compile Include="Table.vb" />
   </ItemGroup>
   <ItemGroup>

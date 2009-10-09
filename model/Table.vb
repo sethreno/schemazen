@@ -6,6 +6,8 @@
     Public Owner As String
     Public Name As String
     Public Columns As New ColumnList
+    Public PrimaryKey As PrimaryKey
+    Public ForeignKeys As New List(Of ForeignKey)
 
     Public Function Compare(ByVal t As Table) As TableDiff
         Dim diff As New TableDiff()
@@ -40,6 +42,10 @@
         Dim text As New StringBuilder()
         text.AppendFormat("CREATE TABLE [{0}].[{1}]({2}", Owner, Name, vbCrLf)
         text.Append(Columns.Script())
+        If PrimaryKey IsNot Nothing Then
+            text.AppendLine()
+            text.AppendLine("   " + PrimaryKey.Script())
+        End If
         text.AppendLine(")")
         text.AppendLine()
         Return text.ToString()
