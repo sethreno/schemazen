@@ -111,6 +111,7 @@
       <CustomToolNamespace>My</CustomToolNamespace>
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
+    <None Include="test_schemas\DFS_QUOTE.sql" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\model\model.vbproj">

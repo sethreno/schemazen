@@ -35,19 +35,28 @@ Public Class DatabaseTester
     End Sub
 
     <Test()> Public Sub TestCopy()
-        Dim copy As New Database("DFS_COPY")
-        copy.Load(TestHelper.GetConnString("DFS_QUOTE"))
-        TestHelper.DropDb(copy.Name)
-        TestHelper.ExecSql(copy.Script())
-        TestHelper.ExecSql(copy.ScriptObjects, copy.Name)
-        For Each p As Proc In copy.Procs
-            TestHelper.ExecSql(p.Script(), copy.Name)
-        Next
-        For Each f As [Function] In copy.Functions
-            TestHelper.ExecSql(f.Script(), copy.Name)
-        Next
+        For Each script As String In IO.Directory.GetFiles(ConfigHelper.TestSchemaDir)
+            TestHelper.DropDb("TEST_SOURCE")
+            TestHelper.DropDb("TEST_COPY")
 
-        'TODO automate db comparison
+            TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE")
+            TestHelper.ExecBatchSql(IO.File.ReadAllText(script), "TEST_SOURCE")
+
+            Dim copy As New Database("TEST_COPY")
+            copy.Load(TestHelper.GetConnString("TEST_SOURCE"))
+
+            TestHelper.ExecSql(copy.Script())
+            TestHelper.ExecSql(copy.ScriptObjects, copy.Name)
+            For Each p As Proc In copy.Procs
+                TestHelper.ExecSql(p.Script(), copy.Name)
+            Next
+            For Each f As [Function] In copy.Functions
+                TestHelper.ExecSql(f.Script(), copy.Name)
+            Next
+
+            'TODO automate db comparison
+        Next
     End Sub
 
+    
 End Class

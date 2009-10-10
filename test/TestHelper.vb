@@ -13,6 +13,26 @@
         End Using
     End Sub
 
+    Public Shared Sub ExecBatchSql(ByVal sql As String, ByVal dbName As String)
+        Using cn As New Data.SqlClient.SqlConnection(GetConnString(dbName))
+            cn.Open()
+            Using cm As Data.SqlClient.SqlCommand = cn.CreateCommand()
+                For Each script As String In sql.Split((vbCrLf + "GO" + vbCrLf).Split(","c), System.StringSplitOptions.RemoveEmptyEntries)
+                    Console.WriteLine(script)
+                    cm.CommandText = script
+                    cm.ExecuteNonQuery()
+                Next
+            End Using
+        End Using
+    End Sub
+
+    <Test()> Public Sub TestSplit()
+        Dim str As String = "script 1 line 1" + vbCrLf + "script 1 line 2" + vbCrLf + "GO" + vbCrLf + "line 2"
+        Dim arr As String() = str.Split("GO".Split(","c), System.StringSplitOptions.None)
+        Assert.AreEqual(2, arr.Length)
+    End Sub
+
+
     Public Shared Function GetConnString(ByVal dbName As String) As String
         Dim connString As String = ""
         Using cn As New Data.SqlClient.SqlConnection(ConfigHelper.TestDB)
