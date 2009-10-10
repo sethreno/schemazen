@@ -32,9 +32,15 @@
         Dim text As New StringBuilder()
         text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH CHECK ADD CONSTRAINT [{2}]{3}", _
                           Table.Owner, Table.Name, Name, vbCrLf)
-        text.AppendFormat("FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}]){4}", _
+        text.AppendFormat("   FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}]){4}", _
                           String.Join("], [", Columns.ToArray()), RefTable.Owner, RefTable.Name, _
                           String.Join("], [", RefColumns.ToArray()), vbCrLf)
+        If Not String.IsNullOrEmpty(OnUpdate) Then
+            text.AppendFormat("   ON UPDATE {0}{1}", OnUpdate, vbCrLf)
+        End If
+        If Not String.IsNullOrEmpty(OnDelete) Then
+            text.AppendFormat("   ON DELETE {0}{1}", OnDelete, vbCrLf)
+        End If
         Return text.ToString()
     End Function
 End Class

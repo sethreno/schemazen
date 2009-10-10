@@ -10,6 +10,7 @@ Public Class ForeignKeyTester
 
         Dim address As New Table("dbo", "Address")
         address.Columns.Add(New Column("id", "int", False))
+        address.Columns.Add(New Column("personId", "int", False))
         address.Columns.Add(New Column("street", "varchar", 50, False))
         address.Columns.Add(New Column("city", "varchar", 50, False))
         address.Columns.Add(New Column("state", "char", 2, False))
@@ -17,7 +18,7 @@ Public Class ForeignKeyTester
         address.Columns.Find("id").Identity = New Identity(1, 1)
         address.PrimaryKey = New PrimaryKey("PK_Address", "id")
 
-        Dim fk As New ForeignKey(address, "FK_Address_Person", "id", person, "id", "", "DELETE")
+        Dim fk As New ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE")
 
         TestHelper.ExecSql(person.Script())
         TestHelper.ExecSql(address.Script())
