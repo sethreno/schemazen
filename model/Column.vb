@@ -7,6 +7,7 @@
     Public Length As Integer
     Public Precision As Byte
     Public Scale As Integer
+    Public Identity As Identity
 
     Private ReadOnly Property IsNullableText() As String
         Get
@@ -18,7 +19,14 @@
     Public ReadOnly Property DefaultText() As String
         Get
             If Me.Default Is Nothing Then Return ""
-            Return Me.Default.Script()
+            Return vbCrLf + "      " + Me.Default.Script()
+        End Get
+    End Property
+
+    Public ReadOnly Property IdentityText() As String
+        Get
+            If Me.Identity Is Nothing Then Return ""
+            Return vbCrLf + "      " + Me.Identity.Script()
         End Get
     End Property
 
@@ -54,16 +62,19 @@
                 "smalldatetime", "smallint", "smallmoney", _
                 "sql_variant", "text", "timestamp", "tinyint", _
                 "uniqueidentifier", "xml"
-                Return String.Format("[{0}] [{1}] {2} {3}", Name, Type, IsNullableText, DefaultText)
+                Return String.Format("[{0}] [{1}] {2} {3} {4}", _
+                    Name, Type, IsNullableText, DefaultText, IdentityText)
 
             Case "binary", "char", "nchar", _
                  "nvarchar", "varbinary", "varchar"
                 Dim lengthString As String = Length.ToString()
                 If lengthString = "-1" Then lengthString = "max"
-                Return String.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, DefaultText)
+                Return String.Format("[{0}] [{1}]({2}) {3} {4}", _
+                    Name, Type, lengthString, IsNullableText, DefaultText)
 
             Case "decimal", "numeric"
-                Return String.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, DefaultText)
+                Return String.Format("[{0}] [{1}]({2},{3}) {4} {5}", _
+                    Name, Type, Precision, Scale, IsNullableText, DefaultText)
 
             Case Else
                 Throw New NotSupportedException("SQL data type " + Type + " is not supported.")

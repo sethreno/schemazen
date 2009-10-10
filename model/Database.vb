@@ -99,6 +99,19 @@
                     End While
                 End Using
 
+                'get column identities
+                cm.CommandText = "select t.name as TABLE_NAME, c.name AS COLUMN_NAME, i.SEED_VALUE, i.INCREMENT_VALUE" _
+                    + " from sys.tables t inner join sys.columns c on c.object_id = t.object_id" _
+                    + " inner join sys.identity_columns i on i.object_id = c.object_id" _
+                    + " and i.column_id = c.column_id"
+                Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
+                    While dr.Read()
+                        Dim t As Table = FindTable(CStr(dr("TABLE_NAME")))
+                        t.Columns.Find(CStr(dr("COLUMN_NAME"))).Identity = _
+                            New Identity(CInt(dr("SEED_VALUE")), CInt(dr("INCREMENT_VALUE")))
+                    End While
+                End Using
+
                 'get column defaults
                 cm.CommandText = "select t.name as TABLE_NAME, c.name as COLUMN_NAME, d.name as DEFAULT_NAME, d.definition as DEFAULT_VALUE" _
                                 + " from sys.tables t inner join sys.columns c on c.object_id = t.object_id" _

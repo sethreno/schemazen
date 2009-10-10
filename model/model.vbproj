@@ -71,6 +71,7 @@
     <Compile Include="Default.vb" />
     <Compile Include="ForeignKey.vb" />
     <Compile Include="Function.vb" />
+    <Compile Include="Identity.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
