@@ -45,11 +45,11 @@
         Return Nothing
     End Function
 
-    Public Function FindPrimaryKey(ByVal name As String) As PrimaryKey
+    Public Function FindConstraint(ByVal name As String) As Constraint
         For Each t As Table In Tables
-            If t.PrimaryKey IsNot Nothing AndAlso t.PrimaryKey.Name = name Then
-                Return t.PrimaryKey
-            End If
+            For Each c As Constraint In t.Constraints
+                If c.Name = name Then Return c
+            Next
         Next
         Return Nothing
     End Function
@@ -124,12 +124,13 @@
                     End While
                 End Using
 
-                'get primary keys
-                cm.CommandText = "select TABLE_NAME, CONSTRAINT_NAME from INFORMATION_SCHEMA.TABLE_CONSTRAINTS" _
-                                + " where CONSTRAINT_TYPE = 'PRIMARY KEY'"
+                'get constraints (except foreign keys)
+                cm.CommandText = "select TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE from INFORMATION_SCHEMA.TABLE_CONSTRAINTS" _
+                                + " where not CONSTRAINT_TYPE = 'FOREIGN KEY'"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
-                        FindTable(CStr(dr("TABLE_NAME"))).PrimaryKey = New PrimaryKey(CStr(dr("CONSTRAINT_NAME")))
+                        Dim t As Table = FindTable(CStr(dr("TABLE_NAME")))
+                        t.Constraints.Add(New Constraint(CStr(dr("CONSTRAINT_NAME")), CStr(dr("CONSTRAINT_TYPE"))))
                     End While
                 End Using
 
@@ -137,8 +138,8 @@
                 cm.CommandText = "select CONSTRAINT_NAME, COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
-                        Dim pk As PrimaryKey = FindPrimaryKey(CStr(dr("CONSTRAINT_NAME")))
-                        If pk IsNot Nothing Then pk.Columns.Add(CStr(dr("COLUMN_NAME")))
+                        Dim c As Constraint = FindConstraint(CStr(dr("CONSTRAINT_NAME")))
+                        If c IsNot Nothing Then c.Columns.Add(CStr(dr("COLUMN_NAME")))
                     End While
                 End Using
 

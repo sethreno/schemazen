@@ -8,7 +8,7 @@ Public Class ProcTester
         t.Columns.Add(New Column("city", "varchar", 50, False))
         t.Columns.Add(New Column("state", "char", 2, False))
         t.Columns.Add(New Column("zip", "char", 5, False))
-        t.PrimaryKey = New PrimaryKey("PK_Address", "id")
+        t.Constraints.Add(New model.Constraint("PK_Address", "PRIMARY KEY", "id"))
 
         Dim getAddress As New Proc("dbo", "GetAddress")
         getAddress.Text = _

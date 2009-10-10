@@ -72,6 +72,7 @@
     <Compile Include="ForeignKey.vb" />
     <Compile Include="Function.vb" />
     <Compile Include="Identity.vb" />
+    <Compile Include="Constraint.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -87,7 +88,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="PrimaryKey.vb" />
     <Compile Include="Proc.vb" />
     <Compile Include="Table.vb" />
   </ItemGroup>

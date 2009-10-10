@@ -6,8 +6,17 @@
     Public Owner As String
     Public Name As String
     Public Columns As New ColumnList
-    Public PrimaryKey As PrimaryKey
+    Public Constraints As New List(Of Constraint)
     Public ForeignKeys As New List(Of ForeignKey)
+
+    Public ReadOnly Property PrimaryKey() As Constraint
+        Get
+            For Each c As Constraint In Constraints
+                If c.Type = "PRIMARY KEY" Then Return c
+            Next
+            Return Nothing
+        End Get
+    End Property
 
     Public Function Compare(ByVal t As Table) As TableDiff
         Dim diff As New TableDiff()
@@ -42,10 +51,10 @@
         Dim text As New StringBuilder()
         text.AppendFormat("CREATE TABLE [{0}].[{1}]({2}", Owner, Name, vbCrLf)
         text.Append(Columns.Script())
-        If PrimaryKey IsNot Nothing Then
-            text.AppendLine()
-            text.AppendLine("   " + PrimaryKey.Script())
-        End If
+        If Constraints.Count > 0 Then text.AppendLine()
+        For Each c As Constraint In Constraints
+            text.AppendLine("   ," + c.Script())
+        Next
         text.AppendLine(")")
         text.AppendLine()
         Return text.ToString()

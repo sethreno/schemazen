@@ -6,7 +6,7 @@ Public Class ForeignKeyTester
         person.Columns.Add(New Column("id", "int", False))
         person.Columns.Add(New Column("name", "varchar", 50, False))
         person.Columns.Find("id").Identity = New Identity(1, 1)
-        person.PrimaryKey = New PrimaryKey("PK_Person", "id")
+        person.Constraints.Add(New model.Constraint("PK_Person", "PRIMARY KEY", "id"))
 
         Dim address As New Table("dbo", "Address")
         address.Columns.Add(New Column("id", "int", False))
@@ -16,7 +16,7 @@ Public Class ForeignKeyTester
         address.Columns.Add(New Column("state", "char", 2, False))
         address.Columns.Add(New Column("zip", "varchar", 5, False))
         address.Columns.Find("id").Identity = New Identity(1, 1)
-        address.PrimaryKey = New PrimaryKey("PK_Address", "id")
+        address.Constraints.Add(New model.Constraint("PK_Address", "PRIMARY KEY", "id"))
 
         Dim fk As New ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE")
 

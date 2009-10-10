@@ -9,8 +9,9 @@ Public Class TableTester
         'test equal
         t1.Columns.Add(New Column("first", "varchar", 30, False))
         t2.Columns.Add(New Column("first", "varchar", 30, False))
-        t1.PrimaryKey = New PrimaryKey("PK_Test", "first")
-        t2.PrimaryKey = New PrimaryKey("PK_Test", "first")
+        t1.Constraints.Add(New Constraint("PK_Test", "PRIMARY KEY", "first"))
+        t2.Constraints.Add(New Constraint("PK_Test", "PRIMARY KEY", "first"))
+        
         diff = t1.Compare(t2)
         Assert.IsNotNull(diff)
         Assert.IsFalse(diff.IsDiff)
