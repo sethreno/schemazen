@@ -1,11 +1,15 @@
 ﻿Public Class ForeignKey
     Public Table As Table
     Public Name As String
-    Public Columns As List(Of String)
+    Public Columns As New List(Of String)
     Public RefTable As Table
-    Public RefColumns As List(Of String)
+    Public RefColumns As New List(Of String)
     Public OnUpdate As String
     Public OnDelete As String
+
+    Public Sub New(ByVal name As String)
+        Me.Name = name
+    End Sub
 
     Public Sub New(ByVal table As Table, ByVal name As String, _
                    ByVal columns As String, ByVal refTable As Table, ByVal refColumns As String)
@@ -19,7 +23,7 @@
         Me.Name = name
         Me.Columns = New List(Of String)(columns.Split(","c))
         Me.RefTable = refTable
-        Me.RefColumns = New List(Of String)(columns.Split(","c))
+        Me.RefColumns = New List(Of String)(refColumns.Split(","c))
         Me.OnUpdate = onUpdate
         Me.OnDelete = onDelete
     End Sub

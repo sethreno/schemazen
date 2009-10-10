@@ -71,6 +71,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.vb" />
+    <Compile Include="DatabaseTester.vb" />
     <Compile Include="ForeignKeyTester.vb" />
     <Compile Include="FunctionTester.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />

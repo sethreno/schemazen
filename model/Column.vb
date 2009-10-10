@@ -22,6 +22,10 @@
         End Get
     End Property
 
+    Public Sub New()
+
+    End Sub
+
     Public Sub New(ByVal name As String, ByVal type As String, ByVal null As Boolean, Optional ByVal [default] As [Default] = Nothing)
         Me.Name = name
         Me.Type = type

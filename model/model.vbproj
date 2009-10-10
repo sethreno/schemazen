@@ -67,6 +67,7 @@
   <ItemGroup>
     <Compile Include="Column.vb" />
     <Compile Include="ColumnList.vb" />
+    <Compile Include="Database.vb" />
     <Compile Include="Default.vb" />
     <Compile Include="ForeignKey.vb" />
     <Compile Include="Function.vb" />
