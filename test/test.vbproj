@@ -72,6 +72,7 @@
   <ItemGroup>
     <Compile Include="ConfigHelper.vb" />
     <Compile Include="ForeignKeyTester.vb" />
+    <Compile Include="FunctionTester.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
     <Compile Include="My Project\Application.Designer.vb">
       <AutoGen>True</AutoGen>
@@ -89,6 +90,7 @@
     </Compile>
     <Compile Include="ProcTester.vb" />
     <Compile Include="TableTester.vb" />
+    <Compile Include="TestHelper.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
