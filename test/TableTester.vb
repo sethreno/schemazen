@@ -76,36 +76,8 @@ Public Class TableTester
         t.Columns.Add(New Column("cc", "xml", True))
 
         Console.WriteLine(t.Script())
-
-        Dim appSettings As New Configuration.AppSettingsReader()
-        Using cn As New Odbc.OdbcConnection(CStr(appSettings.GetValue("testdb_odbc", GetType(String))))
-            cn.Open()
-            Using cm As Odbc.OdbcCommand = cn.CreateCommand()
-                'create the table
-                cm.CommandText = t.Script()
-                cm.CommandType = CommandType.Text
-                cm.ExecuteNonQuery()
-
-                'drop the table
-                cm.CommandText = "drop table " + t.Name
-                cm.ExecuteNonQuery()
-            End Using
-        End Using
-
-        Using cn As New SqlClient.SqlConnection(CStr(appSettings.GetValue("testdb", GetType(String))))
-            cn.Open()
-            Using cm As SqlClient.SqlCommand = cn.CreateCommand()
-                'create the table
-                cm.CommandText = t.Script()
-                cm.CommandType = CommandType.Text
-                cm.ExecuteNonQuery()
-
-                'drop the table
-                cm.CommandText = "drop table " + t.Name
-                cm.ExecuteNonQuery()
-            End Using
-        End Using
-
+        TestHelper.ExecSql(t.Script())
+        TestHelper.ExecSql("drop table [dbo].[AllTypesTest]")
     End Sub
 
     <Test()> <ExpectedException(GetType(NotSupportedException))> _

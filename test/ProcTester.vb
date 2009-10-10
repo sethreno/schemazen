@@ -17,25 +17,10 @@ Public Class ProcTester
         + "AS" + vbCrLf _
         + "   select * from Address where id = @id" + vbCrLf
 
-        Console.WriteLine(t.Script())
-        Console.WriteLine(getAddress.Script())
-
-        Using cn As New SqlClient.SqlConnection(ConfigHelper.TestDB)
-            cn.Open()
-            Using cm As SqlClient.SqlCommand = cn.CreateCommand()
-                cm.CommandText = t.Script()
-                cm.ExecuteNonQuery()
-
-                cm.CommandText = getAddress.Script()
-                cm.ExecuteNonQuery()
-
-                cm.CommandText = "drop table [dbo].[Address]"
-                cm.ExecuteNonQuery()
-
-                cm.CommandText = "drop procedure [dbo].[GetAddress]"
-                cm.ExecuteNonQuery()
-            End Using
-        End Using
+        TestHelper.ExecSql(t.Script())
+        TestHelper.ExecSql(getAddress.Script)
+        TestHelper.ExecSql("drop table [dbo].[Address]")
+        TestHelper.ExecSql("drop procedure [dbo].[GetAddress]")
     End Sub
 
 End Class

@@ -1,5 +1,6 @@
 ﻿Public Class TestHelper
     Public Shared Sub ExecSql(ByVal sql As String)
+        Console.WriteLine(sql)
         Using cn As New SqlClient.SqlConnection(ConfigHelper.TestDB)
             cn.Open()
             Using cm As SqlClient.SqlCommand = cn.CreateCommand()
