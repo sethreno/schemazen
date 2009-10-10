@@ -26,7 +26,6 @@
                 text.AppendLine(fk.Script())
             Next
         Next
-
         Return Text.ToString()
     End Function
 
@@ -178,17 +177,19 @@
                 End Using
 
                 'get procs & functions
-                cm.CommandText = "select ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, ROUTINE_DEFINITION from INFORMATION_SCHEMA.ROUTINES"
+                cm.CommandText = "select s.name as ROUTINE_SCHEMA, o.name as ROUTINE_NAME, o.type_desc, m.definition" _
+                    + " from sys.sql_modules m inner join sys.objects o on m.object_id = o.object_id" _
+                    + " inner join sys.schemas s on s.schema_id = o.schema_id"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
-                        Select Case CStr(dr("ROUTINE_TYPE"))
-                            Case "PROCEDURE"
+                        Select Case CStr(dr("type_desc"))
+                            Case "SQL_STORED_PROCEDURE"
                                 Dim p As New Proc(CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
-                                p.Text = CStr(dr("ROUTINE_DEFINITION"))
+                                p.Text = CStr(dr("definition"))
                                 Procs.Add(p)
-                            Case "FUNCTION"
+                            Case "SQL_SCALAR_FUNCTION"
                                 Dim f As New [Function](CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
-                                f.Text = CStr(dr("ROUTINE_DEFINITION"))
+                                f.Text = CStr(dr("definition"))
                                 Functions.Add(f)
                         End Select
                     End While

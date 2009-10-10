@@ -39,6 +39,12 @@ Public Class DatabaseTester
         TestHelper.DropDb(copy.Name)
         TestHelper.ExecSql(copy.Script())
         TestHelper.ExecSql(copy.ScriptObjects, copy.Name)
+        For Each p As Proc In copy.Procs
+            TestHelper.ExecSql(p.Script(), copy.Name)
+        Next
+        For Each f As [Function] In copy.Functions
+            TestHelper.ExecSql(f.Script(), copy.Name)
+        Next
 
         'TODO automate db comparison
     End Sub
