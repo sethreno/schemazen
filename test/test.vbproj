@@ -87,6 +87,7 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <Compile Include="ProcTester.vb" />
     <Compile Include="TableTester.vb" />
   </ItemGroup>
   <ItemGroup>

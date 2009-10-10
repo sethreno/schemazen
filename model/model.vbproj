@@ -85,6 +85,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <Compile Include="PrimaryKey.vb" />
+    <Compile Include="Proc.vb" />
     <Compile Include="Table.vb" />
   </ItemGroup>
   <ItemGroup>
