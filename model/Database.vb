@@ -99,6 +99,19 @@
                     End While
                 End Using
 
+                'get column defaults
+                cm.CommandText = "select t.name as TABLE_NAME, c.name as COLUMN_NAME, d.name as DEFAULT_NAME, d.definition as DEFAULT_VALUE" _
+                                + " from sys.tables t inner join sys.columns c on c.object_id = t.object_id" _
+                                + "	inner join sys.default_constraints d on c.column_id = d.parent_column_id" _
+                                + " and d.parent_object_id = c.object_id"
+                Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
+                    While dr.Read()
+                        Dim t As Table = FindTable(CStr(dr("TABLE_NAME")))
+                        t.Columns.Find(CStr(dr("COLUMN_NAME"))).Default = _
+                            New [Default](CStr(dr("DEFAULT_NAME")), CStr(dr("DEFAULT_VALUE")))
+                    End While
+                End Using
+
                 'get primary keys
                 cm.CommandText = "select TABLE_NAME, CONSTRAINT_NAME from INFORMATION_SCHEMA.TABLE_CONSTRAINTS" _
                                 + " where CONSTRAINT_TYPE = 'PRIMARY KEY'"
@@ -136,9 +149,7 @@
                     While dr.Read()
                         Dim fk As ForeignKey = FindForeignKey(CStr(dr("CONSTRAINT_NAME")))
                         fk.RefTable = FindTableByPk(CStr(dr("UNIQUE_CONSTRAINT_NAME")))
-                        For Each c As Column In fk.RefTable.Columns.Items
-                            fk.RefColumns.Add(c.Name)
-                        Next
+                        fk.RefColumns = fk.RefTable.PrimaryKey.Columns
                         fk.OnUpdate = CStr(dr("UPDATE_RULE"))
                         fk.OnDelete = CStr(dr("DELETE_RULE"))
                     End While
@@ -150,6 +161,23 @@
                     While dr.Read()
                         Dim fk As ForeignKey = FindForeignKey(CStr(dr("CONSTRAINT_NAME")))
                         If fk IsNot Nothing Then fk.Columns.Add(CStr(dr("COLUMN_NAME")))
+                    End While
+                End Using
+
+                'get procs & functions
+                cm.CommandText = "select ROUTINE_SCHEMA, ROUTINE_NAME, ROUTINE_TYPE, ROUTINE_DEFINITION from INFORMATION_SCHEMA.ROUTINES"
+                Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
+                    While dr.Read()
+                        Select Case CStr(dr("ROUTINE_TYPE"))
+                            Case "PROCEDURE"
+                                Dim p As New Proc(CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
+                                p.Text = CStr(dr("ROUTINE_DEFINITION"))
+                                Procs.Add(p)
+                            Case "FUNCTION"
+                                Dim f As New [Function](CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
+                                f.Text = CStr(dr("ROUTINE_DEFINITION"))
+                                Functions.Add(f)
+                        End Select
                     End While
                 End Using
             End Using

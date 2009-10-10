@@ -10,7 +10,6 @@
                 cm.CommandText = sql
                 cm.ExecuteNonQuery()
             End Using
-            cn.Close()
         End Using
     End Sub
 
@@ -22,5 +21,24 @@
         Return connString
     End Function
 
+    Public Shared Sub DropDb(ByVal dbName As String)
+        If DbExists(dbName) Then
+            ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
+            ExecSql("drop database " + dbName)
+        End If
+    End Sub
+
+    Public Shared Function DbExists(ByVal dbName As String) As Boolean
+        Dim exists As Boolean
+        Using cn As New SqlClient.SqlConnection(ConfigHelper.TestDB)
+            cn.Open()
+            Using cm As SqlClient.SqlCommand = cn.CreateCommand()
+                cm.CommandText = "select db_id('" + dbName + "')"
+                exists = Not cm.ExecuteScalar() Is DBNull.Value
+            End Using
+        End Using
+
+        Return exists
+    End Function
 
 End Class

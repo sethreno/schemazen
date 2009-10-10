@@ -25,8 +25,7 @@ Public Class DatabaseTester
         Dim db2 As New Database()
         db2.Load(TestHelper.GetConnString("TEST_TEMP"))
 
-        TestHelper.ExecSql("ALTER DATABASE TEST_TEMP SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
-        TestHelper.ExecSql("drop database TEST_TEMP")
+        TestHelper.DropDb("TEST_TEMP")
 
         For Each t As Table In db.Tables
             Assert.IsNotNull(db2.FindTable(t.Name))
@@ -34,8 +33,14 @@ Public Class DatabaseTester
         Next
     End Sub
 
-    <Test()> Public Sub TestLoad()
+    <Test()> Public Sub TestCopy()
+        Dim copy As New Database("DFS_COPY")
+        copy.Load(TestHelper.GetConnString("DFS_QUOTE"))
+        TestHelper.DropDb(copy.Name)
+        TestHelper.ExecSql(copy.Script())
+        TestHelper.ExecSql(copy.ScriptObjects, copy.Name)
 
+        'TODO automate db comparison
     End Sub
 
 End Class
