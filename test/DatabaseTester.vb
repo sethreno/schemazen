@@ -59,6 +59,9 @@ Public Class DatabaseTester
                     If c.Type <> "INDEX" Then Continue For
                     TestHelper.ExecSql(c.Script(), copy.Name)
                 Next
+                For Each tr As Trigger In t.Triggers
+                    TestHelper.ExecSql(tr.Script(), copy.Name)
+                Next
             Next
 
             'compare the dbs to make sure they are the same

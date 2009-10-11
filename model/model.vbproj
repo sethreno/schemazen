@@ -90,6 +90,7 @@
     </Compile>
     <Compile Include="Proc.vb" />
     <Compile Include="Table.vb" />
+    <Compile Include="Trigger.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

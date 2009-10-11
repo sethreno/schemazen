@@ -8,6 +8,7 @@
     Public Columns As New ColumnList
     Public Constraints As New List(Of Constraint)
     Public ForeignKeys As New List(Of ForeignKey)
+    Public Triggers As New List(Of Trigger)
 
     Public ReadOnly Property PrimaryKey() As Constraint
         Get

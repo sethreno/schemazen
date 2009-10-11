@@ -187,20 +187,33 @@
                 End Using
 
                 'get procs & functions
-                cm.CommandText = "select s.name as ROUTINE_SCHEMA, o.name as ROUTINE_NAME, o.type_desc, m.definition" _
-                    + " from sys.sql_modules m inner join sys.objects o on m.object_id = o.object_id" _
-                    + " inner join sys.schemas s on s.schema_id = o.schema_id"
+                cm.CommandText = _
+                "   select " _
+                + "     s.name as schemaName," _
+                + "     o.name as routineName, " _
+                + "     o.type_desc," _
+                + "     m.definition," _
+                + "     t.name as tableName" _
+                + "	from sys.sql_modules m" _
+                + "		inner join sys.objects o on m.object_id = o.object_id" _
+                + "		inner join sys.schemas s on s.schema_id = o.schema_id" _
+                + "		left join sys.triggers tr on m.object_id = tr.object_id" _
+                + "		left join sys.tables t on tr.parent_id = t.object_id"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
                         Select Case CStr(dr("type_desc"))
                             Case "SQL_STORED_PROCEDURE"
-                                Dim p As New Proc(CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
+                                Dim p As New Proc(CStr(dr("schemaName")), CStr(dr("routineName")))
                                 p.Text = CStr(dr("definition"))
                                 Procs.Add(p)
                             Case "SQL_SCALAR_FUNCTION"
-                                Dim f As New [Function](CStr(dr("ROUTINE_SCHEMA")), CStr(dr("ROUTINE_NAME")))
+                                Dim f As New [Function](CStr(dr("schemaName")), CStr(dr("routineName")))
                                 f.Text = CStr(dr("definition"))
                                 Functions.Add(f)
+                            Case "SQL_TRIGGER"
+                                Dim t As New Trigger(CStr(dr("schemaName")), CStr(dr("routineName")))
+                                t.Text = CStr(dr("definition"))
+                                FindTable(CStr(dr("tableName"))).Triggers.Add(t)
                         End Select
                     End While
                 End Using
