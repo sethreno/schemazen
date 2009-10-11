@@ -45,6 +45,7 @@
         If DbExists(dbName) Then
             ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
             ExecSql("drop database " + dbName)
+            ClearPool(dbName)
         End If
     End Sub
 
@@ -59,6 +60,12 @@
         End Using
 
         Return exists
+    End Function
+
+    Public Shared Function ClearPool(ByVal dbName As String) As Boolean
+        Using cn As New Data.SqlClient.SqlConnection(GetConnString(dbName))
+            Data.SqlClient.SqlConnection.ClearPool(cn)
+        End Using
     End Function
 
 End Class

@@ -39,13 +39,14 @@ Public Class DatabaseTester
             TestHelper.DropDb("TEST_SOURCE")
             TestHelper.DropDb("TEST_COPY")
 
+            'create the db from sql script
             TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE")
             TestHelper.ExecBatchSql(IO.File.ReadAllText(script), "TEST_SOURCE")
 
+            'load the model from newly created db and create a copy
             Dim copy As New Database("TEST_COPY")
             copy.Load(TestHelper.GetConnString("TEST_SOURCE"))
-
-            TestHelper.ExecSql(copy.Script())
+            TestHelper.ExecSql("CREATE DATABASE TEST_COPY")
             TestHelper.ExecSql(copy.ScriptObjects, copy.Name)
             For Each p As Proc In copy.Procs
                 TestHelper.ExecSql(p.Script(), copy.Name)
@@ -53,8 +54,14 @@ Public Class DatabaseTester
             For Each f As [Function] In copy.Functions
                 TestHelper.ExecSql(f.Script(), copy.Name)
             Next
+            For Each t As Table In copy.Tables
+                For Each c As Constraint In t.Constraints
+                    If c.Type <> "INDEX" Then Continue For
+                    TestHelper.ExecSql(c.Script(), copy.Name)
+                Next
+            Next
 
-            'TODO automate db comparison
+            'TODO compare the dbs to make sure they are the same
         Next
     End Sub
 

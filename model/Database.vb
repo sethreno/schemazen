@@ -124,22 +124,31 @@
                     End While
                 End Using
 
-                'get constraints (except foreign keys)
-                cm.CommandText = "select TABLE_NAME, CONSTRAINT_NAME, CONSTRAINT_TYPE from INFORMATION_SCHEMA.TABLE_CONSTRAINTS" _
-                                + " where not CONSTRAINT_TYPE = 'FOREIGN KEY'"
+                'get constraints & indexes
+                cm.CommandText = _
+                "select t.name as tableName, i.name as indexName, c.name as columnName," _
+                + " i.is_primary_key, i.is_unique_constraint, i.type_desc" _
+                + " from sys.tables t " _
+                + "	inner join sys.indexes i on i.object_id = t.object_id" _
+                + "	inner join sys.index_columns ic on ic.object_id = t.object_id" _
+                + "		and ic.index_id = i.index_id" _
+                + "	inner join sys.columns c on c.object_id = t.object_id" _
+                + "		and c.column_id = ic.column_id" _
+                + " order by t.name, i.name, ic.key_ordinal"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
-                    While dr.Read()
-                        Dim t As Table = FindTable(CStr(dr("TABLE_NAME")))
-                        t.Constraints.Add(New Constraint(CStr(dr("CONSTRAINT_NAME")), CStr(dr("CONSTRAINT_TYPE"))))
-                    End While
-                End Using
-
-                'get primarykey columns
-                cm.CommandText = "select CONSTRAINT_NAME, COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE"
-                Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
-                    While dr.Read()
-                        Dim c As Constraint = FindConstraint(CStr(dr("CONSTRAINT_NAME")))
-                        If c IsNot Nothing Then c.Columns.Add(CStr(dr("COLUMN_NAME")))
+                    While dr.Read
+                        Dim c As Constraint = FindConstraint(CStr(dr("indexName")))
+                        If c Is Nothing Then
+                            c = New Constraint(CStr(dr("indexName")), "")
+                            Dim t As Table = FindTable(CStr(dr("tableName")))
+                            t.Constraints.Add(c)
+                            c.Table = t
+                        End If
+                        c.Clustered = CStr(dr("type_desc")) = "CLUSTERED"
+                        c.Columns.Add(CStr(dr("columnName")))
+                        c.Type = "INDEX"
+                        If CBool(dr("is_primary_key")) Then c.Type = "PRIMARY KEY"
+                        If CBool(dr("is_unique_constraint")) Then c.Type = "UNIQUE"
                     End While
                 End Using
 

@@ -53,6 +53,7 @@
         text.Append(Columns.Script())
         If Constraints.Count > 0 Then text.AppendLine()
         For Each c As Constraint In Constraints
+            If c.Type = "INDEX" Then Continue For
             text.AppendLine("   ," + c.Script())
         Next
         text.AppendLine(")")
