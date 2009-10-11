@@ -61,9 +61,15 @@ Public Class DatabaseTester
                 Next
             Next
 
-            'TODO compare the dbs to make sure they are the same
+            'compare the dbs to make sure they are the same
+            Dim cmd As String = String.Format("{0}\SQLDBDiffConsole.exe {1} {2} {0}\{3}" _
+                , ConfigHelper.SqlDbDiffPath _
+                , "localhost\SQLEXPRESS TEST_COPY   NULL NULL Y" _
+                , "localhost\SQLEXPRESS TEST_SOURCE NULL NULL Y" _
+                , "SqlDbDiff.XML CompareResult.txt null")
+            Shell(cmd, AppWinStyle.NormalFocus, True)
+            Assert.AreEqual("no difference", IO.File.ReadAllLines("CompareResult.txt")(0))
         Next
     End Sub
 
-    
 End Class

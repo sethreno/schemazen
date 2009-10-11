@@ -1,6 +1,12 @@
 ﻿Public Class TestHelper
+    Public Shared ReadOnly Property EchoSql() As Boolean
+        Get
+            Return False
+        End Get
+    End Property
+
     Public Shared Sub ExecSql(ByVal sql As String, Optional ByVal dbName As String = "")
-        Console.WriteLine(sql)
+        If EchoSql Then Console.WriteLine(sql)
         Using cn As New Data.SqlClient.SqlConnection(ConfigHelper.TestDB)
             If Not String.IsNullOrEmpty(dbName) Then
                 cn.ConnectionString = GetConnString(dbName)
@@ -18,7 +24,7 @@
             cn.Open()
             Using cm As Data.SqlClient.SqlCommand = cn.CreateCommand()
                 For Each script As String In sql.Split((vbCrLf + "GO" + vbCrLf).Split(","c), System.StringSplitOptions.RemoveEmptyEntries)
-                    Console.WriteLine(script)
+                    If EchoSql Then Console.WriteLine(script)
                     cm.CommandText = script
                     cm.ExecuteNonQuery()
                 Next
