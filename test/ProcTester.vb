@@ -10,15 +10,15 @@ Public Class ProcTester
         t.Columns.Add(New Column("zip", "char", 5, False))
         t.Constraints.Add(New model.Constraint("PK_Address", "PRIMARY KEY", "id"))
 
-        Dim getAddress As New Proc("dbo", "GetAddress")
+        Dim getAddress As New Routine("dbo", "GetAddress")
         getAddress.Text = _
         "CREATE PROCEDURE [dbo].[GetAddress]" + vbCrLf _
         + "   @id int" + vbCrLf _
         + "AS" + vbCrLf _
         + "   select * from Address where id = @id" + vbCrLf
 
-        TestHelper.ExecSql(t.Script())
-        TestHelper.ExecSql(getAddress.Script)
+        TestHelper.ExecSql(t.ScriptCreate())
+        TestHelper.ExecSql(getAddress.ScriptCreate)
         TestHelper.ExecSql("drop table [dbo].[Address]")
         TestHelper.ExecSql("drop procedure [dbo].[GetAddress]")
     End Sub

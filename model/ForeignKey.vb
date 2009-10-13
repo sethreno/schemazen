@@ -28,7 +28,7 @@
         Me.OnDelete = onDelete
     End Sub
 
-    Public Function Script() As String
+    Public Function ScriptCreate() As String
         Dim text As New StringBuilder()
         text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH CHECK ADD CONSTRAINT [{2}]{3}", _
                           Table.Owner, Table.Name, Name, vbCrLf)
@@ -42,5 +42,10 @@
             text.AppendFormat("   ON DELETE {0}{1}", OnDelete, vbCrLf)
         End If
         Return text.ToString()
+    End Function
+
+    Public Function ScriptDrop() As String
+        Return String.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]" _
+                             , Table.Owner, Table.Name, Name)
     End Function
 End Class

@@ -83,7 +83,7 @@
 End Class
 
 Public Class ColumnDiff
-    Public Sub New(ByVal source As Column, ByVal target As Column)
+    Public Sub New(ByVal target As Column, ByVal source As Column)
         Me.Source = source
         Me.Target = target
     End Sub

@@ -70,7 +70,6 @@
     <Compile Include="Database.vb" />
     <Compile Include="Default.vb" />
     <Compile Include="ForeignKey.vb" />
-    <Compile Include="Function.vb" />
     <Compile Include="Identity.vb" />
     <Compile Include="Constraint.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
@@ -88,9 +87,8 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="Proc.vb" />
+    <Compile Include="Routine.vb" />
     <Compile Include="Table.vb" />
-    <Compile Include="Trigger.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">

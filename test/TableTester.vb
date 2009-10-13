@@ -34,7 +34,7 @@ Public Class TableTester
         Assert.AreEqual(1, diff.ColumnsDiff.Count)
 
         Console.WriteLine("--- create ----")
-        Console.Write(t1.Script())
+        Console.Write(t1.ScriptCreate())
 
         Console.WriteLine("--- migrate up ---")
         Console.Write(t1.Compare(t2).Script())
@@ -76,8 +76,8 @@ Public Class TableTester
         t.Columns.Add(New Column("bb", "varchar", -1, True))
         t.Columns.Add(New Column("cc", "xml", True))
 
-        Console.WriteLine(t.Script())
-        TestHelper.ExecSql(t.Script())
+        Console.WriteLine(t.ScriptCreate())
+        TestHelper.ExecSql(t.ScriptCreate())
         TestHelper.ExecSql("drop table [dbo].[AllTypesTest]")
     End Sub
 
@@ -85,7 +85,7 @@ Public Class TableTester
     Public Sub TestScriptNonSupportedColumn()
         Dim t As New Table("dbo", "bla")
         t.Columns.Add(New Column("a", "madeuptype", True))
-        t.Script()
+        t.ScriptCreate()
     End Sub
 
 End Class

@@ -7,8 +7,13 @@
     Public Name As String
     Public Columns As New ColumnList
     Public Constraints As New List(Of Constraint)
-    Public ForeignKeys As New List(Of ForeignKey)
-    Public Triggers As New List(Of Trigger)
+
+    Public Function FindConstraint(ByVal name As String) As Constraint
+        For Each c As Constraint In Constraints
+            If c.Name = name Then Return c
+        Next
+        Return Nothing
+    End Function
 
     Public ReadOnly Property PrimaryKey() As Constraint
         Get
@@ -45,10 +50,28 @@
             End If
         Next
 
+        'get added and compare mutual constraints
+        For Each c As Constraint In Constraints
+            Dim c2 As Constraint = t.FindConstraint(c.Name)
+            If c2 Is Nothing Then
+                diff.ConstraintsAdded.Add(c)
+            Else
+                If c.Script <> c2.Script Then
+                    diff.ConstraintsChanged.Add(c)
+                End If
+            End If
+        Next
+        'get deleted constraints
+        For Each c As Constraint In t.Constraints
+            If FindConstraint(c.Name) Is Nothing Then
+                diff.ConstraintsDeleted.Add(c)
+            End If
+        Next
+
         Return diff
     End Function
 
-    Public Function Script() As String
+    Public Function ScriptCreate() As String
         Dim text As New StringBuilder()
         text.AppendFormat("CREATE TABLE [{0}].[{1}]({2}", Owner, Name, vbCrLf)
         text.Append(Columns.Script())
@@ -59,20 +82,34 @@
         Next
         text.AppendLine(")")
         text.AppendLine()
+        For Each c As Constraint In Constraints
+            If c.Type <> "INDEX" Then Continue For
+            text.AppendLine(c.Script())
+        Next
         Return text.ToString()
+    End Function
+
+    Public Function ScriptDrop() As String
+        Return String.Format("DROP TABLE [{0}].[{1}]", Owner, Name)
     End Function
 End Class
 
 Public Class TableDiff
     Public Owner As String
     Public Name As String
+
     Public ColumnsAdded As New List(Of Column)
     Public ColumnsDroped As New List(Of Column)
     Public ColumnsDiff As New List(Of ColumnDiff)
+
+    Public ConstraintsAdded As New List(Of Constraint)
+    Public ConstraintsChanged As New List(Of Constraint)
+    Public ConstraintsDeleted As New List(Of Constraint)
+
     Public ReadOnly Property IsDiff() As Boolean
         Get
-            Return ColumnsAdded.Count + ColumnsDroped.Count _
-                + ColumnsDiff.Count > 0
+            Return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count _
+            + ConstraintsAdded.Count + ConstraintsChanged.Count + ConstraintsDeleted.Count > 0
         End Get
     End Property
 

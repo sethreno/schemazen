@@ -112,6 +112,7 @@
       <LastGenOutput>Settings.Designer.vb</LastGenOutput>
     </None>
     <None Include="test_schemas\BOP_QUOTE.sql" />
+    <None Include="test_schemas\BOP_QUOTE_2.sql" />
     <None Include="test_schemas\DFS_QUOTE.sql" />
   </ItemGroup>
   <ItemGroup>

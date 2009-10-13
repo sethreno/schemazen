@@ -1,7 +1,7 @@
 ﻿Public Class TestHelper
     Public Shared ReadOnly Property EchoSql() As Boolean
         Get
-            Return False
+            Return True
         End Get
     End Property
 
@@ -23,7 +23,8 @@
         Using cn As New Data.SqlClient.SqlConnection(GetConnString(dbName))
             cn.Open()
             Using cm As Data.SqlClient.SqlCommand = cn.CreateCommand()
-                For Each script As String In sql.Split((vbCrLf + "GO" + vbCrLf).Split(","c), System.StringSplitOptions.RemoveEmptyEntries)
+                For Each script As String In sql.Split((vbLf + "GO" + vbCr).Split(","c), System.StringSplitOptions.RemoveEmptyEntries)
+                    If script.Trim().Replace(vbCrLf, "").ToUpper() = "GO" Then Continue For
                     If EchoSql Then Console.WriteLine(script)
                     cm.CommandText = script
                     cm.ExecuteNonQuery()

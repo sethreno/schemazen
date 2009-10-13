@@ -1,8 +1,6 @@
 ﻿Public Class Database
-    Public Name As String
-    Public Tables As New List(Of Table)
-    Public Procs As New List(Of Proc)
-    Public Functions As New List(Of [Function])
+
+#Region " Constructors "
 
     Public Sub New()
 
@@ -12,22 +10,14 @@
         Me.Name = name
     End Sub
 
-    Public Function Script() As String
-        Return String.Format("CREATE DATABASE {0}", Name)
-    End Function
+#End Region
 
-    Public Function ScriptObjects() As String
-        Dim text As New StringBuilder()
-        For Each t As Table In Tables
-            text.Append(t.Script())
-        Next
-        For Each t As Table In Tables
-            For Each fk As ForeignKey In t.ForeignKeys
-                text.AppendLine(fk.Script())
-            Next
-        Next
-        Return Text.ToString()
-    End Function
+#Region " Properties "
+
+    Public Name As String
+    Public Tables As New List(Of Table)
+    Public Routines As New List(Of Routine)
+    Public ForeignKeys As New List(Of ForeignKey)
 
     Public Function FindTable(ByVal name As String) As Table
         For Each t As Table In Tables
@@ -55,13 +45,20 @@
     End Function
 
     Public Function FindForeignKey(ByVal name As String) As ForeignKey
-        For Each t As Table In Tables
-            For Each fk As ForeignKey In t.ForeignKeys
-                If fk.Name = name Then Return fk
-            Next
+        For Each fk As ForeignKey In ForeignKeys
+            If fk.Name = name Then Return fk
         Next
         Return Nothing
     End Function
+
+    Public Function FindRoutine(ByVal name As String) As Routine
+        For Each r As Routine In Routines
+            If r.Name = name Then Return r
+        Next
+        Return Nothing
+    End Function
+
+#End Region
 
     Public Sub Load(ByVal connString As String)
         Using cn As New SqlClient.SqlConnection(connString)
@@ -160,7 +157,7 @@
                         Dim t As Table = FindTable(CStr(dr("TABLE_NAME")))
                         Dim fk As New ForeignKey(CStr(dr("CONSTRAINT_NAME")))
                         fk.Table = t
-                        t.ForeignKeys.Add(fk)
+                        ForeignKeys.Add(fk)
                     End While
                 End Using
 
@@ -186,7 +183,7 @@
                     End While
                 End Using
 
-                'get procs & functions
+                'get routines
                 cm.CommandText = _
                 "   select " _
                 + "     s.name as schemaName," _
@@ -201,23 +198,188 @@
                 + "		left join sys.tables t on tr.parent_id = t.object_id"
                 Using dr As SqlClient.SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
+                        Dim r As New Routine(CStr(dr("schemaName")), CStr(dr("routineName")))
+                        r.Text = CStr(dr("definition"))
+                        Routines.Add(r)
+
                         Select Case CStr(dr("type_desc"))
                             Case "SQL_STORED_PROCEDURE"
-                                Dim p As New Proc(CStr(dr("schemaName")), CStr(dr("routineName")))
-                                p.Text = CStr(dr("definition"))
-                                Procs.Add(p)
-                            Case "SQL_SCALAR_FUNCTION"
-                                Dim f As New [Function](CStr(dr("schemaName")), CStr(dr("routineName")))
-                                f.Text = CStr(dr("definition"))
-                                Functions.Add(f)
+                                r.Type = "PROCEDURE"
                             Case "SQL_TRIGGER"
-                                Dim t As New Trigger(CStr(dr("schemaName")), CStr(dr("routineName")))
-                                t.Text = CStr(dr("definition"))
-                                FindTable(CStr(dr("tableName"))).Triggers.Add(t)
+                                r.Type = "TRIGGER"
+                            Case "SQL_SCALAR_FUNCTION"
+                                r.Type = "FUNCTION"
                         End Select
                     End While
                 End Using
             End Using
         End Using
     End Sub
+
+    Public Function Compare(ByVal db As Database) As DatabaseDiff
+        Dim diff As New DatabaseDiff()
+
+        'get tables added and changed
+        For Each t As Table In Tables
+            Dim t2 As Table = db.FindTable(t.Name)
+            If t2 Is Nothing Then
+                diff.TablesAdded.Add(t)
+            Else
+                'compare mutual tables
+                Dim tDiff As TableDiff = t.Compare(t2)
+                If tDiff.IsDiff Then
+                    diff.TablesDiff.Add(tDiff)
+                End If
+            End If
+        Next
+        'get deleted tables
+        For Each t As Table In db.Tables
+            If FindTable(t.Name) Is Nothing Then
+                diff.TablesDeleted.Add(t)
+            End If
+        Next
+
+        'get procs added and changed
+        For Each r As Routine In Routines
+            Dim r2 As Routine = db.FindRoutine(r.Name)
+            If r2 Is Nothing Then
+                diff.RoutinesAdded.Add(r)
+            Else
+                'compare mutual procs
+                If r.Text <> r2.Text Then
+                    diff.RoutinesDiff.Add(r)
+                End If
+            End If
+        Next
+        'get procs deleted
+        For Each r As Routine In db.Routines
+            If FindRoutine(r.Name) Is Nothing Then
+                diff.RoutinesDeleted.Add(r)
+            End If
+        Next
+
+        'get added and compare mutual foreign keys
+        For Each fk As ForeignKey In ForeignKeys
+            Dim fk2 As ForeignKey = db.FindForeignKey(fk.Name)
+            If fk2 Is Nothing Then
+                diff.ForeignKeysAdded.Add(fk)
+            Else
+                If fk.ScriptCreate <> fk2.ScriptCreate Then
+                    diff.ForeignKeysChanged.Add(fk)
+                End If
+            End If
+        Next
+        'get deleted foreign keys
+        For Each fk As ForeignKey In db.ForeignKeys
+            If FindForeignKey(fk.Name) Is Nothing Then
+                diff.ForeignKeysDeleted.Add(fk)
+            End If
+        Next
+
+        Return diff
+    End Function
+
+    Public Function ScriptCreate() As String
+        Dim text As New StringBuilder()
+
+        text.AppendFormat("CREATE DATABASE {0}", Name)
+        text.AppendLine()
+        text.AppendLine("GO")
+        text.AppendFormat("USE {0}", Name)
+        text.AppendLine()
+        text.AppendLine("GO")
+        text.AppendLine()
+
+        For Each t As Table In Tables
+            text.AppendLine(t.ScriptCreate())
+        Next
+        text.AppendLine()
+        text.AppendLine("GO")
+
+        For Each fk As ForeignKey In ForeignKeys
+            text.AppendLine(fk.ScriptCreate())
+        Next
+        text.AppendLine()
+        text.AppendLine("GO")
+
+        For Each r As Routine In Routines
+            text.AppendLine(r.ScriptCreate())
+            text.AppendLine()
+            text.AppendLine("GO")
+        Next
+
+        Return text.ToString()
+    End Function
+End Class
+
+Public Class DatabaseDiff
+    Public TablesAdded As New List(Of Table)
+    Public TablesDiff As New List(Of TableDiff)
+    Public TablesDeleted As New List(Of Table)
+
+    Public RoutinesAdded As New List(Of Routine)
+    Public RoutinesDiff As New List(Of Routine)
+    Public RoutinesDeleted As New List(Of Routine)
+
+    Public ForeignKeysAdded As New List(Of ForeignKey)
+    Public ForeignKeysChanged As New List(Of ForeignKey)
+    Public ForeignKeysDeleted As New List(Of ForeignKey)
+
+    Public Function Script() As String
+        Dim text As New StringBuilder()
+        'delete foreign keys
+        For Each fk As ForeignKey In ForeignKeysDeleted
+            text.AppendLine(fk.ScriptDrop())
+            text.AppendLine()
+        Next
+        'delete modified foreign keys
+        For Each fk As ForeignKey In ForeignKeysChanged
+            text.AppendLine(fk.ScriptDrop())
+            text.AppendLine()
+        Next
+        text.AppendLine("GO")
+
+        'add tables
+        For Each t As Table In TablesAdded
+            text.AppendLine(t.ScriptCreate())
+            text.AppendLine()
+        Next
+        text.AppendLine("GO")
+
+        'modify tables
+        For Each t As TableDiff In TablesDiff
+            text.AppendLine(t.Script())
+        Next
+        text.AppendLine("GO")
+
+        'delete tables
+        For Each t As Table In TablesDeleted
+            text.AppendLine(t.ScriptDrop())
+        Next
+        text.AppendLine("GO")
+
+        'add foreign keys
+        For Each fk As ForeignKey In ForeignKeysAdded
+            text.AppendLine(fk.ScriptCreate())
+        Next
+        'add modified foreign keys
+        For Each fk As ForeignKey In ForeignKeysChanged
+            text.AppendLine(fk.ScriptCreate())
+        Next
+        text.AppendLine("GO")
+
+        'add & delete procs, functions, & triggers
+        For Each r As Routine In RoutinesAdded
+            text.AppendLine(r.ScriptCreate())
+            text.AppendLine("GO")
+        Next
+        For Each r As Routine In RoutinesDiff
+            text.AppendLine(r.ScriptDrop())
+            text.AppendLine("GO")
+            text.AppendLine(r.ScriptCreate())
+            text.AppendLine("GO")
+        Next
+
+        Return text.ToString()
+    End Function
 End Class

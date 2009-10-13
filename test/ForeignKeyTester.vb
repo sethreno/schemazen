@@ -20,9 +20,9 @@ Public Class ForeignKeyTester
 
         Dim fk As New ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE")
 
-        TestHelper.ExecSql(person.Script())
-        TestHelper.ExecSql(address.Script())
-        TestHelper.ExecSql(fk.Script())
+        TestHelper.ExecSql(person.ScriptCreate())
+        TestHelper.ExecSql(address.ScriptCreate())
+        TestHelper.ExecSql(fk.ScriptCreate())
         TestHelper.ExecSql("drop table Address")
         TestHelper.ExecSql("drop table Person")
     End Sub

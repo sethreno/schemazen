@@ -2,7 +2,7 @@
 Public Class FunctionTester
 
     <Test()> Public Sub TestScript()
-        Dim f As New [Function]("dbo", "udf_GetDate")
+        Dim f As New Routine("dbo", "udf_GetDate")
         f.Text = _
         "CREATE FUNCTION [dbo].[udf_GetDate]()" + vbCrLf _
         + "RETURNS DATETIME AS" + vbCrLf _
@@ -10,8 +10,8 @@ Public Class FunctionTester
         + "   RETURN GETDATE()" + vbCrLf _
         + "END" + vbCrLf
 
-        Console.WriteLine(f.Script())
-        TestHelper.ExecSql(f.Script())
+        Console.WriteLine(f.ScriptCreate())
+        TestHelper.ExecSql(f.ScriptCreate())
         TestHelper.ExecSql("drop function [dbo].[udf_GetDate]")
     End Sub
 
