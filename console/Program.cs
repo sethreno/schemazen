@@ -4,13 +4,13 @@ using System.Collections.Generic;
 using CommandLine;
 using CommandLine.Text;
 using model;
+using System.Data.SqlClient;
 
 namespace console
 {
 	class Program {
 
         private enum Command{
-            Unspecified,
             Script,
             Create
         }
@@ -23,7 +23,7 @@ namespace console
                            script - generate scripts for the specified db
                            create - create the specified db from scripts
             ")]
-            public Command command = Command.Unspecified;
+            public Command command;
 
             [Option("n", "conn_string",
                 Required = true,                
@@ -47,11 +47,17 @@ namespace console
                 ")]
             public bool delete = false;
 
+            [Option("v","verbose",
+                Required = false,
+                HelpText = @"Print additional debug information to console.
+                ")]
+            public bool verbose = false;
+
             [HelpOption(HelpText = "Display this help screen.")]
             public string GetHelp(){
                 var txt = new HelpText("schemacon - Schemanator Console");
                 txt.Copyright = new CopyrightInfo("Seth Reno", 2009);                
-                txt.AddPreOptionsLine("\nUsage: schemacon [-d] -c<command> -n<connection string> [-s<snapshot dir>]");
+                txt.AddPreOptionsLine("\nUsage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]");
                 txt.AddOptions(this);
                 return txt;
             }
@@ -71,8 +77,17 @@ namespace console
 
             switch (options.command){
                 case Command.Create:
-                    Console.WriteLine("not implemented.");
-                    return -1;
+                    if (String.IsNullOrEmpty(options.Dir)) {
+                        Console.WriteLine("You must specify a snapshot dir with the create command.");
+                        Environment.Exit(-1);
+                    }
+                    if (!Directory.Exists(options.Dir)) {
+                        Console.WriteLine("Snapshot dir {0} does not exist.", options.Dir);
+                        Environment.Exit(-1);
+                    }
+                    
+                    CreateDb(options);
+                    break;
 
                 case Command.Script:
                    // load the model
@@ -86,14 +101,13 @@ namespace console
                        ScriptToOutput(options, db);
                    }
                    break;
-
-                case Command.Unspecified:
-                    Console.WriteLine("You must specify a command.");
-                    return -1;
             }                    
                        
             return 0;
 		}
+
+        private static string[] dirs = { "tables",    "foreign_keys",  "data",
+                                         "functions", "procs",         "triggers" };
 
         private static void ScriptToOutput(Options options, Database db) {
             foreach (Table t in db.Tables) {
@@ -111,16 +125,14 @@ namespace console
         }
 
         private static void ScriptToDir(Options options, Database db) {
-            string[] dirs = { "data",  "foreign_keys", "functions", 
-                              "procs", "tables",       "triggers" };
-
             if (Directory.Exists(options.Dir)){
                 if (!options.delete) {
-                    Console.WriteLine("{0} already exists do you want to replace it? (Y/N)", options.Dir);
+                    Console.Write("{0} already exists do you want to replace it? (Y/N)", options.Dir);
                     var key = Console.ReadKey();
                     if (key.Key != ConsoleKey.Y) {
                         Environment.Exit(-1);
                     }
+                    Console.WriteLine();
                 }
                 
                 // delete the existing script files
@@ -166,7 +178,40 @@ namespace console
                 );
             }
 
-            Console.WriteLine("success");
+            Console.WriteLine("Snapshot successfully created at " + options.Dir);
+        }
+
+        private static void CreateDb(Options options) {
+            DBHelper.EchoSql = options.verbose;
+            var cnBuilder = new SqlConnectionStringBuilder(options.ConnString);
+            if (DBHelper.DbExists(options.ConnString)) {
+                if (!options.delete) {                    
+                    Console.Write(
+                        "{0} {1} already exists do you want to drop it? (Y/N)",
+                        cnBuilder.DataSource, cnBuilder.InitialCatalog);
+                    var key = Console.ReadKey();                    
+                    if (key.Key != ConsoleKey.Y) {
+                        Environment.Exit(-1);
+                    }
+                    Console.WriteLine();                   
+                }
+                DBHelper.DropDb(options.ConnString);
+            }
+
+            //create database
+            DBHelper.CreateDb(options.ConnString);
+
+            //run scripts
+            foreach (string dir in dirs) {
+                if ("data" == dir) { continue; }
+                Console.WriteLine("creating {0}", dir);
+                foreach (string f in Directory.GetFiles(options.Dir + "/" + dir)) {
+                    DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
+                }
+            }
+
+            Console.WriteLine("{0} {1} successfully created.",
+                cnBuilder.DataSource, cnBuilder.InitialCatalog);
         }
 	}
 }

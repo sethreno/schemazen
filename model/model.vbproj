@@ -89,6 +89,7 @@
     </Compile>
     <Compile Include="Routine.vb" />
     <Compile Include="Table.vb" />
+    <Compile Include="DBHelper.vb" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="My Project\Resources.resx">
