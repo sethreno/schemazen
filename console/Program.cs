@@ -8,40 +8,50 @@ using model;
 namespace console
 {
 	class Program {
+
+        private enum Command{
+            Unspecified,
+            Script,
+            Create
+        }
+
         class Options
         {
-            [Option("c", "conn_string",
-                Required = false,                
-                HelpText = @"Connection string to the db to script.
+            [Option("c", "command",
+                Required = true,
+                HelpText = @"Command to execute. Valid options include:
+                           script - generate scripts for the specified db
+                           create - create the specified db from scripts
+            ")]
+            public Command command = Command.Unspecified;
 
-      Examples: ""Server=localhost;Database=MYDB;Trusted_Connection=True;""
-                ""Server=localhost;Database=MYDB;User Id=user;Password=pass;""
+            [Option("n", "conn_string",
+                Required = true,                
+                HelpText = @"Connection string to the db or a .net app
+                        setting containing the connection string.
             ")]
             public string ConnString = "";
 
-            [Option("a", "conn_appSetting",
+            [Option("s", "snapshot_dir",
                 Required = false,
-                HelpText = @"The key for a .net appSetting that contains
-                        the connection string to the db to script.
-            ")]
-            public string ConnAppSetting = "";
-
-            [Option("d", "output_dir",
-                Required = false,
-                HelpText = @"Output directory for generated scripts.
-                        If this option is used a separate script will be
-                        generated for each object. Scripts are grouped
-                        into sub directories by object type.
+                HelpText = @"Path to a schemanator snapshot directory.
+                        Required for the 'create' command. If the 'script'
+                        command is used without it all scripts will be combined
+                        and written to standard out.                        
             ")]
             public string Dir = "";
 
+            [Option("d","delete",
+                Required =false,
+                HelpText = @"Deletes existing database or snapshot without promt.
+                ")]
+            public bool delete = false;
+
             [HelpOption(HelpText = "Display this help screen.")]
             public string GetHelp(){
-                var txt = new HelpText("schemacon - schemanator console");
-                txt.Copyright = new CopyrightInfo("Seth Reno", 2009);
-                txt.AddPreOptionsLine(@"
-Usage: schemacon -c <connection string> [-d <output dir>]
-       schemacon -a <app setting> [-d <output dir>]");
+                var txt = new HelpText("schemacon - Schemanator Console");
+                txt.Copyright = new CopyrightInfo("Seth Reno", 2009);                
+                txt.AddPreOptionsLine("\nUsage: schemacon [-d] -c<command> -n<connection string> [-s<snapshot dir>]");
                 txt.AddOptions(this);
                 return txt;
             }
@@ -53,28 +63,34 @@ Usage: schemacon -c <connection string> [-d <output dir>]
             if (!parser.ParseArguments(args, options)){
                 return -1;
             }
-            if (string.IsNullOrEmpty(options.ConnAppSetting)
-             && string.IsNullOrEmpty(options.ConnString)){
-                 Console.WriteLine("You must specify a connection string or app setting.");
-                 Console.WriteLine("Enter \"schemacon --help\" for more info.");
-                 return -1;
-            }
-
-            if (!String.IsNullOrEmpty(options.ConnAppSetting)) {
+            
+            if (!options.ConnString.Contains(";")) {
                 var appSettings = new System.Configuration.AppSettingsReader();
-                options.ConnString = (string)appSettings.GetValue(options.ConnAppSetting, typeof(string));
+                options.ConnString = (string)appSettings.GetValue(options.ConnString, typeof(string));
             }
 
-            // load the model
-            var db = new Database();
-            db.Load(options.ConnString);
+            switch (options.command){
+                case Command.Create:
+                    Console.WriteLine("not implemented.");
+                    return -1;
 
-            // generate scripts
-            if (!String.IsNullOrEmpty(options.Dir)) {
-                ScriptToDir(options, db);
-            } else {
-                ScriptToOutput(options, db);
-            }
+                case Command.Script:
+                   // load the model
+                   var db = new Database();
+                   db.Load(options.ConnString);
+
+                   // generate scripts
+                   if (!String.IsNullOrEmpty(options.Dir))                   {
+                       ScriptToDir(options, db);
+                   } else {
+                       ScriptToOutput(options, db);
+                   }
+                   break;
+
+                case Command.Unspecified:
+                    Console.WriteLine("You must specify a command.");
+                    return -1;
+            }                    
                        
             return 0;
 		}
@@ -95,10 +111,28 @@ Usage: schemacon -c <connection string> [-d <output dir>]
         }
 
         private static void ScriptToDir(Options options, Database db) {
-            // create dir tree
-            Console.WriteLine("creating directory tree");
             string[] dirs = { "data",  "foreign_keys", "functions", 
                               "procs", "tables",       "triggers" };
+
+            if (Directory.Exists(options.Dir)){
+                if (!options.delete) {
+                    Console.WriteLine("{0} already exists do you want to replace it? (Y/N)", options.Dir);
+                    var key = Console.ReadKey();
+                    if (key.Key != ConsoleKey.Y) {
+                        Environment.Exit(-1);
+                    }
+                }
+                
+                // delete the existing script files
+                foreach (string dir in dirs) {
+                    if (!Directory.Exists(options.Dir +"/" +dir)) break;
+                    foreach (string f in Directory.GetFiles(options.Dir + "/" + dir)){
+                        File.Delete(f);
+                    }
+                }
+            }
+            // create dir tree
+            Console.WriteLine("creating directory tree");            
             foreach (string dir in dirs) {
                 if (!Directory.Exists(options.Dir + "/" + dir)) {
                     Directory.CreateDirectory(options.Dir + "/" + dir);
