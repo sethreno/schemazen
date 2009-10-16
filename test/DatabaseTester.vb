@@ -95,4 +95,17 @@ Public Class DatabaseTester
         Shell(cmd, AppWinStyle.NormalFocus, True)
         Assert.AreEqual("no difference", IO.File.ReadAllLines("CompareResult.txt")(0))
     End Sub
+
+    <Test()> Public Sub TestFindTableRegEx()
+        Dim db As New Database()
+        db.Tables.Add(New Table("dbo", "cmicDeductible"))
+        db.Tables.Add(New Table("dbo", "cmicZipCode"))
+        db.Tables.Add(New Table("dbo", "cmicState"))
+        db.Tables.Add(New Table("dbo", "Policy"))
+        db.Tables.Add(New Table("dbo", "Location"))
+        db.Tables.Add(New Table("dbo", "Rate"))
+
+        Assert.AreEqual(3, db.FindTablesRegEx("^cmic").Count)
+        Assert.AreEqual(1, db.FindTablesRegEx("Location").Count)
+    End Sub
 End Class

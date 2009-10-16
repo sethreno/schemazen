@@ -27,14 +27,21 @@ namespace console
 
             [Option("n", "conn_string",
                 Required = true,                
-                HelpText = @"Connection string to the db or a .net app
-                        setting containing the connection string.
+                HelpText = @"Connection string to the db to script or
+                        create. The connection string can be read from the
+                        <appSettings> or <connectionStrings> section of 
+                        machine.config by prefixing the key name with <as> or
+                        <cs> respectively.
+              Examples:
+                -n""server=localhost;database=DEVDB;Trusted_Connection=yes;"" 
+                -n<as>devcn - appSetting in machine.config named 'devcn'
+                -n<cs>devcn - connectionString in machine.config named 'devcn'
             ")]
             public string ConnString = "";
 
-            [Option("s", "snapshot_dir",
+            [Option("s", "script_dir",
                 Required = false,
-                HelpText = @"Path to a schemanator snapshot directory.
+                HelpText = @"Path to a schemanator script directory.
                         Required for the 'create' command. If the 'script'
                         command is used without it all scripts will be combined
                         and written to standard out.                        
@@ -43,7 +50,7 @@ namespace console
 
             [Option("d","delete",
                 Required =false,
-                HelpText = @"Deletes existing database or snapshot without promt.
+                HelpText = @"Deletes existing db or script dir without promt.
                 ")]
             public bool delete = false;
 
@@ -53,11 +60,29 @@ namespace console
                 ")]
             public bool verbose = false;
 
+            [Option(null, "data",
+                Required= false,
+                HelpText = @"A comma separated list of tables that contain
+                        lookup data. The data from these tables will be 
+                        exported to file when using the script command, and
+                        imported into the database when using the create 
+                        command. Regular expressions can be used to match 
+                        multiple tables with the same naming pattern.
+              Examples:
+                --data ^lookup
+                --data VehicleMake, VehicleModel
+                --data ^lookup, VehicleMake, VehicleModel
+            ")]
+            public string data = "";
+
             [HelpOption(HelpText = "Display this help screen.")]
             public string GetHelp(){
                 var txt = new HelpText("schemacon - Schemanator Console");
                 txt.Copyright = new CopyrightInfo("Seth Reno", 2009);                
-                txt.AddPreOptionsLine("\nUsage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]");
+                txt.AddPreOptionsLine(@"
+Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
+                 [-data<tables>]
+");
                 txt.AddOptions(this);
                 return txt;
             }
@@ -65,14 +90,15 @@ namespace console
 
 		static int Main(string[] args) {
             var options = new Options();
-            var parser = new CommandLineParser(new CommandLineParserSettings(Console.Error));
+            var parser = new CommandLineParser(new CommandLineParserSettings(Console.Out));
             if (!parser.ParseArguments(args, options)){
                 return -1;
             }
             
-            if (!options.ConnString.Contains(";")) {
-                var appSettings = new System.Configuration.AppSettingsReader();
-                options.ConnString = (string)appSettings.GetValue(options.ConnString, typeof(string));
+            if (options.ConnString.IndexOf("<as>") == 0) {
+                options.ConnString = ConfigHelper.GetAppSetting(options.ConnString.Substring(4));
+            } else if (options.ConnString.IndexOf("<cs>") == 0) {
+                options.ConnString = ConfigHelper.GetConnectionString(options.ConnString.Substring(4));
             }
 
             switch (options.command){
@@ -106,8 +132,7 @@ namespace console
             return 0;
 		}
 
-        private static string[] dirs = { "tables",    "foreign_keys",  "data",
-                                         "functions", "procs",         "triggers" };
+        private static string[] dirs = {"tables","foreign_keys","functions","procs","triggers" };
 
         private static void ScriptToOutput(Options options, Database db) {
             foreach (Table t in db.Tables) {
@@ -178,7 +203,29 @@ namespace console
                 );
             }
 
+            
+            if (!string.IsNullOrEmpty(options.data)) {
+                Console.WriteLine("exporting data");
+                ExportData(options, db);
+            }
+
             Console.WriteLine("Snapshot successfully created at " + options.Dir);
+        }
+
+        private static void ExportData(Options options, Database db) {
+            var dataDir = options.Dir + "/data";
+            if (!Directory.Exists(dataDir)) {
+                Directory.CreateDirectory(dataDir);
+            }
+            var tables = new List<Table>();
+            foreach (string pattern in options.data.Split(',')) {
+                foreach (Table t in db.FindTablesRegEx(pattern)) {
+                    tables.Add(t);
+                }
+            }
+            foreach (Table t in tables) {
+                File.WriteAllText(dataDir + "/" + t.Name, t.ExportData(options.ConnString));
+            }
         }
 
         private static void CreateDb(Options options) {

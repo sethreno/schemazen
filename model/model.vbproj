@@ -41,6 +41,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
+    <Reference Include="System.configuration" />
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Core">
@@ -67,6 +68,7 @@
   <ItemGroup>
     <Compile Include="Column.vb" />
     <Compile Include="ColumnList.vb" />
+    <Compile Include="ConfigHelper.vb" />
     <Compile Include="Database.vb" />
     <Compile Include="Default.vb" />
     <Compile Include="ForeignKey.vb" />

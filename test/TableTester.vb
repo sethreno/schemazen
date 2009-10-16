@@ -88,4 +88,57 @@ Public Class TableTester
         t.ScriptCreate()
     End Sub
 
+    <Test()> Public Sub TestExportData()
+        Dim t As New Table("dbo", "Status")
+        t.Columns.Add(New Column("id", "int", False))
+        t.Columns.Add(New Column("code", "char", 1, False))
+        t.Columns.Add(New Column("description", "varchar", 20, False))
+        t.Columns.Find("id").Identity = New Identity(1, 1)
+        t.Constraints.Add(New Constraint("PK_Status", "PRIMARY KEY", "id"))
+
+        Dim conn As String = TestHelper.GetConnString("TESTDB")
+        DBHelper.DropDb(conn)
+        DBHelper.CreateDb(conn)
+        DBHelper.ExecBatchSql(conn, t.ScriptCreate())
+
+        DBHelper.ExecBatchSql(conn, _
+        "SET IDENTITY_INSERT [Status] ON" + vbCrLf _
+        + "GO" + vbCrLf _
+        + "insert into Status (id,code,description) values (1,'R','Ready')" + vbCrLf _
+        + "insert into Status (id,code,description) values (2,'P','Processing')" + vbCrLf _
+        + "insert into Status (id,code,description) values (3,'F','Frozen')" + vbCrLf _
+        + "GO" + vbCrLf _
+        + "SET IDENTITY_INSERT [Status] OFF" + vbCrLf _
+        + "GO" + vbCrLf)
+
+        Dim data As String = t.ExportData(conn)
+        Assert.IsFalse(String.IsNullOrEmpty(data))
+
+        Dim dataList As List(Of List(Of String)) = TabDataToList(data)
+        Assert.AreEqual("1", dataList(0)(0))
+        Assert.AreEqual("R", dataList(0)(1))
+        Assert.AreEqual("Ready", dataList(0)(2))
+        Assert.AreEqual("2", dataList(1)(0))
+        Assert.AreEqual("P", dataList(1)(1))
+        Assert.AreEqual("Processing", dataList(1)(2))
+        Assert.AreEqual("3", dataList(2)(0))
+        Assert.AreEqual("F", dataList(2)(1))
+        Assert.AreEqual("Frozen", dataList(2)(2))
+    End Sub
+
+    Private Function TabDataToList(ByVal data As String) As List(Of List(Of String))
+        Dim lines As New List(Of List(Of String))
+        For Each line As String In data.Split(Chr(10))
+            lines.Add(New List(Of String))
+            For Each field As String In line.Split(Chr(9))
+                lines(lines.Count - 1).Add(field)
+            Next
+        Next
+        'remove the \r from the end of the last field of each line
+        For Each line As List(Of String) In lines
+            If line.Last.Length = 0 Then Continue For
+            line(line.Count - 1) = line.Last.Remove(line.Last.Length - 1, 1)
+        Next
+        Return lines
+    End Function
 End Class

@@ -1,4 +1,6 @@
-﻿Public Class Database
+﻿Imports System.Text.RegularExpressions
+
+Public Class Database
 
 #Region " Constructors "
 
@@ -56,6 +58,16 @@
             If r.Name = name Then Return r
         Next
         Return Nothing
+    End Function
+
+    Public Function FindTablesRegEx(ByVal pattern As String) As List(Of Table)
+        Dim matches As New List(Of Table)
+        For Each t As Table In Tables
+            If Regex.Match(t.Name, pattern).Success Then
+                matches.Add(t)
+            End If
+        Next
+        Return matches
     End Function
 
 #End Region

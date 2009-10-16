@@ -1,4 +1,6 @@
-﻿Public Class Table
+﻿Imports System.Data.SqlClient
+
+Public Class Table
     Public Sub New(ByVal owner As String, ByVal name As String)
         Me.Owner = owner
         Me.Name = name
@@ -91,6 +93,33 @@
 
     Public Function ScriptDrop() As String
         Return String.Format("DROP TABLE [{0}].[{1}]", Owner, Name)
+    End Function
+
+    Public Function ExportData(ByVal conn As String) As String
+        Dim data As New StringBuilder()
+        Dim sql As New StringBuilder()
+        sql.Append("select ")
+        For Each c As Column In Columns.Items
+            sql.AppendFormat("{0},", c.Name)
+        Next
+        sql.Remove(sql.Length - 1, 1)
+        sql.AppendFormat(" from {0}", Name)
+        Using cn As New SqlConnection(conn)
+            cn.Open()
+            Using cm As SqlCommand = cn.CreateCommand()
+                cm.CommandText = sql.ToString()
+                Using dr As SqlDataReader = cm.ExecuteReader()
+                    While dr.Read()
+                        For Each c As Column In Columns.Items
+                            data.AppendFormat("{0}{1}", dr(c.Name).ToString(), vbTab)
+                        Next
+                        data.Remove(data.Length - 1, 1)
+                        data.AppendLine()
+                    End While
+                End Using
+            End Using
+        End Using
+        Return data.ToString()
     End Function
 End Class
 
