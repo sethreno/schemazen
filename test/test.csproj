@@ -54,6 +54,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="test_schemas\BOP_QUOTE.sql" />
+    <None Include="test_schemas\BOP_QUOTE_2.sql" />
+    <None Include="test_schemas\DFS_QUOTE.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.cs" />
