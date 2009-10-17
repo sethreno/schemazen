@@ -1,6 +1,6 @@
-﻿using model;
-using System;
+﻿using System;
 using NUnit.Framework;
+using model;
 
 namespace test{
     [TestFixture()]
