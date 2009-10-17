@@ -146,6 +146,9 @@ Public Class Table
 		If val.Length = 0 Then Return DBNull.Value
 		Select Case sqlType.ToLower()
 			Case "bit"
+				'added for compatibility with bcp
+				If val = "0" Then val = "False"
+				If val = "1" Then val = "True"
 				Return Boolean.Parse(val)
 			Case "datetime", "smalldatetime"
 				Return Date.Parse(val)
