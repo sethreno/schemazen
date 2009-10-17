@@ -54,17 +54,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="test_schemas\.svn\all-wcprops" />
-    <None Include="test_schemas\.svn\entries" />
-    <None Include="test_schemas\.svn\prop-base\BOP_QUOTE.sql.svn-base" />
-    <None Include="test_schemas\.svn\prop-base\BOP_QUOTE_2.sql.svn-base" />
-    <None Include="test_schemas\.svn\prop-base\DFS_QUOTE.sql.svn-base" />
-    <None Include="test_schemas\.svn\text-base\BOP_QUOTE.sql.svn-base" />
-    <None Include="test_schemas\.svn\text-base\BOP_QUOTE_2.sql.svn-base" />
-    <None Include="test_schemas\.svn\text-base\DFS_QUOTE.sql.svn-base" />
-    <None Include="test_schemas\BOP_QUOTE.sql" />
-    <None Include="test_schemas\BOP_QUOTE_2.sql" />
-    <None Include="test_schemas\DFS_QUOTE.sql" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.cs" />
@@ -81,12 +70,6 @@
       <Project>{A4DD35B5-21AD-4E14-A9EA-DF599DF9F09B}</Project>
       <Name>model</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="test_schemas\.svn\props\" />
-    <Folder Include="test_schemas\.svn\tmp\prop-base\" />
-    <Folder Include="test_schemas\.svn\tmp\props\" />
-    <Folder Include="test_schemas\.svn\tmp\text-base\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
