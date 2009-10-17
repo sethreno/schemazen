@@ -110,17 +110,49 @@ Public Class Table
                 cm.CommandText = sql.ToString()
                 Using dr As SqlDataReader = cm.ExecuteReader()
                     While dr.Read()
-                        For Each c As Column In Columns.Items
-                            data.AppendFormat("{0}{1}", dr(c.Name).ToString(), vbTab)
-                        Next
+						For Each c As Column In Columns.Items
+							data.AppendFormat("{0}{1}", dr(c.Name).ToString(), vbTab)
+						Next
                         data.Remove(data.Length - 1, 1)
                         data.AppendLine()
                     End While
                 End Using
             End Using
-        End Using
+		End Using
+
         Return data.ToString()
     End Function
+
+    Public Sub ImportData(ByVal conn As String, ByVal data As String)
+        Dim dt As New DataTable()
+        For Each c As Column In Columns.Items
+            dt.Columns.Add(New DataColumn(c.Name))
+        Next
+        For Each line As String In data.Split(vbCrLf.Split(","c), StringSplitOptions.RemoveEmptyEntries)
+            Dim row As DataRow = dt.NewRow()
+			Dim fields As String() = line.Split(Chr(9))
+			For i As Integer = 0 To fields.Count - 1
+				row(i) = ConvertType(Columns.Items(i).Type, fields(i))
+			Next
+            dt.Rows.Add(row)
+        Next
+		Dim bulk As New SqlClient.SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity _
+											  Or SqlBulkCopyOptions.TableLock)
+        bulk.DestinationTableName = Name
+        bulk.WriteToServer(dt)
+	End Sub
+
+	Public Function ConvertType(ByVal sqlType As String, ByVal val As String) As Object
+		If val.Length = 0 Then Return DBNull.Value
+		Select Case sqlType.ToLower()
+			Case "bit"
+				Return Boolean.Parse(val)
+			Case "datetime", "smalldatetime"
+				Return Date.Parse(val)
+			Case Else
+				Return val
+		End Select
+	End Function
 End Class
 
 Public Class TableDiff

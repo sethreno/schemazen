@@ -228,6 +228,19 @@ Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
             }
         }
 
+        private static void ImportData(Options options, Database db) {
+            var dataDir = options.Dir + "/data";            
+            var tables = new List<Table>();
+            foreach (string pattern in options.data.Split(',')) {
+                foreach (Table t in db.FindTablesRegEx(pattern)) {
+                    tables.Add(t);
+                }
+            }
+            foreach (Table t in tables) {
+                t.ImportData(options.ConnString, File.ReadAllText(dataDir + "/" + t.Name));                
+            }
+        }
+
         private static void CreateDb(Options options) {
             DBHelper.EchoSql = options.verbose;
             var cnBuilder = new SqlConnectionStringBuilder(options.ConnString);
@@ -250,11 +263,25 @@ Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
 
             //run scripts
             foreach (string dir in dirs) {
-                if ("data" == dir) { continue; }
+                if ("foreign_keys" == dir) { continue; }
                 Console.WriteLine("creating {0}", dir);
                 foreach (string f in Directory.GetFiles(options.Dir + "/" + dir)) {
                     DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
                 }
+            }
+
+            // data
+            if (!string.IsNullOrEmpty(options.data)) {
+                Console.WriteLine("importing data");
+                var db = new Database();
+                db.Load(options.ConnString);
+                ImportData(options, db);                
+            }
+
+            // foreign keys
+            Console.Write("creating foreign keys");
+            foreach (string f in Directory.GetFiles(options.Dir + "/foreign_keys")) {
+                DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
             }
 
             Console.WriteLine("{0} {1} successfully created.",
