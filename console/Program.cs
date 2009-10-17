@@ -42,11 +42,9 @@ namespace console
             [Option("s", "script_dir",
                 Required = false,
                 HelpText = @"Path to a schemanator script directory.
-                        Required for the 'create' command. If the 'script'
-                        command is used without it all scripts will be combined
-                        and written to standard out.                        
+                        If omitted the current directory is used.                        
             ")]
-            public string Dir = "";
+            public string Dir = ".";
 
             [Option("d","delete",
                 Required =false,
@@ -121,33 +119,14 @@ Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
                    db.Load(options.ConnString);
 
                    // generate scripts
-                   if (!String.IsNullOrEmpty(options.Dir))                   {
-                       ScriptToDir(options, db);
-                   } else {
-                       ScriptToOutput(options, db);
-                   }
+                   ScriptToDir(options, db);
                    break;
-            }                    
+            }
                        
             return 0;
 		}
 
         private static string[] dirs = {"tables","foreign_keys","functions","procs","triggers" };
-
-        private static void ScriptToOutput(Options options, Database db) {
-            foreach (Table t in db.Tables) {
-                Console.WriteLine(t.ScriptCreate());
-                Console.WriteLine("GO");                
-            }
-            foreach (ForeignKey fk in db.ForeignKeys) {
-                Console.WriteLine(fk.ScriptCreate());
-                Console.WriteLine("GO");
-            }
-            foreach (Routine r in db.Routines) {
-                Console.WriteLine(r.ScriptCreate());
-                Console.WriteLine("GO");
-            }
-        }
 
         private static void ScriptToDir(Options options, Database db) {
             if (Directory.Exists(options.Dir)){
@@ -264,8 +243,12 @@ Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
             //run scripts
             foreach (string dir in dirs) {
                 if ("foreign_keys" == dir) { continue; }
+                var dirPath = options.Dir + "/" + dir;
+                if (!Directory.Exists(dirPath)) { continue; }
                 Console.WriteLine("creating {0}", dir);
-                foreach (string f in Directory.GetFiles(options.Dir + "/" + dir)) {
+
+                foreach (string f in Directory.GetFiles(dirPath, "*.sql")) {
+                    
                     DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
                 }
             }
@@ -279,11 +262,13 @@ Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
             }
 
             // foreign keys
-            Console.Write("creating foreign keys");
-            foreach (string f in Directory.GetFiles(options.Dir + "/foreign_keys")) {
-                DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
+            if (Directory.Exists(options.Dir + "/foreign_keys")){
+                Console.WriteLine("creating foreign keys");
+                foreach (string f in Directory.GetFiles(options.Dir + "/foreign_keys", "*.sql")) {
+                    DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
+                }
             }
-
+            
             Console.WriteLine("{0} {1} successfully created.",
                 cnBuilder.DataSource, cnBuilder.InitialCatalog);
         }
