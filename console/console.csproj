@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>console</RootNamespace>
-    <AssemblyName>schemacon</AssemblyName>
+    <AssemblyName>console</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <PublishUrl>publish\</PublishUrl>
@@ -108,4 +108,7 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup>
+    <PostBuildEvent>ilmerge /target:exe /out:schemacon.exe console.exe model.dll CommandLine.dll Subtext.Scripting.dll Microsoft.ApplicationBlocks.Data.dll</PostBuildEvent>
+  </PropertyGroup>
 </Project>
