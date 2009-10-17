@@ -16,15 +16,22 @@
         Using cn As New Data.SqlClient.SqlConnection(conn)
             cn.Open()
             Using cm As Data.SqlClient.SqlCommand = cn.CreateCommand()
-                For Each script As String In sql.Split((vbLf + "GO" + vbCr).Split(","c), System.StringSplitOptions.RemoveEmptyEntries)
-                    If script.Trim().Replace(vbCrLf, "").ToUpper() = "GO" Then Continue For
-                    If EchoSql Then Console.WriteLine(script)
-                    cm.CommandText = script
-                    cm.ExecuteNonQuery()
-                Next
+				For Each script As String In SplitBatchSql(sql)
+					If EchoSql Then Console.WriteLine(script)
+					cm.CommandText = script
+					cm.ExecuteNonQuery()
+				Next
             End Using
         End Using
-    End Sub
+	End Sub
+
+	Public Shared Function SplitBatchSql(ByVal batchSql As String) As String()
+		Dim scripts As New List(Of String)
+		For Each script As Subtext.Scripting.Script In Subtext.Scripting.Script.ParseScripts(batchSql)
+			scripts.Add(script.ScriptText)
+		Next
+		Return scripts.ToArray()
+	End Function
 
     Public Shared Sub DropDb(ByVal conn As String)
         Dim cnBuilder As New SqlClient.SqlConnectionStringBuilder(conn)
