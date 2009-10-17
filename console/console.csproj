@@ -59,12 +59,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\model\model.vbproj">
-      <Project>{A4DD35B5-21AD-4E14-A9EA-DF599DF9F09B}</Project>
-      <Name>model</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="lib\CommandLine.dll" />
     <Content Include="lib\CommandLine.XML" />
   </ItemGroup>

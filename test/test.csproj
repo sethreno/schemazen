@@ -68,12 +68,6 @@
     <Compile Include="TableTester.cs" />
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\model\model.vbproj">
-      <Project>{A4DD35B5-21AD-4E14-A9EA-DF599DF9F09B}</Project>
-      <Name>model</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
