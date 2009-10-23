@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Data.SqlClient;
+using System.IO;
 
 namespace model {
 	using System.Text.RegularExpressions;
@@ -23,10 +23,13 @@ namespace model {
 
 		#region " Properties "
 
+		public string Connection = "";
+		public string Dir = "";
 		public string Name;
 		public List<Table> Tables = new List<Table>();
 		public List<Routine> Routines = new List<Routine>();
 		public List<ForeignKey> ForeignKeys = new List<ForeignKey>();
+		public List<Table> DataTables = new List<Table>();
 
 		public Table FindTable(string name) {
 			foreach (Table t in Tables) {
@@ -79,8 +82,8 @@ namespace model {
 
 		#endregion
 
-		public void Load(string connString) {
-			using (SqlConnection cn = new SqlConnection(connString)) {
+		public void Load() {
+			using (SqlConnection cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
 					//get tables
@@ -375,6 +378,116 @@ namespace model {
 			}
 
 			return text.ToString();
+		}
+
+		private static string[] dirs = { "tables", "foreign_keys", "functions", "procs", "triggers" };
+
+		public void ScriptToDir(bool overwrite) {
+			if (Directory.Exists(Dir)) {		
+				// delete the existing script files
+				foreach (string dir in dirs) {
+					if (!Directory.Exists(Dir + "/" + dir)) break;
+					foreach (string f in Directory.GetFiles(Dir + "/" + dir)) {
+						File.Delete(f);
+					}
+				}
+			}
+			// create dir tree
+			foreach (string dir in dirs) {
+				if (!Directory.Exists(Dir + "/" + dir)) {
+					Directory.CreateDirectory(Dir + "/" + dir);
+				}
+			}
+						
+			foreach (Table t in Tables) {
+				File.WriteAllText(
+					String.Format("{0}/tables/{1}.sql", Dir, t.Name),
+					t.ScriptCreate() + "\r\nGO\r\n"
+				);
+			}
+
+			foreach (ForeignKey fk in ForeignKeys) {
+				File.AppendAllText(
+					String.Format("{0}/foreign_keys/{1}.sql", Dir, fk.Table.Name),
+					fk.ScriptCreate() + "\r\nGO\r\n"
+				);
+			}
+
+			foreach (Routine r in Routines) {
+				string dir = "procs";
+				if (r.Type == "TRIGGER") { dir = "triggers"; }
+				if (r.Type == "FUNCTION") { dir = "functions"; }
+				File.WriteAllText(
+					String.Format("{0}/{1}/{2}.sql", Dir, dir, r.Name),
+					r.ScriptCreate() + "\r\nGO\r\n"
+				);
+			}
+
+			ExportData();
+		}
+
+		public void ExportData() {
+			var dataDir = Dir + "/data";
+			if (!Directory.Exists(dataDir)) {
+				Directory.CreateDirectory(dataDir);
+			}			
+			foreach (Table t in DataTables) {
+				File.WriteAllText(dataDir + "/" + t.Name, t.ExportData(Connection));
+			}
+		}
+
+		public void ImportData() {
+			var dataDir = Dir + "/data";
+			var tables = new List<Table>();			
+			foreach (Table t in DataTables) {
+				t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Name));
+			}
+		}
+
+		public void CreateFromDir(bool overwrite) {
+			var cnBuilder = new SqlConnectionStringBuilder(Connection);
+			if (DBHelper.DbExists(Connection)) {				
+				DBHelper.DropDb(Connection);
+			}
+
+			//create database
+			DBHelper.CreateDb(Connection);
+
+			//run scripts
+			foreach (string dir in dirs) {
+				if ("foreign_keys" == dir) { continue; }
+				var dirPath = Dir + "/" + dir;
+				if (!Directory.Exists(dirPath)) { continue; }
+
+				foreach (string f in Directory.GetFiles(dirPath, "*.sql")) {
+					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+				}
+			}
+
+			// load data
+			ImportData();
+
+			// foreign keys
+			if (Directory.Exists(Dir + "/foreign_keys")) {
+				foreach (string f in Directory.GetFiles(Dir + "/foreign_keys", "*.sql")) {
+					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+				}
+			}
+		}
+
+		public void ExecCreate(bool dropIfExists) {
+			var conStr = new SqlConnectionStringBuilder(Connection);
+			var dbName = conStr.InitialCatalog;
+			conStr.InitialCatalog = "master";
+			if (DBHelper.DbExists(Connection)) {
+				if (dropIfExists) {
+					DBHelper.DropDb(Connection);
+				} else {
+					throw new ApplicationException(String.Format("Database {0} {1} already exists.",
+						conStr.DataSource, dbName));
+				}
+			}
+			DBHelper.ExecBatchSql(conStr.ToString(), ScriptCreate());
 		}
 	}
 

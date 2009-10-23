@@ -35,7 +35,8 @@ namespace test {
             TestHelper.ExecBatchSql(db.ScriptCreate(), "master");
 
             Database db2 = new Database();
-            db2.Load(TestHelper.GetConnString("TEST_TEMP"));
+			db2.Connection = TestHelper.GetConnString("TEST_TEMP");
+			db2.Load();
 
             TestHelper.DropDb("TEST_TEMP");
 
@@ -57,7 +58,8 @@ namespace test {
 
                 //load the model from newly created db and create a copy
                 Database copy = new Database("TEST_COPY");
-                copy.Load(TestHelper.GetConnString("TEST_SOURCE"));
+				copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
+                copy.Load();
                 SqlConnection.ClearAllPools();
                 TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
 
@@ -89,10 +91,12 @@ namespace test {
             TestHelper.ExecBatchSql(script, "TEST_COPY");
 
             Database source = new Database("TEST_SOURCE");
-            source.Load(TestHelper.GetConnString("TEST_SOURCE"));
+			source.Connection = TestHelper.GetConnString("TEST_SOURCE");
+            source.Load();
 
             Database copy = new Database("TEST_COPY");
-            copy.Load(TestHelper.GetConnString("TEST_COPY"));
+			copy.Connection = TestHelper.GetConnString("TEST_COPY");
+            copy.Load();
 
             //execute migration script to make SOURCE the same as COPY
             DatabaseDiff diff = copy.Compare(source);
@@ -124,5 +128,72 @@ namespace test {
             Assert.AreEqual(1, db.FindTablesRegEx("Location").Count);
         }
 
+		[Test()]
+		public void TestScriptToDir() {
+			var policy = new Table("dbo", "Policy");
+			policy.Columns.Add(new Column("id", "int", false, null));
+			policy.Columns.Add(new Column("form", "tinyint", false, null));
+			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
+			policy.Columns.Items[0].Identity = new Identity(1, 1);
+
+			var loc = new Table("dbo", "Location");
+			loc.Columns.Add(new Column("id", "int", false, null));
+			loc.Columns.Add(new Column("policyId", "int", false, null));
+			loc.Columns.Add(new Column("storage", "bit", false, null));
+			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
+			loc.Columns.Items[0].Identity = new Identity(1, 1);
+
+			var formType = new Table("dbo", "FormType");
+			formType.Columns.Add(new Column("code", "tinyint", false, null));
+			formType.Columns.Add(new Column("desc", "varchar", 10, false, null));
+			formType.Constraints.Add(new Constraint("PK_FormType", "PRIMARY KEY", "code"));
+						
+			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
+			fk_policy_formType.Table = policy;
+			fk_policy_formType.Columns.Add("form");
+			fk_policy_formType.RefTable = formType;
+			fk_policy_formType.RefColumns.Add("code");
+
+			var fk_location_policy = new ForeignKey("FK_Location_Policy");
+			fk_location_policy.Table = loc;
+			fk_location_policy.Columns.Add("policyId");
+			fk_location_policy.RefTable = policy;
+			fk_location_policy.RefColumns.Add("id");
+			fk_location_policy.OnDelete = "CASCADE";
+
+			var db = new Database("ScriptTest");
+			db.Tables.Add(policy);
+			db.Tables.Add(formType);
+			db.Tables.Add(loc);
+			db.ForeignKeys.Add(fk_policy_formType);
+			db.ForeignKeys.Add(fk_location_policy);
+
+			db.Connection = "server=localhost\\SQLEXPRESS;"
+				+ "database=ScriptTest;Trusted_Connection=yes;";
+			db.ExecCreate(true);
+
+			DBHelper.ExecSql(db.Connection,
+				"  insert into formType ([code], [desc]) values (1, 'DP-1')\n"
+				+ "insert into formType ([code], [desc]) values (2, 'DP-2')\n"
+				+ "insert into formType ([code], [desc]) values (3, 'DP-3')");
+
+			db.DataTables.Add(formType);
+			db.Dir = db.Name;
+			db.ScriptToDir(true);
+			Assert.IsTrue(Directory.Exists(db.Name));
+			Assert.IsTrue(Directory.Exists(db.Name + "\\data"));
+			Assert.IsTrue(Directory.Exists(db.Name + "\\tables"));
+			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
+
+			foreach(Table t in db.DataTables){
+				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name));
+			}
+			foreach(Table t in db.Tables){
+				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
+			}
+			foreach(ForeignKey fk in db.ForeignKeys){
+				Assert.IsTrue(File.Exists(db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql"));
+			}			
+		}
     }
 }

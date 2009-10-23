@@ -107,10 +107,10 @@ namespace model {
 			StringBuilder sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (Column c in Columns.Items) {
-				sql.AppendFormat("{0},", c.Name);
+				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
-			sql.AppendFormat(" from {0}", Name);
+			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
 			using (SqlConnection cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {

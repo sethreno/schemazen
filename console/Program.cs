@@ -1,66 +1,63 @@
 ﻿using System;
 using System.IO;
-using System.Collections.Generic;
+using System.Data.SqlClient;
 using CommandLine;
 using CommandLine.Text;
 using model;
-using System.Data.SqlClient;
 
-namespace console
-{
+namespace console {
 	class Program {
 
-        private enum Command{
-            Script,
-            Create
-        }
+		private enum Command {
+			Script,
+			Create
+		}
 
-        class Options
-        {
-            [Option("c", "command",
-                Required = true,
-                HelpText = @"Command to execute. Valid options include:
+		class Options {
+			[Option("c", "command",
+				Required = true,
+				HelpText = @"Command to execute. Valid options include:
                            script - generate scripts for the specified db
                            create - create the specified db from scripts
             ")]
-            public Command command;
+			public Command command;
 
-            [Option("n", "conn_string",
-                Required = true,                
-                HelpText = @"Connection string to the db to script or
+			[Option("n", "conn_string",
+				Required = true,
+				HelpText = @"Connection string to the db to script or
                         create. The connection string can be read from the
                         <appSettings> or <connectionStrings> section of 
-                        machine.config by prefixing the key name with <as> or
-                        <cs> respectively.
+                        machine.config by prefixing the key name with as: or
+                        cs: respectively.
               Examples:
                 -n""server=localhost;database=DEVDB;Trusted_Connection=yes;"" 
-                -n<as>devcn - appSetting in machine.config named 'devcn'
-                -n<cs>devcn - connectionString in machine.config named 'devcn'
+                -nas:devcn - appSetting in machine.config named 'devcn'
+                -ncs:devcn - connectionString in machine.config named 'devcn'
             ")]
-            public string ConnString = "";
+			public string ConnString = "";
 
-            [Option("s", "script_dir",
-                Required = false,
-                HelpText = @"Path to a schemanator script directory.
+			[Option("s", "script_dir",
+				Required = false,
+				HelpText = @"Path to a schemanator script directory.
                         If omitted the current directory is used.                        
             ")]
-            public string Dir = ".";
+			public string Dir = ".";
 
-            [Option("d","delete",
-                Required =false,
-                HelpText = @"Deletes existing db or script dir without promt.
+			[Option("d", "delete",
+				Required = false,
+				HelpText = @"Deletes existing db or script dir without promt.
                 ")]
-            public bool delete = false;
+			public bool delete = false;
 
-            [Option("v","verbose",
-                Required = false,
-                HelpText = @"Print additional debug information to console.
+			[Option("v", "verbose",
+				Required = false,
+				HelpText = @"Print additional debug information to console.
                 ")]
-            public bool verbose = false;
+			public bool verbose = false;
 
-            [Option(null, "data",
-                Required= false,
-                HelpText = @"A comma separated list of tables that contain
+			[Option(null, "data",
+				Required = false,
+				HelpText = @"A comma separated list of tables that contain
                         lookup data. The data from these tables will be 
                         exported to file when using the script command, and
                         imported into the database when using the create 
@@ -71,206 +68,106 @@ namespace console
                 --data VehicleMake, VehicleModel
                 --data ^lookup, VehicleMake, VehicleModel
             ")]
-            public string data = "";
+			public string data = "";
 
-            [HelpOption(HelpText = "Display this help screen.")]
-            public string GetHelp(){
-                var txt = new HelpText("schemacon - Schemanator Console");
-                txt.Copyright = new CopyrightInfo("Seth Reno", 2009);                
-                txt.AddPreOptionsLine(@"
+			[HelpOption(HelpText = "Display this help screen.")]
+			public string GetHelp() {
+				var txt = new HelpText("schemacon - Schemanator Console");
+				txt.Copyright = new CopyrightInfo("Seth Reno", 2009);
+				txt.AddPreOptionsLine(@"
 Usage: schemacon [-dv] -c<command> -n<connection string> [-s<snapshot dir>]
-                 [-data<tables>]
+                 [--data <tables>]
 ");
-                txt.AddOptions(this);
-                return txt;
-            }
-        }
-
-		static int Main(string[] args) {
-            var options = new Options();
-            var parser = new CommandLineParser(new CommandLineParserSettings(Console.Out));
-            if (!parser.ParseArguments(args, options)){
-                return -1;
-            }
-            
-            if (options.ConnString.IndexOf("<as>") == 0) {
-                options.ConnString = ConfigHelper.GetAppSetting(options.ConnString.Substring(4));
-            } else if (options.ConnString.IndexOf("<cs>") == 0) {
-                options.ConnString = ConfigHelper.GetConnectionString(options.ConnString.Substring(4));
-            }
-
-            switch (options.command){
-                case Command.Create:
-                    if (String.IsNullOrEmpty(options.Dir)) {
-                        Console.WriteLine("You must specify a snapshot dir with the create command.");
-                        Environment.Exit(-1);
-                    }
-                    if (!Directory.Exists(options.Dir)) {
-                        Console.WriteLine("Snapshot dir {0} does not exist.", options.Dir);
-                        Environment.Exit(-1);
-                    }
-                    
-                    CreateDb(options);
-                    break;
-
-                case Command.Script:
-                   // load the model
-                   var db = new Database();
-                   db.Load(options.ConnString);
-
-                   // generate scripts
-                   ScriptToDir(options, db);
-                   break;
-            }
-                       
-            return 0;
+				txt.AddOptions(this);
+				return txt;
+			}
 		}
 
-        private static string[] dirs = {"tables","foreign_keys","functions","procs","triggers" };
+		static int Main(string[] args) {
+			var options = new Options();
+			var parser = new CommandLineParser(new CommandLineParserSettings(Console.Out));
+			if (!parser.ParseArguments(args, options)) {
+				return -1;
+			}
 
-        private static void ScriptToDir(Options options, Database db) {
-            if (Directory.Exists(options.Dir)){
-                if (!options.delete) {
-                    Console.Write("{0} already exists do you want to replace it? (Y/N)", options.Dir);
-                    var key = Console.ReadKey();
-                    if (key.Key != ConsoleKey.Y) {
-                        Environment.Exit(-1);
-                    }
-                    Console.WriteLine();
-                }
-                
-                // delete the existing script files
-                foreach (string dir in dirs) {
-                    if (!Directory.Exists(options.Dir +"/" +dir)) break;
-                    foreach (string f in Directory.GetFiles(options.Dir + "/" + dir)){
-                        File.Delete(f);
-                    }
-                }
-            }
-            // create dir tree
-            Console.WriteLine("creating directory tree");            
-            foreach (string dir in dirs) {
-                if (!Directory.Exists(options.Dir + "/" + dir)) {
-                    Directory.CreateDirectory(options.Dir + "/" + dir);
-                }
-            }
+			if (options.ConnString.IndexOf("as:") == 0) {
+				options.ConnString = ConfigHelper.GetAppSetting(options.ConnString.Substring(3));
+			} else if (options.ConnString.IndexOf("cs:") == 0) {
+				options.ConnString = ConfigHelper.GetConnectionString(options.ConnString.Substring(3));
+			}
 
-            Console.WriteLine("scripting tables");
-            foreach (Table t in db.Tables) {
-                File.WriteAllText(
-                    String.Format("{0}/tables/{1}.sql", options.Dir, t.Name),
-                    t.ScriptCreate() + "\r\nGO\r\n"
-                );
-            }
+			switch (options.command) {
+				case Command.Create:
+					Create(options);
+					break;
 
-            Console.WriteLine("scripting foreign keys");
-            foreach (ForeignKey fk in db.ForeignKeys) {
-                File.AppendAllText(
-                    String.Format("{0}/foreign_keys/{1}.sql", options.Dir, fk.Table.Name),
-                    fk.ScriptCreate() + "\r\nGO\r\n"
-                );
-            }
+				case Command.Script:
+					Script(options);
+					break;
+			}
+			return 0;
+		}
 
-            Console.WriteLine("scripting procs, functions, & triggers");
-            foreach (Routine r in db.Routines) {
-                string dir = "procs";
-                if (r.Type == "TRIGGER") { dir = "triggers"; }
-                if (r.Type == "FUNCTION") { dir = "functions"; }
-                File.WriteAllText(
-                    String.Format("{0}/{1}/{2}.sql", options.Dir, dir, r.Name),
-                    r.ScriptCreate() + "\r\nGO\r\n"
-                );
-            }
+		private static void Create(Options options){
+			if (String.IsNullOrEmpty(options.Dir)) {
+				Console.WriteLine("You must specify a snapshot dir with the create command.");
+				Environment.Exit(-1);
+			}
+			if (!Directory.Exists(options.Dir)) {
+				Console.WriteLine("Snapshot dir {0} does not exist.", options.Dir);
+				Environment.Exit(-1);
+			}
 
-            
-            if (!string.IsNullOrEmpty(options.data)) {
-                Console.WriteLine("exporting data");
-                ExportData(options, db);
-            }
+			if (DBHelper.DbExists(options.ConnString) && !options.delete) {
+				var cnBuilder = new SqlConnectionStringBuilder(options.ConnString);
+				Console.Write("{0} {1} already exists do you want to drop it? (Y/N)",
+				cnBuilder.DataSource, cnBuilder.InitialCatalog);
 
-            Console.WriteLine("Snapshot successfully created at " + options.Dir);
-        }
+				var key = Console.ReadKey();
+				if (key.Key != ConsoleKey.Y) {
+					Environment.Exit(-1);
+				}
+				Console.WriteLine();
+			}
 
-        private static void ExportData(Options options, Database db) {
-            var dataDir = options.Dir + "/data";
-            if (!Directory.Exists(dataDir)) {
-                Directory.CreateDirectory(dataDir);
-            }
-            var tables = new List<Table>();
-            foreach (string pattern in options.data.Split(',')) {
-                foreach (Table t in db.FindTablesRegEx(pattern)) {
-                    tables.Add(t);
-                }
-            }
-            foreach (Table t in tables) {
-                File.WriteAllText(dataDir + "/" + t.Name, t.ExportData(options.ConnString));
-            }
-        }
+			var db = new Database();
+			db.Connection = options.ConnString;
+			db.Dir = options.Dir;
+			foreach (string pattern in options.data.Split(',')) {
+				if (string.IsNullOrEmpty(pattern)) { continue; }
+				foreach (Table t in db.FindTablesRegEx(pattern)) {
+					db.DataTables.Add(t);
+				}
+			}
+			db.CreateFromDir(options.delete);
+		}
 
-        private static void ImportData(Options options, Database db) {
-            var dataDir = options.Dir + "/data";            
-            var tables = new List<Table>();
-            foreach (string pattern in options.data.Split(',')) {
-                foreach (Table t in db.FindTablesRegEx(pattern)) {
-                    tables.Add(t);
-                }
-            }
-            foreach (Table t in tables) {
-                t.ImportData(options.ConnString, File.ReadAllText(dataDir + "/" + t.Name));                
-            }
-        }
+		private static void Script(Options options) {
+			// load the model
+			var db = new Database();
+			db.Connection = options.ConnString;
+			db.Dir = options.Dir;
+			db.Load();
 
-        private static void CreateDb(Options options) {
-            DBHelper.EchoSql = options.verbose;
-            var cnBuilder = new SqlConnectionStringBuilder(options.ConnString);
-            if (DBHelper.DbExists(options.ConnString)) {
-                if (!options.delete) {                    
-                    Console.Write(
-                        "{0} {1} already exists do you want to drop it? (Y/N)",
-                        cnBuilder.DataSource, cnBuilder.InitialCatalog);
-                    var key = Console.ReadKey();                    
-                    if (key.Key != ConsoleKey.Y) {
-                        Environment.Exit(-1);
-                    }
-                    Console.WriteLine();                   
-                }
-                DBHelper.DropDb(options.ConnString);
-            }
+			// generate scripts
+			if (!options.delete && Directory.Exists(options.Dir)) {
+				Console.Write("{0} already exists do you want to replace it? (Y/N)", options.Dir);
+				var key = Console.ReadKey();
+				if (key.Key != ConsoleKey.Y) {
+					Environment.Exit(-1);
+				}
+				Console.WriteLine();
+			}
 
-            //create database
-            DBHelper.CreateDb(options.ConnString);
+			foreach (string pattern in options.data.Split(',')) {
+				if (string.IsNullOrEmpty(pattern)) { continue; }
+				foreach (Table t in db.FindTablesRegEx(pattern)) {
+					db.DataTables.Add(t);
+				}
+			}
+			db.ScriptToDir(options.delete);
 
-            //run scripts
-            foreach (string dir in dirs) {
-                if ("foreign_keys" == dir) { continue; }
-                var dirPath = options.Dir + "/" + dir;
-                if (!Directory.Exists(dirPath)) { continue; }
-                Console.WriteLine("creating {0}", dir);
-
-                foreach (string f in Directory.GetFiles(dirPath, "*.sql")) {
-                    
-                    DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
-                }
-            }
-
-            // data
-            if (!string.IsNullOrEmpty(options.data)) {
-                Console.WriteLine("importing data");
-                var db = new Database();
-                db.Load(options.ConnString);
-                ImportData(options, db);                
-            }
-
-            // foreign keys
-            if (Directory.Exists(options.Dir + "/foreign_keys")){
-                Console.WriteLine("creating foreign keys");
-                foreach (string f in Directory.GetFiles(options.Dir + "/foreign_keys", "*.sql")) {
-                    DBHelper.ExecBatchSql(options.ConnString, File.ReadAllText(f));
-                }
-            }
-            
-            Console.WriteLine("{0} {1} successfully created.",
-                cnBuilder.DataSource, cnBuilder.InitialCatalog);
-        }
+			Console.WriteLine("Snapshot successfully created at " + options.Dir);
+		}
 	}
 }
