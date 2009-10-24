@@ -19,13 +19,21 @@ namespace model {
 		}
 
 		public static void ExecBatchSql(string conn, string sql) {
+			var prevLines = 0;
 			using (SqlConnection cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
-					foreach (string script in SplitBatchSql(sql)) {
+					foreach (string script in SplitBatchSql(sql)) {						
 						if (EchoSql) Console.WriteLine(script);
 						cm.CommandText = script;
-						cm.ExecuteNonQuery();
+						try {
+							cm.ExecuteNonQuery();
+						} catch (SqlException ex) {
+							throw new SqlBatchException(ex, prevLines);
+						}
+						
+						prevLines += script.Split('\n').Length;
+						prevLines += 1; // add one line for GO statement
 					}
 				}
 			}

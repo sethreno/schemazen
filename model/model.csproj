@@ -54,6 +54,7 @@
     <Compile Include="Database.cs" />
     <Compile Include="DBHelper.cs" />
     <Compile Include="Default.cs" />
+    <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />
     <Compile Include="Identity.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

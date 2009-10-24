@@ -135,14 +135,25 @@ namespace model {
 			foreach (Column c in Columns.Items) {
 				dt.Columns.Add(new DataColumn(c.Name));
 			}
-			foreach (string line in data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries)) {
+			var lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
+			for (int i = 0; i < lines.Count(); i++) {
+				string line = lines[i];
 				DataRow row = dt.NewRow();
 				string[] fields = line.Split('\t');
-				for (int i = 0; i <= fields.Length - 1; i++) {
-					row[i] = ConvertType(Columns.Items[i].Type, fields[i]);
+				if (fields.Length != Columns.Items.Count) {
+					throw new DataException("Incorrect number of columns", i + 1);
+				}
+				for (int j = 0; j < fields.Length; j++) {
+					try {
+						row[j] = ConvertType(Columns.Items[j].Type, fields[j]);
+					} catch (FormatException ex) {
+						throw new DataException(String.Format("{0} at column {1}",ex.Message, j + 1), i + 1);
+					}
+					
 				}
 				dt.Rows.Add(row);
 			}
+			
 			SqlBulkCopy bulk = new SqlBulkCopy(conn, 
 				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
 			bulk.DestinationTableName = Name;
@@ -160,6 +171,8 @@ namespace model {
 				case "datetime":
 				case "smalldatetime":
 					return System.DateTime.Parse(val);
+				case "int":
+					int.Parse(val); return val;
 				default:
 					return val;
 			}

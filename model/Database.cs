@@ -437,10 +437,16 @@ namespace model {
 		}
 
 		public void ImportData() {
-			var dataDir = Dir + "/data";
-			var tables = new List<Table>();			
-			foreach (Table t in DataTables) {
-				t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Name));
+			var dataDir = Dir + "\\data";
+			var tables = new List<Table>();
+			foreach (string f in Directory.GetFiles(dataDir)) {
+				var t = FindTable(f.Replace(String.Concat(dataDir,"\\"), ""));
+				if (t == null) { continue; }
+				try {
+					t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Name));
+				} catch (DataException ex) {
+					throw new DataFileException(ex.Message, f, ex.LineNumber);
+				}
 			}
 		}
 
@@ -460,17 +466,25 @@ namespace model {
 				if (!Directory.Exists(dirPath)) { continue; }
 
 				foreach (string f in Directory.GetFiles(dirPath, "*.sql")) {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					try {
+						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					} catch (SqlBatchException ex) {
+						throw new SqlFileException(f, ex);
+					}
 				}
 			}
-
-			// load data
-			ImportData();
+								
+			Load();			// load the schema first so we can import data
+			ImportData();	// load data
 
 			// foreign keys
 			if (Directory.Exists(Dir + "/foreign_keys")) {
 				foreach (string f in Directory.GetFiles(Dir + "/foreign_keys", "*.sql")) {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					try {
+						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					} catch (SqlBatchException ex) {
+						throw new SqlFileException(f, ex);
+					}
 				}
 			}
 		}
@@ -562,5 +576,4 @@ namespace model {
 			return text.ToString();
 		}
 	}
-
 }
