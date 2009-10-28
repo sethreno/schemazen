@@ -195,5 +195,23 @@ namespace test {
 				Assert.IsTrue(File.Exists(db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql"));
 			}			
 		}
+
+		[Test()]
+		public void TestScriptDeletedProc() {
+			var source = new Database();
+			source.Routines.Add(new Routine("dbo", "test"));
+			source.FindRoutine("test").Type = "PROCEDURE";
+			source.FindRoutine("test").Text = @"
+create procedure [dbo].[test]
+as 
+select * from Table1
+";
+
+			var target = new Database();
+			var scriptUp = target.Compare(source).Script();
+			var scriptDown = source.Compare(target).Script();
+			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
+			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
+		}
     }
 }

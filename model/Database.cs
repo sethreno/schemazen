@@ -598,6 +598,10 @@ namespace model {
 				text.AppendLine(r.ScriptCreate());
 				text.AppendLine("GO");
 			}
+			foreach (Routine r in RoutinesDeleted) {
+				text.AppendLine(r.ScriptDrop());
+				text.AppendLine("GO");
+			}
 
 			return text.ToString();
 		}
