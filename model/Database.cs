@@ -83,6 +83,10 @@ namespace model {
 		#endregion
 
 		public void Load() {
+			Tables.Clear();
+			Routines.Clear();
+			ForeignKeys.Clear();
+			DataTables.Clear();
 			using (SqlConnection cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
@@ -334,7 +338,7 @@ namespace model {
 					diff.ForeignKeysAdded.Add(fk);
 				} else {
 					if (fk.ScriptCreate() != fk2.ScriptCreate()) {
-						diff.ForeignKeysChanged.Add(fk);
+						diff.ForeignKeysDiff.Add(fk);
 					}
 				}
 			}
@@ -439,6 +443,7 @@ namespace model {
 		public void ImportData() {
 			var dataDir = Dir + "\\data";
 			var tables = new List<Table>();
+			if (!Directory.Exists(dataDir)) { return; }
 			foreach (string f in Directory.GetFiles(dataDir)) {
 				var t = FindTable(f.Replace(String.Concat(dataDir,"\\"), ""));
 				if (t == null) { continue; }
@@ -515,52 +520,73 @@ namespace model {
 		public List<Routine> RoutinesDeleted = new List<Routine>();
 
 		public List<ForeignKey> ForeignKeysAdded = new List<ForeignKey>();
-		public List<ForeignKey> ForeignKeysChanged = new List<ForeignKey>();
+		public List<ForeignKey> ForeignKeysDiff = new List<ForeignKey>();
 		public List<ForeignKey> ForeignKeysDeleted = new List<ForeignKey>();
+
+		public bool IsDiff {
+			get {
+				return TablesAdded.Count > 0
+					|| TablesDiff.Count > 0
+					|| TablesDeleted.Count > 0
+					|| RoutinesAdded.Count > 0
+					|| RoutinesDiff.Count > 0
+					|| RoutinesDeleted.Count > 0
+					|| ForeignKeysAdded.Count > 0
+					|| ForeignKeysDiff.Count > 0
+					|| ForeignKeysDeleted.Count > 0;
+			}
+		}
 
 		public string Script() {
 			StringBuilder text = new StringBuilder();
 			//delete foreign keys
-			foreach (ForeignKey fk in ForeignKeysDeleted) {
-				text.AppendLine(fk.ScriptDrop());
-				text.AppendLine();
+			if (ForeignKeysDeleted.Count + ForeignKeysDiff.Count > 0) {
+				foreach (ForeignKey fk in ForeignKeysDeleted) {
+					text.AppendLine(fk.ScriptDrop());
+				}
+				//delete modified foreign keys
+				foreach (ForeignKey fk in ForeignKeysDiff) {
+					text.AppendLine(fk.ScriptDrop());
+				}
+				text.AppendLine("GO");
 			}
-			//delete modified foreign keys
-			foreach (ForeignKey fk in ForeignKeysChanged) {
-				text.AppendLine(fk.ScriptDrop());
-				text.AppendLine();
-			}
-			text.AppendLine("GO");
-
+			
 			//add tables
-			foreach (Table t in TablesAdded) {
-				text.AppendLine(t.ScriptCreate());
-				text.AppendLine();
+			if (TablesAdded.Count > 0) {
+				foreach (Table t in TablesAdded) {
+					text.Append(t.ScriptCreate());
+				}
+				text.AppendLine("GO");
 			}
-			text.AppendLine("GO");
-
+			
 			//modify tables
-			foreach (TableDiff t in TablesDiff) {
-				text.AppendLine(t.Script());
+			if (TablesDiff.Count > 0) {
+				foreach (TableDiff t in TablesDiff) {
+					text.Append(t.Script());
+				}
+				text.AppendLine("GO");
 			}
-			text.AppendLine("GO");
-
+			
 			//delete tables
-			foreach (Table t in TablesDeleted) {
-				text.AppendLine(t.ScriptDrop());
+			if (TablesDeleted.Count > 0) {
+				foreach (Table t in TablesDeleted) {
+					text.AppendLine(t.ScriptDrop());
+				}
+				text.AppendLine("GO");
 			}
-			text.AppendLine("GO");
-
+			
 			//add foreign keys
-			foreach (ForeignKey fk in ForeignKeysAdded) {
-				text.AppendLine(fk.ScriptCreate());
+			if (ForeignKeysAdded.Count + ForeignKeysDiff.Count > 0) {
+				foreach (ForeignKey fk in ForeignKeysAdded) {
+					text.AppendLine(fk.ScriptCreate());
+				}
+				//add modified foreign keys
+				foreach (ForeignKey fk in ForeignKeysDiff) {
+					text.AppendLine(fk.ScriptCreate());
+				}
+				text.AppendLine("GO");
 			}
-			//add modified foreign keys
-			foreach (ForeignKey fk in ForeignKeysChanged) {
-				text.AppendLine(fk.ScriptCreate());
-			}
-			text.AppendLine("GO");
-
+			
 			//add & delete procs, functions, & triggers
 			foreach (Routine r in RoutinesAdded) {
 				text.AppendLine(r.ScriptCreate());

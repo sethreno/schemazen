@@ -199,22 +199,16 @@ namespace model {
 			StringBuilder text = new StringBuilder();
 
 			foreach (Column c in ColumnsAdded) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}", Owner, Name, c.Script());
-				text.AppendLine();
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.Script());
 			}
 
 			foreach (Column c in ColumnsDroped) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]", Owner, Name, c.Name);
-				text.AppendLine();
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
 			}
 
 			foreach (ColumnDiff c in ColumnsDiff) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}", Owner, Name, c.Script());
-				text.AppendLine();
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Script());
 			}
-			text.AppendLine("GO");
-			text.AppendLine();
-
 			return text.ToString();
 		}
 	}

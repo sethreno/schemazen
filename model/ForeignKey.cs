@@ -45,7 +45,7 @@ namespace model {
 		}
 
 		public string ScriptDrop() {
-			return string.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]", Table.Owner, Table.Name, Name);
+			return string.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]\r\n", Table.Owner, Table.Name, Name);
 		}
 	}
 
