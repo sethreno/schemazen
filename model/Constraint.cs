@@ -10,6 +10,7 @@ namespace model {
 		public string Type;
 		public bool Clustered;
 		public List<string> Columns = new List<string>();
+        public List<string> IncludedColumns = new List<string>();
 
 		public string ClusteredText {
 			get {
@@ -28,9 +29,16 @@ namespace model {
 
 		public string Script() {
 			if (Type == "INDEX") {
-				return string.Format("CREATE {0} INDEX [{1}] ON [{2}].[{3}] ([{4}])", ClusteredText, Name, Table.Owner, Table.Name, string.Join("], [", Columns.ToArray()));
+                var sql = string.Format("CREATE {0} INDEX [{1}] ON [{2}].[{3}] ([{4}])", 
+                    ClusteredText, Name, Table.Owner, Table.Name, 
+                    string.Join("], [", Columns.ToArray()));
+                if (IncludedColumns.Count > 0) {
+                    sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
+                }
+                return sql;
 			}
-			return string.Format("CONSTRAINT [{0}] {1} {2} ([{3}])", Name, Type, ClusteredText, string.Join("], [", Columns.ToArray()));
+			return string.Format("CONSTRAINT [{0}] {1} {2} ([{3}])", 
+                Name, Type, ClusteredText, string.Join("], [", Columns.ToArray()));
 		}
 	}
 }

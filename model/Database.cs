@@ -152,9 +152,16 @@ namespace model {
 							and i.column_id = c.column_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							Table t = FindTable((string)dr["TABLE_NAME"]);
-							t.Columns.Find((string)dr["COLUMN_NAME"]).Identity = 
-								new Identity((int)dr["SEED_VALUE"], (int)dr["INCREMENT_VALUE"]);
+                            try
+                            {
+                                Table t = FindTable((string)dr["TABLE_NAME"]);
+                                var c = t.Columns.Find((string)dr["COLUMN_NAME"]);
+                                var seed = dr["SEED_VALUE"].ToString();
+                                var increment = dr["INCREMENT_VALUE"].ToString();
+                                c.Identity = new Identity(seed, increment);
+                            } catch (Exception ex){
+                                throw new ApplicationException(string.Format("{0} : {1}", (string)dr["TABLE_NAME"], ex.Message), ex);
+                            }
 						}
 					}
 
@@ -185,14 +192,15 @@ namespace model {
 						c.name as columnName,
 						i.is_primary_key, 
 						i.is_unique_constraint, 
-						i.type_desc
+						i.type_desc,
+                        isnull(ic.is_included_column, 0) as is_included_column
 					from sys.tables t 
 						inner join sys.indexes i on i.object_id = t.object_id
 						inner join sys.index_columns ic on ic.object_id = t.object_id
 							and ic.index_id = i.index_id
 						inner join sys.columns c on c.object_id = t.object_id
 							and c.column_id = ic.column_id
-					order by t.name, i.name, ic.key_ordinal";
+					order by t.name, i.name, ic.key_ordinal, ic.index_column_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							Constraint c = FindConstraint((string)dr["indexName"]);
@@ -203,7 +211,12 @@ namespace model {
 								c.Table = t;
 							}
 							c.Clustered = (string)dr["type_desc"] == "CLUSTERED";
-							c.Columns.Add((string)dr["columnName"]);
+                            if ((bool)dr["is_included_column"]) {
+                                c.IncludedColumns.Add((string)dr["columnName"]);
+                            } else {
+                                c.Columns.Add((string)dr["columnName"]);
+                            }
+							
 							c.Type = "INDEX";
 							if ((bool)dr["is_primary_key"]) c.Type = "PRIMARY KEY";
 							if ((bool)dr["is_unique_constraint"]) c.Type = "UNIQUE";
@@ -228,12 +241,14 @@ namespace model {
 
 					//get foreign key props
 					cm.CommandText = @"
-					select 
-						CONSTRAINT_NAME, 
-						UNIQUE_CONSTRAINT_NAME, 
-						UPDATE_RULE, 
-						DELETE_RULE
-					from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS";
+select 
+	CONSTRAINT_NAME, 
+	UNIQUE_CONSTRAINT_NAME, 
+	UPDATE_RULE, 
+	DELETE_RULE,
+	fk.is_disabled
+from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
+	inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string)dr["CONSTRAINT_NAME"]);
@@ -241,6 +256,7 @@ namespace model {
 							fk.RefColumns = fk.RefTable.PrimaryKey.Columns;
 							fk.OnUpdate = (string)dr["UPDATE_RULE"];
 							fk.OnDelete = (string)dr["DELETE_RULE"];
+                            fk.Check = !(bool)dr["is_disabled"];
 						}
 					}
 

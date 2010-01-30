@@ -61,7 +61,7 @@ namespace test {
 				copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
                 copy.Load();
                 SqlConnection.ClearAllPools();
-                TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
+                TestHelper.ExecBatchSql(copy.ScriptCreate() , "master");
 
                 //compare the dbs to make sure they are the same
                 string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath, "localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y", "SqlDbDiff.XML CompareResult.txt null");
@@ -72,7 +72,7 @@ namespace test {
                 proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;                
                 proc.Start();
                 proc.WaitForExit();
-                Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0]);
+                Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0], script);
             }
         }
 
