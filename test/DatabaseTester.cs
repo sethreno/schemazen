@@ -65,7 +65,7 @@ namespace test {
 
                 //compare the dbs to make sure they are the same
                 string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath, "localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y", "SqlDbDiff.XML CompareResult.txt null");
-                
+                Console.WriteLine(cmd);
                 var proc = new System.Diagnostics.Process();
                 proc.StartInfo.FileName = "cmd.exe";
                 proc.StartInfo.Arguments = cmd;
