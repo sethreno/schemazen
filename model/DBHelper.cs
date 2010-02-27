@@ -49,9 +49,9 @@ namespace model {
 
 		public static void DropDb(string conn) {
 			SqlConnectionStringBuilder cnBuilder = new SqlConnectionStringBuilder(conn);
-			string dbName = cnBuilder.InitialCatalog;
-			cnBuilder.InitialCatalog = "master";
+			string dbName = cnBuilder.InitialCatalog;			
 			if (DbExists(cnBuilder.ToString())) {
+                cnBuilder.InitialCatalog = "master";
 				ExecSql(cnBuilder.ToString(), "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
 				ExecSql(cnBuilder.ToString(), "drop database " + dbName);
 
