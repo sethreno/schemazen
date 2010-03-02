@@ -3,7 +3,18 @@ using System.Data.SqlClient;
 using NUnit.Framework;
 
 namespace test {
+    [SetUpFixture()]
     public class TestHelper {
+
+        [SetUp()]
+        public void SetUp()
+        {
+            string conn = TestHelper.GetConnString("TESTDB");
+            model.DBHelper.DropDb(conn);
+            model.DBHelper.CreateDb(conn);
+            System.Data.SqlClient.SqlConnection.ClearAllPools();
+        }
+
         public static bool EchoSql {
             get { return true; }
         }
@@ -29,7 +40,10 @@ namespace test {
         public static string GetConnString(string dbName) {
             string connString = "";
             using (SqlConnection cn = new SqlConnection(ConfigHelper.TestDB)) {
-                connString = cn.ConnectionString.Replace("database=" + cn.Database, "database=" + dbName);
+                connString = cn.ConnectionString;
+                if (!string.IsNullOrEmpty(dbName)){
+                    connString = cn.ConnectionString.Replace("database=" + cn.Database, "database=" + dbName);
+                }
             }
             return connString;
         }
