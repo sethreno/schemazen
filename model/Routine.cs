@@ -9,6 +9,8 @@ namespace model {
 		public string Name;
 		public string Text;
 		public string Type;
+        public bool AnsiNull;
+        public bool QuotedId;
 
 		public Routine(string schema, string name) {
 			this.Schema = schema;
@@ -16,7 +18,11 @@ namespace model {
 		}
 
 		public string ScriptCreate() {
-			return Text;
+            return string.Format(@"SET QUOTED_IDENTIFIER {0}
+GO
+SET ANSI_NULLS {1}
+GO
+{2}", (QuotedId ? "ON" : "OFF"), (AnsiNull ? "ON" : "OFF"), Text);                
 		}
 
 		public string ScriptDrop() {

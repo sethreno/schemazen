@@ -276,6 +276,8 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 						o.name as routineName,
 						o.type_desc,
 						m.definition,
+                        m.uses_ansi_nulls,
+						m.uses_quoted_identifier,
 						t.name as tableName
 					from sys.sql_modules m
 						inner join sys.objects o on m.object_id = o.object_id
@@ -286,6 +288,8 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 						while (dr.Read()) {
 							Routine r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
 							r.Text = (string)dr["definition"];
+                            r.AnsiNull = (bool)dr["uses_ansi_nulls"];
+                            r.QuotedId = (bool)dr["uses_quoted_identifier"];
 							Routines.Add(r);
 
 							switch ((string)dr["type_desc"]) {

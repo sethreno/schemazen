@@ -24,7 +24,7 @@ AS
 ";
 
             TestHelper.ExecSql(t.ScriptCreate(), "");
-            TestHelper.ExecSql(getAddress.ScriptCreate(), "");
+            TestHelper.ExecBatchSql(getAddress.ScriptCreate() + "\nGO", "");
             TestHelper.ExecSql("drop table [dbo].[Address]", "");
             TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
         }

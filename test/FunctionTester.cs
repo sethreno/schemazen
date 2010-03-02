@@ -17,7 +17,7 @@ BEGIN
 END
 ";
             Console.WriteLine(f.ScriptCreate());
-            TestHelper.ExecSql(f.ScriptCreate(), "");
+            TestHelper.ExecBatchSql(f.ScriptCreate() + "\nGO" , "");
             TestHelper.ExecSql("drop function [dbo].[udf_GetDate]", "");
         }
 
