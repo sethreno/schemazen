@@ -213,5 +213,10 @@ select * from Table1
 			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
 			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
 		}
+
+        [Test()]
+        public void ExampleFail(){
+            Assert.Fail("example failure");
+        }
     }
 }
