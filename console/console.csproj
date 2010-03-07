@@ -53,10 +53,18 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Data" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Compare.cs" />
+    <Compile Include="Create.cs" />
+    <Compile Include="DataArg.cs" />
+    <Compile Include="Default.cs" />
+    <Compile Include="ICommand.cs" />
+    <Compile Include="Operand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Script.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="lib\CommandLine.dll" />
