@@ -4,7 +4,7 @@ using System.IO;
 using System.Data.SqlClient;
 
 namespace console {
-    class Create : ICommand {
+    public class Create : ICommand {
 
         private Operand source;
         private Operand destination;
@@ -94,6 +94,7 @@ Create the specified database from script
             }
             
             db.CreateFromDir(delete);
+            Console.WriteLine("Database created successfully.");
             return true;
         }
     }
