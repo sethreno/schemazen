@@ -71,14 +71,18 @@ Create the specified database from script
 
             if (DBHelper.DbExists(destination.Value) && !delete) {
                 var cnBuilder = new SqlConnectionStringBuilder(destination.Value);
-                Console.Write("{0} {1} already exists do you want to drop it? (Y/N)",
+                Console.WriteLine("{0} {1} already exists do you want to drop it? (Y/N)",
                 cnBuilder.DataSource, cnBuilder.InitialCatalog);
-
-                var key = Console.ReadKey();
-                if (key.Key != ConsoleKey.Y) {
+                
+                char answer = char.ToUpper(Convert.ToChar(Console.Read()));
+                while (answer != 'Y' && answer != 'N') {
+                    answer = char.ToUpper(Convert.ToChar(Console.Read()));
+                }
+                if (answer == 'N') {
+                    Console.WriteLine("create command cancelled.");
                     return false;
                 }
-                Console.WriteLine();
+                delete = true;
             }
 
             var db = new Database();

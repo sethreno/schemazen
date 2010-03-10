@@ -29,6 +29,16 @@ namespace test {
             Assert.IsTrue(cmd.Run());
 
             Assert.IsTrue(consoleOut.ToString().Contains("Database created successfully"));
+
+            Console.SetIn(new System.IO.StringReader("n"));
+            Assert.IsFalse(cmd.Run());
+            Assert.IsTrue(consoleOut.ToString().Contains("already exists do you want to drop it"));
+            Assert.IsTrue(consoleOut.ToString().Contains("create command cancelled"));
+
+            Console.SetIn(new System.IO.StringReader("y"));
+            Assert.IsTrue(cmd.Run());
+            Assert.IsTrue(consoleOut.ToString().Contains("already exists do you want to drop it"));
+            Assert.IsTrue(consoleOut.ToString().Contains("Database created successfully"));
         }
     }
 }
