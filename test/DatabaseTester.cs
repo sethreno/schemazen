@@ -49,31 +49,40 @@ namespace test {
         [Test()]
         public void TestCopy() {
             foreach (string script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
-                TestHelper.DropDb("TEST_SOURCE");
-                TestHelper.DropDb("TEST_COPY");
-
-                //create the db from sql script
-                TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
-                TestHelper.ExecBatchSql(File.ReadAllText(script), "TEST_SOURCE");
-
-                //load the model from newly created db and create a copy
-                Database copy = new Database("TEST_COPY");
-				copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
-                copy.Load();
-                SqlConnection.ClearAllPools();
-                TestHelper.ExecBatchSql(copy.ScriptCreate() , "master");
-
-                //compare the dbs to make sure they are the same
-                string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath, "localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y", "SqlDbDiff.XML CompareResult.txt null");
-                Console.WriteLine(cmd);
-                var proc = new System.Diagnostics.Process();
-                proc.StartInfo.FileName = "cmd.exe";
-                proc.StartInfo.Arguments = cmd;
-                proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;                
-                proc.Start();
-                proc.WaitForExit();
-                Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0], script);
+                TestCopySchema(script);                
             }
+        }
+
+        [Test()]
+        public void TestBug13() {
+            TestCopySchema(ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL");
+        }
+
+        public static void TestCopySchema(string pathToSchemaScript) {
+            TestHelper.DropDb("TEST_SOURCE");
+            TestHelper.DropDb("TEST_COPY");
+
+            //create the db from sql script
+            TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
+            TestHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), "TEST_SOURCE");
+
+            //load the model from newly created db and create a copy
+            Database copy = new Database("TEST_COPY");
+            copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
+            copy.Load();
+            SqlConnection.ClearAllPools();
+            TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
+
+            //compare the dbs to make sure they are the same
+            string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath, "localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y", "SqlDbDiff.XML CompareResult.txt null");
+            Console.WriteLine(cmd);
+            var proc = new System.Diagnostics.Process();
+            proc.StartInfo.FileName = "cmd.exe";
+            proc.StartInfo.Arguments = cmd;
+            proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
+            proc.Start();
+            proc.WaitForExit();
+            Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0], pathToSchemaScript);
         }
 
         [Test()]

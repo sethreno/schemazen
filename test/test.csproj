@@ -58,6 +58,7 @@
     <None Include="test_schemas\BOP_QUOTE_2.sql" />
     <None Include="test_schemas\DFS_QUOTE.sql" />
     <None Include="test_schemas\IMS_QUOTE.sql" />
+    <None Include="test_schemas\SANDBOX3_GBL.SQL" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.cs" />
