@@ -199,7 +199,8 @@ namespace model {
 						i.name as indexName, 
 						c.name as columnName,
 						i.is_primary_key, 
-						i.is_unique_constraint, 
+						i.is_unique_constraint,
+                        i.is_unique, 
 						i.type_desc,
                         isnull(ic.is_included_column, 0) as is_included_column
 					from sys.tables t 
@@ -219,6 +220,7 @@ namespace model {
 								c.Table = t;
 							}
 							c.Clustered = (string)dr["type_desc"] == "CLUSTERED";
+                            c.Unique = (bool)dr["is_unique"];
                             if ((bool)dr["is_included_column"]) {
                                 c.IncludedColumns.Add((string)dr["columnName"]);
                             } else {

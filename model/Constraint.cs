@@ -8,6 +8,7 @@ namespace model {
 		public Table Table;
 		public string Name;
 		public string Type;
+        public bool Unique;
 		public bool Clustered;
 		public List<string> Columns = new List<string>();
         public List<string> IncludedColumns = new List<string>();
@@ -19,6 +20,13 @@ namespace model {
 			}
 		}
 
+        public string UniqueText {
+            get {
+                if (!Unique) return "";
+                return "UNIQUE";
+            }
+        }
+
 		public Constraint(string name, string type, string columns) {
 			this.Name = name;
 			this.Type = type;
@@ -29,8 +37,8 @@ namespace model {
 
 		public string Script() {
 			if (Type == "INDEX") {
-                var sql = string.Format("CREATE {0} INDEX [{1}] ON [{2}].[{3}] ([{4}])", 
-                    ClusteredText, Name, Table.Owner, Table.Name, 
+                var sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])", 
+                    UniqueText, ClusteredText, Name, Table.Owner, Table.Name, 
                     string.Join("], [", Columns.ToArray()));
                 if (IncludedColumns.Count > 0) {
                     sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
