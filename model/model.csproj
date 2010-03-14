@@ -53,6 +53,7 @@
     <Compile Include="Constraint.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="DBHelper.cs" />
+    <Compile Include="DbProperty.cs" />
     <Compile Include="Default.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />

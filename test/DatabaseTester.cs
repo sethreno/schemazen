@@ -74,7 +74,24 @@ namespace test {
             TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
 
             //compare the dbs to make sure they are the same
-            string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath, "localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y", "SqlDbDiff.XML CompareResult.txt null");
+            var source = new Database("TEST_SOURCE");
+            source.Connection = TestHelper.GetConnString("TEST_SOURCE");
+            source.Load();
+            copy.Load();
+            TestCompare(source, copy);
+        }
+
+        private static void TestCompare(Database source, Database copy) {
+            //compare the dbs to make sure they are the same                        
+            Assert.IsFalse(source.Compare(copy).IsDiff);
+
+            // get a second opinion
+            string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", 
+                ConfigHelper.SqlDbDiffPath, 
+                "localhost\\SQLEXPRESS " + copy.Name + " NULL NULL Y", 
+                "localhost\\SQLEXPRESS " + source.Name + " NULL NULL Y", 
+                "SqlDbDiff.XML CompareResult.txt null");
+
             Console.WriteLine(cmd);
             var proc = new System.Diagnostics.Process();
             proc.StartInfo.FileName = "cmd.exe";
@@ -82,7 +99,7 @@ namespace test {
             proc.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Normal;
             proc.Start();
             proc.WaitForExit();
-            Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0], pathToSchemaScript);
+            Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0]);
         }
 
         [Test()]
@@ -143,6 +160,8 @@ namespace test {
 			policy.Columns.Add(new Column("id", "int", false, null));
 			policy.Columns.Add(new Column("form", "tinyint", false, null));
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
+            policy.Constraints[0].Clustered = true;
+            policy.Constraints[0].Unique = true;
 			policy.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var loc = new Table("dbo", "Location");
@@ -150,35 +169,44 @@ namespace test {
 			loc.Columns.Add(new Column("policyId", "int", false, null));
 			loc.Columns.Add(new Column("storage", "bit", false, null));
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
+            loc.Constraints[0].Clustered = true;
+            loc.Constraints[0].Unique = true;
 			loc.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null));
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null));
 			formType.Constraints.Add(new Constraint("PK_FormType", "PRIMARY KEY", "code"));
+            formType.Constraints[0].Clustered = true;
 						
-			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
-			fk_policy_formType.Table = policy;
+			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");            
+			fk_policy_formType.Table = policy;            
 			fk_policy_formType.Columns.Add("form");
 			fk_policy_formType.RefTable = formType;
 			fk_policy_formType.RefColumns.Add("code");
+            fk_policy_formType.OnUpdate = "NO ACTION";
+            fk_policy_formType.OnDelete = "NO ACTION";
 
 			var fk_location_policy = new ForeignKey("FK_Location_Policy");
 			fk_location_policy.Table = loc;
 			fk_location_policy.Columns.Add("policyId");
 			fk_location_policy.RefTable = policy;
 			fk_location_policy.RefColumns.Add("id");
+            fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
 
-			var db = new Database("ScriptTest");
+			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
-			db.Tables.Add(loc);
+			db.Tables.Add(loc);           
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
-
+            db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
+            db.FindProp("ANSI_NULLS").Value = "ON";
+            db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
+            
 			db.Connection = "server=localhost\\SQLEXPRESS;"
-				+ "database=ScriptTest;Trusted_Connection=yes;";
+				+ "database=" + db.Name + ";Trusted_Connection=yes;";
 			db.ExecCreate(true);
 
 			DBHelper.ExecSql(db.Connection,
@@ -202,7 +230,15 @@ namespace test {
 			}
 			foreach(ForeignKey fk in db.ForeignKeys){
 				Assert.IsTrue(File.Exists(db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql"));
-			}			
+			}
+
+            var copy = new Database("ScriptToDirTestCopy");
+            copy.Dir = db.Dir;
+            copy.Connection = "server=localhost\\SQLEXPRESS;"
+				+ "database=" + copy.Name + ";Trusted_Connection=yes;";
+            copy.CreateFromDir(true);
+            copy.Load();
+            TestCompare(db, copy);            
 		}
 
 		[Test()]
@@ -222,5 +258,22 @@ select * from Table1
 			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
 			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
 		}
+
+        [Test()]        
+        public void TestCollate() {
+            var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
+            TestHelper.DropDb("TEST_SOURCE");        
+
+            //create the db from sql script
+            TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
+            TestHelper.ExecBatchSql(File.ReadAllText(pathToSchema), "TEST_SOURCE");
+
+            //load the model from newly created db and check collation
+            Database copy = new Database("TEST_COPY");
+            copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
+            copy.Load();
+
+            Assert.AreEqual("SQL_Latin1_General_CP1_CI_AS", copy.FindProp("COLLATE").Value);
+        }
     }
 }

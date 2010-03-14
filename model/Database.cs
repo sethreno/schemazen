@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 
@@ -12,10 +13,33 @@ namespace model {
 		#region " Constructors "
 
 		public Database() {
-
+            Props.Add(new DbProp("COLLATE", ""));
+            Props.Add(new DbProp("ANSI_NULLS", ""));
+            Props.Add(new DbProp("QUOTED_IDENTIFIER", ""));
+            Props.Add(new DbProp("ANSI_NULL_DEFAULT", ""));
+            Props.Add(new DbProp("ANSI_PADDING", ""));
+            Props.Add(new DbProp("ANSI_WARNINGS", ""));
+            Props.Add(new DbProp("ARITHABORT", ""));
+            Props.Add(new DbProp("AUTO_CLOSE", ""));
+            Props.Add(new DbProp("AUTO_CREATE_STATISTICS", ""));
+            Props.Add(new DbProp("AUTO_SHRINK", ""));
+            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS", ""));
+            Props.Add(new DbProp("CURSOR_CLOSE_ON_COMMIT", ""));
+            Props.Add(new DbProp("CURSOR_DEFAULT", ""));
+            Props.Add(new DbProp("CONCAT_NULL_YIELDS_NULL", ""));
+            Props.Add(new DbProp("NUMERIC_ROUNDABORT", ""));
+            Props.Add(new DbProp("RECURSIVE_TRIGGERS",""));
+            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS_ASYNC", ""));
+            Props.Add(new DbProp("TRUSTWORTHY", ""));
+            Props.Add(new DbProp("ALLOW_SNAPSHOT_ISOLATION", ""));
+            Props.Add(new DbProp("PARAMETERIZATION", ""));
+            Props.Add(new DbProp("READ_COMMITTED_SNAPSHOT", ""));
+            Props.Add(new DbProp("RECOVERY", ""));
+            Props.Add(new DbProp("PAGE_VERIFY", ""));
+            Props.Add(new DbProp("DB_CHAINING", ""));
 		}
 
-		public Database(string name) {
+		public Database(string name) : this() {
 			this.Name = name;
 		}
 
@@ -26,10 +50,19 @@ namespace model {
 		public string Connection = "";
 		public string Dir = "";
 		public string Name;
+        
+        public List<DbProp> Props = new List<DbProp>();        
 		public List<Table> Tables = new List<Table>();
 		public List<Routine> Routines = new List<Routine>();
 		public List<ForeignKey> ForeignKeys = new List<ForeignKey>();
 		public List<Table> DataTables = new List<Table>();
+
+        public DbProp FindProp(string name) {
+            foreach (DbProp p in Props) {                
+                if (p.Name.ToUpper() == name.ToUpper()) return p;
+            }
+            return null;
+        }
 
 		public Table FindTable(string name) {
 			foreach (Table t in Tables) {
@@ -83,6 +116,8 @@ namespace model {
 		#endregion
 
 		public void Load() {
+            var cnStrBuilder = new SqlConnectionStringBuilder(Connection);            
+
 			Tables.Clear();
 			Routines.Clear();
 			ForeignKeys.Clear();
@@ -90,7 +125,46 @@ namespace model {
 			using (SqlConnection cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
-					//get tables
+                    // get default database properties from server
+                    cm.CommandText = "select top 1 [collation_name] from sys.servers";
+                    using (IDataReader dr = cm.ExecuteReader()) {
+                        if (dr.Read()) {
+                            var dbVal = dr["collation_name"];
+                            if (dbVal != DBNull.Value) {
+                                FindProp("COLLATE").Value = (string)dbVal;
+                            }
+                        }
+                    }
+
+                    // query schema for database properties
+                    cm.CommandText = @"
+select
+    [collation_name],
+    [is_ansi_nulls_on],
+    [is_quoted_identifier_on]
+from sys.databases
+where name = @dbname
+";
+                    cm.Parameters.AddWithValue("@dbname", cnStrBuilder.InitialCatalog);
+                    using (System.Data.IDataReader dr = cm.ExecuteReader()) {
+                        if (dr.Read()) {
+                            var dbVal = dr["collation_name"];
+                            if (dbVal != DBNull.Value) {
+                                FindProp("COLLATE").Value = (string)dbVal;
+                            }
+                            dbVal = dr["is_ansi_nulls_on"];
+                            if (dbVal != DBNull.Value) {
+                                FindProp("ANSI_NULLS").Value = (bool)dbVal ? "ON" : "OFF";
+                            }
+                            dbVal = dr["is_quoted_identifier_on"];
+                            if (dbVal != DBNull.Value) {
+                                FindProp("QUOTED_IDENTIFIER").Value = (bool)dbVal ? "ON" : "OFF";
+                            }
+                        }
+                    }
+                                       
+
+                    //get tables
 					cm.CommandText = @"
 					select 
 						TABLE_SCHEMA, 
@@ -322,6 +396,14 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 		public DatabaseDiff Compare(Database db) {
 			DatabaseDiff diff = new DatabaseDiff();
 
+            //compare database properties           
+            foreach (DbProp p in Props) {
+                DbProp p2 = db.FindProp(p.Name);
+                if (p.Script() != p2.Script()) {
+                    diff.PropsChanged.Add(p);
+                }                
+            }
+            
 			//get tables added and changed
 			foreach (Table t in Tables) {
 				Table t2 = db.FindTable(t.Name);
@@ -393,6 +475,12 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 			text.AppendLine("GO");
 			text.AppendLine();
 
+            if (Props.Count > 0) {
+                text.Append(ScriptPropList(Props));
+                text.AppendLine("GO");
+                text.AppendLine();
+            }
+
 			foreach (Table t in Tables) {
 				text.AppendLine(t.ScriptCreate());
 			}
@@ -432,7 +520,14 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 					Directory.CreateDirectory(Dir + "/" + dir);
 				}
 			}
-						
+
+            var text = new StringBuilder();
+            text.Append(ScriptPropList(Props));
+            text.AppendLine("GO");
+            text.AppendLine();
+            File.WriteAllText(string.Format("{0}/props.sql", Dir),
+                text.ToString());
+            
 			foreach (Table t in Tables) {
 				File.WriteAllText(
 					String.Format("{0}/tables/{1}.sql", Dir, t.Name),
@@ -495,6 +590,13 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 			DBHelper.CreateDb(Connection);
 
 			//run scripts
+            if (File.Exists(Dir + "/props.sql")) {
+                try {
+                    DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
+                } catch (SqlBatchException ex) {
+                    throw new SqlFileException(Dir + "/props.sql", ex);
+                }
+            }
 			foreach (string dir in dirs) {
 				if ("foreign_keys" == dir) { continue; }
 				var dirPath = Dir + "/" + dir;
@@ -538,9 +640,24 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 			}
 			DBHelper.ExecBatchSql(conStr.ToString(), ScriptCreate());
 		}
+
+        public static string ScriptPropList(IList<DbProp> props) {
+            var text = new StringBuilder();
+            
+            text.AppendLine("DECLARE @DB VARCHAR(255)");
+            text.AppendLine("SET @DB = DB_NAME()");
+            foreach (DbProp p in props) {
+                if (!string.IsNullOrEmpty(p.Script())) {
+                    text.AppendLine(p.Script());
+                }
+            }
+            return text.ToString();
+        }
 	}
 
 	public class DatabaseDiff {
+        public List<DbProp> PropsChanged = new List<DbProp>();
+
 		public List<Table> TablesAdded = new List<Table>();
 		public List<TableDiff> TablesDiff = new List<TableDiff>();
 		public List<Table> TablesDeleted = new List<Table>();
@@ -555,7 +672,8 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 
 		public bool IsDiff {
 			get {
-				return TablesAdded.Count > 0
+				return PropsChanged.Count > 0
+                    || TablesAdded.Count > 0
 					|| TablesDiff.Count > 0
 					|| TablesDeleted.Count > 0
 					|| RoutinesAdded.Count > 0
@@ -569,6 +687,15 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 
 		public string Script() {
 			StringBuilder text = new StringBuilder();
+            //alter database props
+            //TODO need to check dependencies for collation change
+            //TODO how can collation be set to null at the server level?
+            if (PropsChanged.Count > 0) {
+                text.Append(Database.ScriptPropList(PropsChanged));
+                text.AppendLine("GO");
+                text.AppendLine();
+            }
+
 			//delete foreign keys
 			if (ForeignKeysDeleted.Count + ForeignKeysDiff.Count > 0) {
 				foreach (ForeignKey fk in ForeignKeysDeleted) {
