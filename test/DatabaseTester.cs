@@ -200,10 +200,33 @@ namespace test {
 			db.Tables.Add(formType);
 			db.Tables.Add(loc);           
 			db.ForeignKeys.Add(fk_policy_formType);
-			db.ForeignKeys.Add(fk_location_policy);
+			db.ForeignKeys.Add(fk_location_policy);                        
+            db.FindProp("COMPATIBILITY_LEVEL").Value = "90";            
             db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
+            db.FindProp("AUTO_CLOSE").Value = "OFF";
+            db.FindProp("AUTO_SHRINK").Value = "ON";
+            db.FindProp("ALLOW_SNAPSHOT_ISOLATION").Value = "ON";
+            db.FindProp("READ_COMMITTED_SNAPSHOT").Value = "OFF";
+            db.FindProp("RECOVERY").Value = "SIMPLE";
+            db.FindProp("PAGE_VERIFY").Value = "CHECKSUM";
+            db.FindProp("AUTO_CREATE_STATISTICS").Value = "ON";
+            db.FindProp("AUTO_UPDATE_STATISTICS").Value = "ON";
+            db.FindProp("AUTO_UPDATE_STATISTICS_ASYNC").Value = "ON";
+            db.FindProp("ANSI_NULL_DEFAULT").Value = "ON";
             db.FindProp("ANSI_NULLS").Value = "ON";
+            db.FindProp("ANSI_PADDING").Value = "ON";
+            db.FindProp("ANSI_WARNINGS").Value = "ON";
+            db.FindProp("ARITHABORT").Value = "ON";
+            db.FindProp("CONCAT_NULL_YIELDS_NULL").Value = "ON";
+            db.FindProp("NUMERIC_ROUNDABORT").Value = "ON";
             db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
+            db.FindProp("RECURSIVE_TRIGGERS").Value = "ON";
+            db.FindProp("CURSOR_CLOSE_ON_COMMIT").Value = "ON";
+            db.FindProp("CURSOR_DEFAULT").Value = "LOCAL";
+            db.FindProp("TRUSTWORTHY").Value = "ON";
+            db.FindProp("DB_CHAINING").Value = "ON";
+            db.FindProp("PARAMETERIZATION").Value = "FORCED";
+            db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
             
 			db.Connection = "server=localhost\\SQLEXPRESS;"
 				+ "database=" + db.Name + ";Trusted_Connection=yes;";

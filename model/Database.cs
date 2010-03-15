@@ -13,30 +13,32 @@ namespace model {
 		#region " Constructors "
 
 		public Database() {
+            Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
             Props.Add(new DbProp("COLLATE", ""));
-            Props.Add(new DbProp("ANSI_NULLS", ""));
-            Props.Add(new DbProp("QUOTED_IDENTIFIER", ""));
-            Props.Add(new DbProp("ANSI_NULL_DEFAULT", ""));
-            Props.Add(new DbProp("ANSI_PADDING", ""));
-            Props.Add(new DbProp("ANSI_WARNINGS", ""));
-            Props.Add(new DbProp("ARITHABORT", ""));
             Props.Add(new DbProp("AUTO_CLOSE", ""));
-            Props.Add(new DbProp("AUTO_CREATE_STATISTICS", ""));
             Props.Add(new DbProp("AUTO_SHRINK", ""));
-            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS", ""));
-            Props.Add(new DbProp("CURSOR_CLOSE_ON_COMMIT", ""));
-            Props.Add(new DbProp("CURSOR_DEFAULT", ""));
-            Props.Add(new DbProp("CONCAT_NULL_YIELDS_NULL", ""));
-            Props.Add(new DbProp("NUMERIC_ROUNDABORT", ""));
-            Props.Add(new DbProp("RECURSIVE_TRIGGERS",""));
-            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS_ASYNC", ""));
-            Props.Add(new DbProp("TRUSTWORTHY", ""));
             Props.Add(new DbProp("ALLOW_SNAPSHOT_ISOLATION", ""));
-            Props.Add(new DbProp("PARAMETERIZATION", ""));
             Props.Add(new DbProp("READ_COMMITTED_SNAPSHOT", ""));
             Props.Add(new DbProp("RECOVERY", ""));
             Props.Add(new DbProp("PAGE_VERIFY", ""));
+            Props.Add(new DbProp("AUTO_CREATE_STATISTICS", ""));
+            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS", ""));
+            Props.Add(new DbProp("AUTO_UPDATE_STATISTICS_ASYNC", ""));
+            Props.Add(new DbProp("ANSI_NULL_DEFAULT", ""));
+            Props.Add(new DbProp("ANSI_NULLS", ""));          
+            Props.Add(new DbProp("ANSI_PADDING", ""));
+            Props.Add(new DbProp("ANSI_WARNINGS", ""));
+            Props.Add(new DbProp("ARITHABORT", ""));
+            Props.Add(new DbProp("CONCAT_NULL_YIELDS_NULL", ""));
+            Props.Add(new DbProp("NUMERIC_ROUNDABORT", ""));
+            Props.Add(new DbProp("QUOTED_IDENTIFIER", ""));
+            Props.Add(new DbProp("RECURSIVE_TRIGGERS", ""));
+            Props.Add(new DbProp("CURSOR_CLOSE_ON_COMMIT", ""));
+            Props.Add(new DbProp("CURSOR_DEFAULT", ""));
+            Props.Add(new DbProp("TRUSTWORTHY", ""));
             Props.Add(new DbProp("DB_CHAINING", ""));
+            Props.Add(new DbProp("PARAMETERIZATION", ""));
+            Props.Add(new DbProp("DATE_CORRELATION_OPTIMIZATION", ""));
 		}
 
 		public Database(string name) : this() {
@@ -115,6 +117,17 @@ namespace model {
 
 		#endregion
 
+        private void SetPropOnOff(string propName, object dbVal) {            
+            if (dbVal != DBNull.Value) {
+                FindProp(propName).Value = (bool)dbVal ? "ON" : "OFF";
+            }
+        }
+        private void SetPropString(string propName, object dbVal) {
+            if (dbVal != DBNull.Value) {
+                FindProp(propName).Value = dbVal.ToString();
+            }
+        }
+
 		public void Load() {
             var cnStrBuilder = new SqlConnectionStringBuilder(Connection);            
 
@@ -124,42 +137,78 @@ namespace model {
 			DataTables.Clear();
 			using (SqlConnection cn = new SqlConnection(Connection)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
-                    // get default database properties from server
-                    cm.CommandText = "select top 1 [collation_name] from sys.servers";
-                    using (IDataReader dr = cm.ExecuteReader()) {
-                        if (dr.Read()) {
-                            var dbVal = dr["collation_name"];
-                            if (dbVal != DBNull.Value) {
-                                FindProp("COLLATE").Value = (string)dbVal;
-                            }
-                        }
-                    }
-
+				using (SqlCommand cm = cn.CreateCommand()) {                 
                     // query schema for database properties
                     cm.CommandText = @"
 select
+    [compatibility_level],
     [collation_name],
+    [is_auto_close_on],
+    [is_auto_shrink_on],
+    [snapshot_isolation_state],
+    [is_read_committed_snapshot_on],
+    [recovery_model_desc],
+    [page_verify_option_desc],
+    [is_auto_create_stats_on],
+    [is_auto_update_stats_on],
+    [is_auto_update_stats_async_on],
+    [is_ansi_null_default_on],
     [is_ansi_nulls_on],
-    [is_quoted_identifier_on]
+    [is_ansi_padding_on],
+    [is_ansi_warnings_on],
+    [is_arithabort_on],
+    [is_concat_null_yields_null_on],
+    [is_numeric_roundabort_on],
+    [is_quoted_identifier_on],
+    [is_recursive_triggers_on],
+    [is_cursor_close_on_commit_on],
+    [is_local_cursor_default],
+    [is_trustworthy_on],
+    [is_db_chaining_on],
+    [is_parameterization_forced],
+    [is_date_correlation_on]
 from sys.databases
 where name = @dbname
 ";
                     cm.Parameters.AddWithValue("@dbname", cnStrBuilder.InitialCatalog);
                     using (System.Data.IDataReader dr = cm.ExecuteReader()) {
                         if (dr.Read()) {
-                            var dbVal = dr["collation_name"];
-                            if (dbVal != DBNull.Value) {
-                                FindProp("COLLATE").Value = (string)dbVal;
+                            SetPropString("COMPATIBILITY_LEVEL", dr["compatibility_level"]);
+                            SetPropString("COLLATE", dr["collation_name"]);
+                            SetPropOnOff("AUTO_CLOSE", dr["is_auto_close_on"]);
+                            SetPropOnOff("AUTO_SHRINK", dr["is_auto_shrink_on"]);
+                            if (dr["snapshot_isolation_state"] != DBNull.Value) {                                
+                                FindProp("ALLOW_SNAPSHOT_ISOLATION").Value = 
+                                    (byte)dr["snapshot_isolation_state"] == 0 || 
+                                    (byte)dr["snapshot_isolation_state"] == 2 ? "OFF" : "ON";
+                            }                           
+                            SetPropOnOff("READ_COMMITTED_SNAPSHOT", dr["is_read_committed_snapshot_on"]);
+                            SetPropString("RECOVERY", dr["recovery_model_desc"]);
+                            SetPropString("PAGE_VERIFY", dr["page_verify_option_desc"]);
+                            SetPropOnOff("AUTO_CREATE_STATISTICS", dr["is_auto_create_stats_on"]);
+                            SetPropOnOff("AUTO_UPDATE_STATISTICS", dr["is_auto_update_stats_on"]);
+                            SetPropOnOff("AUTO_UPDATE_STATISTICS_ASYNC", dr["is_auto_update_stats_async_on"]);
+                            SetPropOnOff("ANSI_NULL_DEFAULT", dr["is_ansi_null_default_on"]);
+                            SetPropOnOff("ANSI_NULLS", dr["is_ansi_nulls_on"]);
+                            SetPropOnOff("ANSI_PADDING", dr["is_ansi_padding_on"]);
+                            SetPropOnOff("ANSI_WARNINGS", dr["is_ansi_warnings_on"]);
+                            SetPropOnOff("ARITHABORT", dr["is_arithabort_on"]);
+                            SetPropOnOff("CONCAT_NULL_YIELDS_NULL", dr["is_concat_null_yields_null_on"]);
+                            SetPropOnOff("NUMERIC_ROUNDABORT", dr["is_numeric_roundabort_on"]);
+                            SetPropOnOff("QUOTED_IDENTIFIER", dr["is_quoted_identifier_on"]);
+                            SetPropOnOff("RECURSIVE_TRIGGERS", dr["is_recursive_triggers_on"]);
+                            SetPropOnOff("CURSOR_CLOSE_ON_COMMIT", dr["is_cursor_close_on_commit_on"]);
+                            if (dr["is_local_cursor_default"] != DBNull.Value){
+                                FindProp("CURSOR_DEFAULT").Value =
+                                    (bool)dr["is_local_cursor_default"] ? "LOCAL" : "GLOBAL";
                             }
-                            dbVal = dr["is_ansi_nulls_on"];
-                            if (dbVal != DBNull.Value) {
-                                FindProp("ANSI_NULLS").Value = (bool)dbVal ? "ON" : "OFF";
+                            SetPropOnOff("TRUSTWORTHY", dr["is_trustworthy_on"]);
+                            SetPropOnOff("DB_CHAINING", dr["is_db_chaining_on"]);
+                            if (dr["is_parameterization_forced"] != DBNull.Value) {
+                                FindProp("PARAMETERIZATION").Value =
+                                    (bool)dr["is_parameterization_forced"] ? "FORCED" : "SIMPLE";
                             }
-                            dbVal = dr["is_quoted_identifier_on"];
-                            if (dbVal != DBNull.Value) {
-                                FindProp("QUOTED_IDENTIFIER").Value = (bool)dbVal ? "ON" : "OFF";
-                            }
+                            SetPropOnOff("DATE_CORRELATION_OPTIMIZATION", dr["is_date_correlation_on"]);
                         }
                     }
                                        
