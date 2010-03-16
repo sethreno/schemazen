@@ -645,6 +645,10 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
                 } catch (SqlBatchException ex) {
                     throw new SqlFileException(Dir + "/props.sql", ex);
                 }
+
+                // COLLATE can cause connection to be reset
+                // so clear the pool so we get a new connection
+                DBHelper.ClearPool(Connection);
             }
 			foreach (string dir in dirs) {
 				if ("foreign_keys" == dir) { continue; }
