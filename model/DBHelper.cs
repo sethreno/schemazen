@@ -40,11 +40,7 @@ namespace model {
 		}
 
 		public static string[] SplitBatchSql(string batchSql) {
-			List<string> scripts = new List<string>();
-			foreach (Subtext.Scripting.Script script in Subtext.Scripting.Script.ParseScripts(batchSql)) {
-				scripts.Add(script.ScriptText);
-			}
-			return scripts.ToArray();
+            return BatchSqlParser.SplitBatch(batchSql);
 		}
 
 		public static void DropDb(string conn) {

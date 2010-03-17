@@ -31,7 +31,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Subtext.Scripting, Version=1.9.6.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -47,6 +46,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BatchSqlParser.cs" />
     <Compile Include="Column.cs" />
     <Compile Include="ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
@@ -61,10 +61,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Routine.cs" />
     <Compile Include="Table.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="lib\Microsoft.ApplicationBlocks.Data.dll" />
-    <Content Include="lib\Subtext.Scripting.dll" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

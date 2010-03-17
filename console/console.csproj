@@ -47,7 +47,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="CommandLine, Version=1.6.0.0, Culture=neutral, processorArchitecture=MSIL" />
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -65,10 +64,6 @@
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Script.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="lib\CommandLine.dll" />
-    <Content Include="lib\CommandLine.XML" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
@@ -117,6 +112,6 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>ilmerge /target:exe /out:schemacon.exe console.exe model.dll CommandLine.dll Subtext.Scripting.dll Microsoft.ApplicationBlocks.Data.dll</PostBuildEvent>
+    <PostBuildEvent>ilmerge /target:exe /out:schemacon.exe console.exe model.dll</PostBuildEvent>
   </PropertyGroup>
 </Project>
