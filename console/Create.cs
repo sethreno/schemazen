@@ -96,9 +96,20 @@ Create the specified database from script
                     }
                 }
             }
-            
-            db.CreateFromDir(delete);
-            Console.WriteLine("Database created successfully.");
+
+            try {
+                db.CreateFromDir(delete);
+                Console.WriteLine("Database created successfully.");
+            } catch (SqlFileException ex) {
+                Console.Write(@"A SQL error occurred while executing scripts.
+{0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
+                return false;
+            } catch (DataFileException ex) {
+                Console.Write(@"A SQL error occurred while loading data.
+{0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
+                return false;
+            }
+                        
             return true;
         }
     }
