@@ -97,6 +97,22 @@ NOGO <-- also not a GO <-- still no
             Assert.AreEqual(2, scripts.Length);            
         }
 
+        [Test()]
+        public void TestCommentPrecedingGO() {
+            string[] scripts = DBHelper.SplitBatchSql("/*script1*/GO--script2");
+            Assert.AreEqual(2, scripts.Length);
+            Assert.AreEqual("/*script1*/", scripts[0]);
+            Assert.AreEqual("--script2", scripts[1]);           
+        }
+
+        [Test()]
+        public void TestCommentFollowingGO() {
+            string[] scripts = DBHelper.SplitBatchSql("/*script1*/GO/*script2*/");
+            Assert.AreEqual(2, scripts.Length);
+            Assert.AreEqual("/*script1*/", scripts[0]);
+            Assert.AreEqual("/*script2*/", scripts[1]);
+        }
+
         #region Tests from Subtext.Scripting
 
         [Test]
