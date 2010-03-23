@@ -408,6 +408,7 @@ from
 		inner join sys.columns rc
 			on fkc.referenced_object_id = rc.object_id
 				and fkc.referenced_column_id = rc.column_id
+order by fkc.constraint_column_id
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
