@@ -385,8 +385,7 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string)dr["CONSTRAINT_NAME"]);
-							fk.RefTable = FindTableByPk((string)dr["UNIQUE_CONSTRAINT_NAME"]);
-							fk.RefColumns = fk.RefTable.PrimaryKey.Columns;
+							fk.RefTable = FindTableByPk((string)dr["UNIQUE_CONSTRAINT_NAME"]);							
 							fk.OnUpdate = (string)dr["UPDATE_RULE"];
 							fk.OnDelete = (string)dr["DELETE_RULE"];
                             fk.Check = !(bool)dr["is_disabled"];
@@ -394,11 +393,27 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 					}
 
 					//get foreign key columns
-					cm.CommandText = "select CONSTRAINT_NAME, COLUMN_NAME from INFORMATION_SCHEMA.KEY_COLUMN_USAGE";
+					cm.CommandText = @"
+select
+	fk.name as CONSTRAINT_NAME,
+	c.name as COLUMN_NAME,
+	rc.name as REF_COLUMN_NAME
+from
+	sys.foreign_key_columns fkc	
+		inner join sys.foreign_keys fk 
+			on fk.object_id = fkc.constraint_object_id	
+		inner join sys.columns c
+			on fkc.parent_object_id = c.object_id
+				and fkc.parent_column_id = c.column_id
+		inner join sys.columns rc
+			on fkc.referenced_object_id = rc.object_id
+				and fkc.referenced_column_id = rc.column_id
+";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string)dr["CONSTRAINT_NAME"]);
 							if (fk != null) fk.Columns.Add((string)dr["COLUMN_NAME"]);
+                            if (fk != null) fk.RefColumns.Add((string)dr["REF_COLUMN_NAME"]);
 						}
 					}
 

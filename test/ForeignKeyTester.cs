@@ -32,6 +32,38 @@ namespace test {
             TestHelper.ExecSql("drop table Person", "");
         }
 
+        public void TestMultiColumnKey()
+        {
+            Table t1 = new Table("dbo", "t1");
+            t1.Columns.Add(new Column("c1", "int", false, null));
+            t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
+            t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "c1,c2"));
+
+            Table t2 = new Table("dbo", "t2");
+            t2.Columns.Add(new Column("c1", "int", false, null));
+            t2.Columns.Add(new Column("c2", "varchar", 10, false, null));
+            t2.Columns.Add(new Column("c3", "int", false, null));
+
+            ForeignKey fk = new ForeignKey(t2, "fk_test", "c3,c2", t1, "c1,c2");
+
+            TestHelper.ExecSql(t1.ScriptCreate(), "TESTDB");
+            TestHelper.ExecSql(t2.ScriptCreate(), "TESTDB");
+            TestHelper.ExecSql(fk.ScriptCreate(), "TESTDB");
+
+            Database db = new Database();
+            db.Connection = TestHelper.GetConnString("TESTDB");
+            db.Load();
+
+            Assert.AreEqual("c3", db.FindForeignKey("fk_test").Columns[0]);
+            Assert.AreEqual("c2", db.FindForeignKey("fk_test").Columns[1]);
+            Assert.AreEqual("c1", db.FindForeignKey("fk_test").RefColumns[0]);
+            Assert.AreEqual("c2", db.FindForeignKey("fk_test").RefColumns[1]);
+            
+            TestHelper.ExecSql("drop table t2", "TESTDB");
+            TestHelper.ExecSql("drop table t1", "TESTDB");
+            
+        }
+
     }
 
 
