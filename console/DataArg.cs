@@ -1,5 +1,5 @@
 ﻿namespace console {
-    class DataArg {
+    public class DataArg {
 
         private string _value = "";
         public string Value {
@@ -14,7 +14,7 @@
                         obj = new DataArg();
                         obj._value = arg.Substring(6);
                     } else {
-                        if (args.Length > i + 2) {
+                        if (i + 1 < args.Length) {
                             obj = new DataArg();
                             obj._value = args[i + 1];
                         }

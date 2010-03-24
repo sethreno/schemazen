@@ -3,7 +3,7 @@ using model;
 using System.IO;
 
 namespace console {
-    class Script : ICommand {
+    public class Script : ICommand {
         public bool Parse(string[] args) {
             if (args.Length < 3) { return false; }
             source = Operand.Parse(args[1]);
@@ -11,6 +11,7 @@ namespace console {
                 args[2] = "dir:" + args[2];
             }
             destination = Operand.Parse(args[2]);
+            data = DataArg.Parse(args);
             foreach (string arg in args) {
                 if (arg.ToLower() == "-d") delete = true;                
             }           

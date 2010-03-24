@@ -18,6 +18,7 @@ namespace console {
             }
             source = Operand.Parse(args[1]);       
             destination = Operand.Parse(args[2]);
+            data = DataArg.Parse(args);
             foreach (string arg in args) {
                 if (arg.ToLower() == "-d") delete = true;
             }
