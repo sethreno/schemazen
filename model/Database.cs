@@ -73,15 +73,6 @@ namespace model {
 			return null;
 		}
 
-		public Table FindTableByPk(string name) {
-			foreach (Table t in Tables) {
-				if (t.PrimaryKey != null && t.PrimaryKey.Name == name) {
-					return t;
-				}
-			}
-			return null;
-		}
-
 		public Constraint FindConstraint(string name) {
 			foreach (Table t in Tables) {
 				foreach (Constraint c in t.Constraints) {
@@ -376,7 +367,6 @@ where name = @dbname
 					cm.CommandText = @"
 select 
 	CONSTRAINT_NAME, 
-	UNIQUE_CONSTRAINT_NAME, 
 	UPDATE_RULE, 
 	DELETE_RULE,
 	fk.is_disabled
@@ -385,36 +375,44 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string)dr["CONSTRAINT_NAME"]);
-							fk.RefTable = FindTableByPk((string)dr["UNIQUE_CONSTRAINT_NAME"]);							
 							fk.OnUpdate = (string)dr["UPDATE_RULE"];
 							fk.OnDelete = (string)dr["DELETE_RULE"];
                             fk.Check = !(bool)dr["is_disabled"];
 						}
 					}
 
-					//get foreign key columns
+					//get foreign key columns and ref table
 					cm.CommandText = @"
-select
-	fk.name as CONSTRAINT_NAME,
-	c.name as COLUMN_NAME,
-	rc.name as REF_COLUMN_NAME
-from
-	sys.foreign_key_columns fkc	
-		inner join sys.foreign_keys fk 
-			on fk.object_id = fkc.constraint_object_id	
-		inner join sys.columns c
-			on fkc.parent_object_id = c.object_id
-				and fkc.parent_column_id = c.column_id
-		inner join sys.columns rc
-			on fkc.referenced_object_id = rc.object_id
-				and fkc.referenced_column_id = rc.column_id
-order by fkc.constraint_column_id
+SELECT  
+     KCU1.CONSTRAINT_NAME AS CONSTRAINT_NAME 
+    ,KCU1.COLUMN_NAME AS COLUMN_NAME 
+    ,KCU1.ORDINAL_POSITION AS FK_ORDINAL_POSITION 
+    ,KCU2.TABLE_NAME AS REF_TABLE_NAME 
+    ,KCU2.COLUMN_NAME AS REF_COLUMN_NAME 
+FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS AS RC 
+
+INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU1 
+    ON KCU1.CONSTRAINT_CATALOG = RC.CONSTRAINT_CATALOG  
+    AND KCU1.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA 
+    AND KCU1.CONSTRAINT_NAME = RC.CONSTRAINT_NAME 
+
+INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU2 
+    ON KCU2.CONSTRAINT_CATALOG = RC.UNIQUE_CONSTRAINT_CATALOG  
+    AND KCU2.CONSTRAINT_SCHEMA = RC.UNIQUE_CONSTRAINT_SCHEMA 
+    AND KCU2.CONSTRAINT_NAME = RC.UNIQUE_CONSTRAINT_NAME 
+    AND KCU2.ORDINAL_POSITION = KCU1.ORDINAL_POSITION
+
+ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string)dr["CONSTRAINT_NAME"]);
-							if (fk != null) fk.Columns.Add((string)dr["COLUMN_NAME"]);
-                            if (fk != null) fk.RefColumns.Add((string)dr["REF_COLUMN_NAME"]);
+							if (fk == null) { continue; }
+							fk.Columns.Add((string)dr["COLUMN_NAME"]);
+							fk.RefColumns.Add((string)dr["REF_COLUMN_NAME"]);
+							if (fk.RefTable == null) {
+								fk.RefTable = FindTable((string)dr["REF_TABLE_NAME"]);
+							}
 						}
 					}
 
