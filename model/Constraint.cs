@@ -15,7 +15,7 @@ namespace model {
 
 		public string ClusteredText {
 			get {
-				if (!Clustered) return "";
+				if (!Clustered) return "NONCLUSTERED";
 				return "CLUSTERED";
 			}
 		}
