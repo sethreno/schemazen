@@ -10,7 +10,7 @@ namespace model {
 		}
 
 		public string Script() {
-			return string.Format("CONSTRAINT {0} DEFAULT {1}", Name, Value);
+			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", Name, Value);
 		}
 	}
 }
