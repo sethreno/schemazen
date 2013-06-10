@@ -326,10 +326,10 @@ where name = @dbname
 					order by t.name, i.name, ic.key_ordinal, ic.index_column_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							Constraint c = FindConstraint((string)dr["indexName"]);
+							Table t = FindTable((string)dr["tableName"]);
+							Constraint c = t.FindConstraint((string)dr["indexName"]);
 							if (c == null) {
 								c = new Constraint((string)dr["indexName"], "", "");
-								Table t = FindTable((string)dr["tableName"]);
 								t.Constraints.Add(c);
 								c.Table = t;
 							}
