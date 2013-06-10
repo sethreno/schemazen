@@ -63,6 +63,7 @@ namespace model {
 			switch (Type) {
 				case "bigint":
 				case "bit":
+				case "date":
 				case "datetime":
 				case "float":
 				case "image":
