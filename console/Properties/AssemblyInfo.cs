@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("schemacon")]
-[assembly: AssemblyDescription("Schemanator Console")]
+[assembly: AssemblyTitle("schemazen")]
+[assembly: AssemblyDescription("Script SQL Server schema and data quickly.")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Seth Reno")]
-[assembly: AssemblyProduct("Schemanator")]
+[assembly: AssemblyProduct("schemazen")]
 [assembly: AssemblyCopyright("Copyright ©  2009 Seth Reno")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

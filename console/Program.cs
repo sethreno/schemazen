@@ -16,10 +16,10 @@ namespace console {
             }
             
             if (!cmd.Parse(args)) {
-                Console.WriteLine("schemacon - Schemanator Console");
+                Console.WriteLine("schemazen");
                 Console.WriteLine("Copyright (c) Seth Reno. All rights reserved.");
                 Console.WriteLine();
-                Console.Write("usage: schemacon " + cmd.GetUsageText());
+                Console.Write("usage: schemazen " + cmd.GetUsageText());
                 return -1;
             }
             if (!cmd.Run()) {
