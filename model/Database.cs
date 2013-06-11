@@ -4,6 +4,7 @@ using System.Text;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 
 namespace model {
 	using System.Text.RegularExpressions;
@@ -664,20 +665,31 @@ ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
                 // so clear the pool so we get a new connection
                 DBHelper.ClearPool(Connection);
             }
-			foreach (string dir in dirs) {
-				if ("foreign_keys" == dir) { continue; }
-				var dirPath = Dir + "/" + dir;
-				if (!Directory.Exists(dirPath)) { continue; }
-
-				foreach (string f in Directory.GetFiles(dirPath, "*.sql")) {
+		
+			// create db objects
+			// resolve dependencies by trying over and over
+			// if the number of failures stops decreasing then give up
+			var scripts = GetScripts();
+			var errors = new List<SqlFileException>();
+			var prevCount = Int32.MaxValue;
+			while(scripts.Count > 0 && errors.Count < prevCount){
+				if (errors.Count > 0){
+					prevCount = errors.Count;
+					Console.WriteLine(
+					  "{0} errors occurred, retrying...", errors.Count);
+				}
+				errors.Clear();
+				foreach(var f in scripts.ToArray()){
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+						scripts.Remove(f);
 					} catch (SqlBatchException ex) {
-						throw new SqlFileException(f, ex);
+						errors.Add(new SqlFileException(f, ex));
 					}
 				}
 			}
-								
+			if (errors.Count > 0){ throw errors[0]; }
+
 			Load();			// load the schema first so we can import data
 			ImportData();	// load data
 
@@ -691,6 +703,17 @@ ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
 					}
 				}
 			}
+		}
+
+		private List<string> GetScripts(){
+			var scripts = new List<string>();
+			foreach (string dir in dirs) {
+				if ("foreign_keys" == dir) { continue; }
+				var dirPath = Dir + "/" + dir;
+				if (!Directory.Exists(dirPath)) { continue; }
+				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
+			}
+			return scripts;
 		}
 
 		public void ExecCreate(bool dropIfExists) {
