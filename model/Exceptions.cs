@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Data.SqlClient;
 
 namespace model {
+	public class BatchSqlFileException : Exception {
+		public List<SqlFileException> Exceptions { get; set; }
+	}
+
 	public class SqlBatchException : Exception {
 		public SqlBatchException(SqlException ex, int prevLinesInBatch)
 			: base("", ex) {

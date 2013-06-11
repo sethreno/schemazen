@@ -101,6 +101,12 @@ Create the specified database from script
             try {
                 db.CreateFromDir(delete);
                 Console.WriteLine("Database created successfully.");
+			} catch (BatchSqlFileException ex) {
+				Console.WriteLine(@"Create completed with the following errors:");
+				foreach(var e in ex.Exceptions){
+					Console.WriteLine(@"{0}(Line {1}): {2}",
+					  e.FileName.Replace("/", "\\"), e.LineNumber, e.Message);
+				}
             } catch (SqlFileException ex) {
                 Console.Write(@"A SQL error occurred while executing scripts.
 {0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);

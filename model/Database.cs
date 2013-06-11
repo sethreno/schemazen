@@ -688,7 +688,6 @@ ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
 					}
 				}
 			}
-			if (errors.Count > 0){ throw errors[0]; }
 
 			Load();			// load the schema first so we can import data
 			ImportData();	// load data
@@ -702,6 +701,11 @@ ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
 						throw new SqlFileException(f, ex);
 					}
 				}
+			}
+			if (errors.Count > 0){ 
+				var ex = new BatchSqlFileException();
+				ex.Exceptions = errors;
+				throw ex;
 			}
 		}
 
