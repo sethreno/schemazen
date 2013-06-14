@@ -1,11 +1,26 @@
-Schemazen is a command line utility that makes it easy to put your database
-in version control.
+Schemazen - Script and create SQL Server objects quickly
+--------------------------------------------------------
 
-To create scripts for a databse schema run:
+Schemazen has two commands:
 
-    schemazen.exe cn:"server=localhost;database=db;trusted_connection=yes;" db
+**script**
 
-Then to create the database from script run:
+    schemazen.exe cn:"server=localhost;database=db;trusted_connection=yes;" c:\somedir
 
-    schemazen.exe db cn:"server=localhost;database=db;trusted_connection=yes;"
+This will generate sql scripts for all objects in the database in the
+following directory structure:
+
+    c:\somedir\
+      foreign_keys
+	  functions
+	  procs
+	  tables
+	  triggers
+	  props.sql
+
+**create**
+
+    schemazen.exe c:\somedir cn:"server=localhost;database=db;trusted_connection=yes;"
+
+This will create a database named db from the sql scripts in c:\somedir.
 
