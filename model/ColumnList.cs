@@ -1,14 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text;
 
 namespace model {
-	using System.Collections.ObjectModel;
-
 	public class ColumnList {
+		private readonly List<Column> mItems = new List<Column>();
 
-		private List<Column> mItems = new List<Column>();
 		public ReadOnlyCollection<Column> Items {
 			get { return mItems.AsReadOnly(); }
 		}
@@ -29,12 +26,13 @@ namespace model {
 		}
 
 		public string Script() {
-			StringBuilder text = new StringBuilder();
+			var text = new StringBuilder();
 			foreach (Column c in mItems) {
 				text.Append("   " + c.Script());
 				if (mItems.IndexOf(c) < mItems.Count - 1) {
 					text.AppendLine(",");
-				} else {
+				}
+				else {
 					text.AppendLine();
 				}
 			}

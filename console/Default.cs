@@ -1,11 +1,11 @@
 ﻿namespace console {
-    class Default : ICommand {
+	internal class Default : ICommand {
+		public bool Parse(string[] args) {
+			return false;
+		}
 
-        public bool Parse(string[] args) {
-            return false;
-        }
-        public string GetUsageText() {
-            return @"<command> [options]
+		public string GetUsageText() {
+			return @"<command> [options]
 
 Valid commands include:
    script
@@ -14,9 +14,10 @@ Valid commands include:
 
 Type schemanator <command> help for information on a specific command.
 ";
-        }
-        public bool Run() {
-            return false;
-        }
-    }
+		}
+
+		public bool Run() {
+			return false;
+		}
+	}
 }

@@ -2,64 +2,62 @@
 using NUnit.Framework;
 
 namespace test {
-    [TestFixture()]
-    public class ForeignKeyTester {
+	[TestFixture]
+	public class ForeignKeyTester {
+		public void TestMultiColumnKey() {
+			var t1 = new Table("dbo", "t1");
+			t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
+			t1.Columns.Add(new Column("c1", "int", false, null));
+			t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "c1,c2"));
 
-        [Test()]
-        public void TestScript() {
-            Table person = new Table("dbo", "Person");
-            person.Columns.Add(new Column("id", "int", false, null));
-            person.Columns.Add(new Column("name", "varchar", 50, false, null));
-            person.Columns.Find("id").Identity = new Identity(1, 1);
-            person.Constraints.Add(new model.Constraint("PK_Person", "PRIMARY KEY", "id"));
+			var t2 = new Table("dbo", "t2");
+			t2.Columns.Add(new Column("c1", "int", false, null));
+			t2.Columns.Add(new Column("c2", "varchar", 10, false, null));
+			t2.Columns.Add(new Column("c3", "int", false, null));
 
-            Table address = new Table("dbo", "Address");
-            address.Columns.Add(new Column("id", "int", false, null));
-            address.Columns.Add(new Column("personId", "int", false, null));
-            address.Columns.Add(new Column("street", "varchar", 50, false, null));
-            address.Columns.Add(new Column("city", "varchar", 50, false, null));
-            address.Columns.Add(new Column("state", "char", 2, false, null));
-            address.Columns.Add(new Column("zip", "varchar", 5, false, null));
-            address.Columns.Find("id").Identity = new Identity(1, 1);
-            address.Constraints.Add(new model.Constraint("PK_Address", "PRIMARY KEY", "id"));
+			var fk = new ForeignKey(t2, "fk_test", "c3,c2", t1, "c1,c2");
 
-            ForeignKey fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
+			var db = new Database("TESTDB");
+			db.Tables.Add(t1);
+			db.Tables.Add(t2);
+			db.ForeignKeys.Add(fk);
+			db.Connection = TestHelper.GetConnString("TESTDB");
+			db.ExecCreate(true);
+			db.Load();
 
-            TestHelper.ExecSql(person.ScriptCreate(), "");
-            TestHelper.ExecSql(address.ScriptCreate(), "");
-            TestHelper.ExecSql(fk.ScriptCreate(), "");
-            TestHelper.ExecSql("drop table Address", "");
-            TestHelper.ExecSql("drop table Person", "");
-        }
+			Assert.AreEqual("c3", db.FindForeignKey("fk_test").Columns[0]);
+			Assert.AreEqual("c2", db.FindForeignKey("fk_test").Columns[1]);
+			Assert.AreEqual("c1", db.FindForeignKey("fk_test").RefColumns[0]);
+			Assert.AreEqual("c2", db.FindForeignKey("fk_test").RefColumns[1]);
 
-        public void TestMultiColumnKey()
-        {
-            Table t1 = new Table("dbo", "t1");            
-            t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
-            t1.Columns.Add(new Column("c1", "int", false, null));
-            t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "c1,c2"));
+			db.ExecCreate(true);
+		}
 
-            Table t2 = new Table("dbo", "t2");
-            t2.Columns.Add(new Column("c1", "int", false, null));
-            t2.Columns.Add(new Column("c2", "varchar", 10, false, null));
-            t2.Columns.Add(new Column("c3", "int", false, null));
+		[Test]
+		public void TestScript() {
+			var person = new Table("dbo", "Person");
+			person.Columns.Add(new Column("id", "int", false, null));
+			person.Columns.Add(new Column("name", "varchar", 50, false, null));
+			person.Columns.Find("id").Identity = new Identity(1, 1);
+			person.Constraints.Add(new Constraint("PK_Person", "PRIMARY KEY", "id"));
 
-            ForeignKey fk = new ForeignKey(t2, "fk_test", "c3,c2", t1, "c1,c2");          
-                        
-            Database db = new Database("TESTDB");
-            db.Tables.Add(t1);
-            db.Tables.Add(t2);
-            db.ForeignKeys.Add(fk);
-            db.Connection = TestHelper.GetConnString("TESTDB");
-            db.ExecCreate(true);
-            db.Load();
+			var address = new Table("dbo", "Address");
+			address.Columns.Add(new Column("id", "int", false, null));
+			address.Columns.Add(new Column("personId", "int", false, null));
+			address.Columns.Add(new Column("street", "varchar", 50, false, null));
+			address.Columns.Add(new Column("city", "varchar", 50, false, null));
+			address.Columns.Add(new Column("state", "char", 2, false, null));
+			address.Columns.Add(new Column("zip", "varchar", 5, false, null));
+			address.Columns.Find("id").Identity = new Identity(1, 1);
+			address.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-            Assert.AreEqual("c3", db.FindForeignKey("fk_test").Columns[0]);
-            Assert.AreEqual("c2", db.FindForeignKey("fk_test").Columns[1]);
-            Assert.AreEqual("c1", db.FindForeignKey("fk_test").RefColumns[0]);
-            Assert.AreEqual("c2", db.FindForeignKey("fk_test").RefColumns[1]);
+			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
 
-            db.ExecCreate(true); 
-        }
-    }
+			TestHelper.ExecSql(person.ScriptCreate(), "");
+			TestHelper.ExecSql(address.ScriptCreate(), "");
+			TestHelper.ExecSql(fk.ScriptCreate(), "");
+			TestHelper.ExecSql("drop table Address", "");
+			TestHelper.ExecSql("drop table Person", "");
+		}
+	}
 }

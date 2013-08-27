@@ -1,17 +1,36 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace model {
 	public class Column {
+		public Default Default;
+		public Identity Identity;
+		public bool IsNullable;
+		public int Length;
 		public string Name;
 		public int Position;
-		public Default Default;
-		public bool IsNullable;
-		public string Type;
-		public int Length;
 		public byte Precision;
 		public int Scale;
-		public Identity Identity;
+		public string Type;
+
+		public Column() {
+		}
+
+		public Column(string name, string type, bool @null, Default @default) {
+			Name = name;
+			Type = type;
+			Default = @default;
+		}
+
+		public Column(string name, string type, int length, bool @null, Default @default)
+			: this(name, type, @null, @default) {
+			Length = length;
+		}
+
+		public Column(string name, string type, byte precision, int scale, bool @null, Default @default)
+			: this(name, type, @null, @default) {
+			Precision = precision;
+			Scale = scale;
+		}
 
 		private string IsNullableText {
 			get {
@@ -22,37 +41,16 @@ namespace model {
 
 		public string DefaultText {
 			get {
-				if (this.Default == null) return "";
-				return "\r\n      " + this.Default.Script();
+				if (Default == null) return "";
+				return "\r\n      " + Default.Script();
 			}
 		}
 
 		public string IdentityText {
 			get {
-				if (this.Identity == null) return "";
-				return "\r\n      " + this.Identity.Script();
+				if (Identity == null) return "";
+				return "\r\n      " + Identity.Script();
 			}
-		}
-
-		public Column() {
-
-		}
-
-		public Column(string name, string type, bool @null, Default @default) {
-			this.Name = name;
-			this.Type = type;
-			this.Default = @default;
-		}
-
-		public Column(string name, string type, int length, bool @null, Default @default)
-			: this(name, type, @null, @default) {
-			this.Length = length;
-		}
-
-		public Column(string name, string type, byte precision, int scale, bool @null, Default @default)
-			: this(name, type, @null, @default) {
-			this.Precision = precision;
-			this.Scale = scale;
 		}
 
 		public ColumnDiff Compare(Column c) {
@@ -103,19 +101,24 @@ namespace model {
 	}
 
 	public class ColumnDiff {
-		public ColumnDiff(Column target, Column source) {
-			this.Source = source;
-			this.Target = target;
-		}
 		public Column Source;
 		public Column Target;
+
+		public ColumnDiff(Column target, Column source) {
+			Source = source;
+			Target = target;
+		}
+
 		public bool IsDiff {
-			get { return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable || Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision || Source.Scale != Target.Scale; }
+			get {
+				return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable ||
+				       Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
+				       Source.Precision != Target.Precision || Source.Scale != Target.Scale;
+			}
 		}
 
 		public string Script() {
 			return Target.Script();
 		}
 	}
-
 }

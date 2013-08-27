@@ -1,28 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-namespace model {
+﻿namespace model {
 	public class Routine {
-		public string Schema;
+		public bool AnsiNull;
 		public string Name;
+		public bool QuotedId;
+		public string Schema;
 		public string Text;
 		public string Type;
-        public bool AnsiNull;
-        public bool QuotedId;
 
 		public Routine(string schema, string name) {
-			this.Schema = schema;
-			this.Name = name;
+			Schema = schema;
+			Name = name;
 		}
 
 		public string ScriptCreate() {
-            return string.Format(@"SET QUOTED_IDENTIFIER {0}
+			return string.Format(@"SET QUOTED_IDENTIFIER {0}
 GO
 SET ANSI_NULLS {1}
 GO
-{2}", (QuotedId ? "ON" : "OFF"), (AnsiNull ? "ON" : "OFF"), Text);                
+{2}", (QuotedId ? "ON" : "OFF"), (AnsiNull ? "ON" : "OFF"), Text);
 		}
 
 		public string ScriptDrop() {

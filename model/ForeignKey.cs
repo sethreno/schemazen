@@ -1,57 +1,56 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Text;
 
 namespace model {
 	public class ForeignKey {
-		public Table Table;
-		public string Name;
+		public bool Check;
 		public List<string> Columns = new List<string>();
-		public Table RefTable;
-		public List<string> RefColumns = new List<string>();
-		public string OnUpdate;
+		public string Name;
 		public string OnDelete;
-        public bool Check;
-
-        public string CheckText {
-            get {
-                return Check ? "CHECK" : "NOCHECK";
-            }
-        }
+		public string OnUpdate;
+		public List<string> RefColumns = new List<string>();
+		public Table RefTable;
+		public Table Table;
 
 		public ForeignKey(string name) {
-			this.Name = name;
+			Name = name;
 		}
 
 		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns)
 			: this(table, name, columns, refTable, refColumns, "", "") {
 		}
 
-		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns, string onUpdate, string onDelete) {
-			this.Table = table;
-			this.Name = name;
-			this.Columns = new List<string>(columns.Split(','));
-			this.RefTable = refTable;
-			this.RefColumns = new List<string>(refColumns.Split(','));
-			this.OnUpdate = onUpdate;
-			this.OnDelete = onDelete;
+		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns, string onUpdate,
+			string onDelete) {
+			Table = table;
+			Name = name;
+			Columns = new List<string>(columns.Split(','));
+			RefTable = refTable;
+			RefColumns = new List<string>(refColumns.Split(','));
+			OnUpdate = onUpdate;
+			OnDelete = onDelete;
+		}
+
+		public string CheckText {
+			get { return Check ? "CHECK" : "NOCHECK"; }
 		}
 
 		public string ScriptCreate() {
-			StringBuilder text = new StringBuilder();
-			text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH {2} ADD CONSTRAINT [{3}]\r\n", Table.Owner, Table.Name, CheckText, Name);
-			text.AppendFormat("   FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}])\r\n", string.Join("], [", Columns.ToArray()), RefTable.Owner, RefTable.Name, string.Join("], [", RefColumns.ToArray()));
+			var text = new StringBuilder();
+			text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH {2} ADD CONSTRAINT [{3}]\r\n", Table.Owner, Table.Name, CheckText,
+				Name);
+			text.AppendFormat("   FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}])\r\n", string.Join("], [", Columns.ToArray()),
+				RefTable.Owner, RefTable.Name, string.Join("], [", RefColumns.ToArray()));
 			if (!string.IsNullOrEmpty(OnUpdate)) {
 				text.AppendFormat("   ON UPDATE {0}\r\n", OnUpdate);
 			}
 			if (!string.IsNullOrEmpty(OnDelete)) {
 				text.AppendFormat("   ON DELETE {0}\r\n", OnDelete);
 			}
-            if (!Check) {
-                text.AppendFormat("   ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT [{2}]\r\n",
-                    Table.Owner, Table.Name, Name);
-            }
+			if (!Check) {
+				text.AppendFormat("   ALTER TABLE [{0}].[{1}] NOCHECK CONSTRAINT [{2}]\r\n",
+					Table.Owner, Table.Name, Name);
+			}
 			return text.ToString();
 		}
 
@@ -59,5 +58,4 @@ namespace model {
 			return string.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]\r\n", Table.Owner, Table.Name, Name);
 		}
 	}
-
 }

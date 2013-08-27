@@ -1,17 +1,17 @@
-﻿
-namespace model {
+﻿namespace model {
 	public class Identity {
-		public string Seed;
 		public string Increment;
+		public string Seed;
 
 		public Identity(string seed, string increment) {
-			this.Seed = seed;
-			this.Increment = increment;
+			Seed = seed;
+			Increment = increment;
 		}
-        public Identity(int seed, int increment) {
-            this.Seed = seed.ToString();
-            this.Increment = increment.ToString();
-        }
+
+		public Identity(int seed, int increment) {
+			Seed = seed.ToString();
+			Increment = increment.ToString();
+		}
 
 		public string Script() {
 			return string.Format("IDENTITY ({0},{1})", Seed, Increment);

@@ -1,12 +1,11 @@
-﻿
-namespace model {
+﻿namespace model {
 	public class Default {
 		public string Name;
 		public string Value;
 
 		public Default(string name, string value) {
-			this.Name = name;
-			this.Value = value;
+			Name = name;
+			Value = value;
 		}
 
 		public string Script() {

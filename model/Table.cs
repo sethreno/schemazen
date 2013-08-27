@@ -1,27 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Data;
 using System.Data.SqlClient;
+using System.Linq;
+using System.Text;
 
 namespace model {
-
 	public class Table {
-		public Table(string owner, string name) {
-			this.Owner = owner;
-			this.Name = name;
-		}
-		public string Owner;
-		public string Name;
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
+		public string Name;
+		public string Owner;
 
-		public Constraint FindConstraint(string name) {
-			foreach (Constraint c in Constraints) {
-				if (c.Name == name) return c;
-			}
-			return null;
+		public Table(string owner, string name) {
+			Owner = owner;
+			Name = name;
 		}
 
 		public Constraint PrimaryKey {
@@ -33,8 +26,15 @@ namespace model {
 			}
 		}
 
+		public Constraint FindConstraint(string name) {
+			foreach (Constraint c in Constraints) {
+				if (c.Name == name) return c;
+			}
+			return null;
+		}
+
 		public TableDiff Compare(Table t) {
-			TableDiff diff = new TableDiff();
+			var diff = new TableDiff();
 			diff.Owner = t.Owner;
 			diff.Name = t.Name;
 
@@ -43,7 +43,8 @@ namespace model {
 				Column c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
 					diff.ColumnsAdded.Add(c);
-				} else {
+				}
+				else {
 					//compare mutual columns
 					ColumnDiff cDiff = c.Compare(c2);
 					if (cDiff.IsDiff) {
@@ -64,7 +65,8 @@ namespace model {
 				Constraint c2 = t.FindConstraint(c.Name);
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
-				} else {
+				}
+				else {
 					if (c.Script() != c2.Script()) {
 						diff.ConstraintsChanged.Add(c);
 					}
@@ -81,7 +83,7 @@ namespace model {
 		}
 
 		public string ScriptCreate() {
-			StringBuilder text = new StringBuilder();
+			var text = new StringBuilder();
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
@@ -103,22 +105,22 @@ namespace model {
 		}
 
 		public string ExportData(string conn) {
-			StringBuilder data = new StringBuilder();
-			StringBuilder sql = new StringBuilder();
+			var data = new StringBuilder();
+			var sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (Column c in Columns.Items) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
 			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
-			using (SqlConnection cn = new SqlConnection(conn)) {
+			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
 					cm.CommandText = sql.ToString();
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							foreach (Column c in Columns.Items) {
-								data.AppendFormat("{0}\t", dr[c.Name].ToString());
+								data.AppendFormat("{0}\t", dr[c.Name]);
 							}
 							data.Remove(data.Length - 1, 1);
 							data.AppendLine();
@@ -131,11 +133,11 @@ namespace model {
 		}
 
 		public void ImportData(string conn, string data) {
-			DataTable dt = new DataTable();
+			var dt = new DataTable();
 			foreach (Column c in Columns.Items) {
 				dt.Columns.Add(new DataColumn(c.Name));
 			}
-			var lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
+			string[] lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
 			for (int i = 0; i < lines.Count(); i++) {
 				string line = lines[i];
 				DataRow row = dt.NewRow();
@@ -146,15 +148,15 @@ namespace model {
 				for (int j = 0; j < fields.Length; j++) {
 					try {
 						row[j] = ConvertType(Columns.Items[j].Type, fields[j]);
-					} catch (FormatException ex) {
-						throw new DataException(String.Format("{0} at column {1}",ex.Message, j + 1), i + 1);
 					}
-					
+					catch (FormatException ex) {
+						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i + 1);
+					}
 				}
 				dt.Rows.Add(row);
 			}
-			
-			SqlBulkCopy bulk = new SqlBulkCopy(conn, 
+
+			var bulk = new SqlBulkCopy(conn,
 				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
 			bulk.DestinationTableName = Name;
 			bulk.WriteToServer(dt);
@@ -170,9 +172,10 @@ namespace model {
 					return bool.Parse(val);
 				case "datetime":
 				case "smalldatetime":
-					return System.DateTime.Parse(val);
+					return DateTime.Parse(val);
 				case "int":
-					int.Parse(val); return val;
+					int.Parse(val);
+					return val;
 				default:
 					return val;
 			}
@@ -180,23 +183,25 @@ namespace model {
 	}
 
 	public class TableDiff {
-		public string Owner;
-		public string Name;
-
 		public List<Column> ColumnsAdded = new List<Column>();
-		public List<Column> ColumnsDroped = new List<Column>();
 		public List<ColumnDiff> ColumnsDiff = new List<ColumnDiff>();
+		public List<Column> ColumnsDroped = new List<Column>();
 
 		public List<Constraint> ConstraintsAdded = new List<Constraint>();
 		public List<Constraint> ConstraintsChanged = new List<Constraint>();
 		public List<Constraint> ConstraintsDeleted = new List<Constraint>();
+		public string Name;
+		public string Owner;
 
 		public bool IsDiff {
-			get { return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count + ConstraintsAdded.Count + ConstraintsChanged.Count + ConstraintsDeleted.Count > 0; }
+			get {
+				return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
+				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+			}
 		}
 
 		public string Script() {
-			StringBuilder text = new StringBuilder();
+			var text = new StringBuilder();
 
 			foreach (Column c in ColumnsAdded) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.Script());
