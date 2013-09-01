@@ -12,7 +12,7 @@ Valid commands include:
    create
    compare
 
-Type schemanator <command> help for information on a specific command.
+Type schemazen <command> help for information on a specific command.
 ";
 		}
 
