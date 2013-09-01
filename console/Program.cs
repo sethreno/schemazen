@@ -22,7 +22,12 @@ namespace console {
 				Console.Write("usage: schemazen " + cmd.GetUsageText());
 				return -1;
 			}
-			if (!cmd.Run()) {
+			try {
+				if (!cmd.Run()) {
+					return -1;
+				}
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
 				return -1;
 			}
 			return 0;
