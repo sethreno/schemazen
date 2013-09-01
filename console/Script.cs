@@ -14,9 +14,6 @@ namespace console {
 				return false;
 			}
 			source = Operand.Parse(args[1]);
-			if (!args[2].ToLower().StartsWith("dir:")) {
-				args[2] = "dir:" + args[2];
-			}
 			destination = Operand.Parse(args[2]);
 			data = DataArg.Parse(args);
 			foreach (string arg in args) {
