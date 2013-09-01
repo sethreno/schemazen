@@ -12,15 +12,9 @@ namespace console {
 Compares two databases.
 
 <source>                The connection strings to databases to compare. 
-<target>                Each should be prefixed with a type identifer. 
-                        Valid type identifiers include: cn:, cs:, & as:.
-                        cn: - connection string
-                        cs: - <conectionString> from machine.config
-                        as: - <appSetting> from machine.config
-              Examples:
-                cn:""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-                cs:devcn - connectionString in machine.config named 'devcn'
-                as:devcn - appSetting in machine.config named 'devcn'
+<target>                
+              Example:
+                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
 ";
 		}
 

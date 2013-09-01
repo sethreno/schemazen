@@ -14,9 +14,6 @@ namespace console {
 			if (args.Length < 3) {
 				return false;
 			}
-			if (!args[1].ToLower().StartsWith("dir:")) {
-				args[1] = "dir:" + args[1];
-			}
 			source = Operand.Parse(args[1]);
 			destination = Operand.Parse(args[2]);
 			data = DataArg.Parse(args);
@@ -32,32 +29,15 @@ namespace console {
 		}
 
 		public string GetUsageText() {
-			return @"create <source> <destination> [--data <tables>] [-d]
+			return @"create <source> <destination> [-d]
 
 Create the specified database from script
 
 <source>                Path to the directory where scripts are located.
 
 <destination>           The connection string to the database to create.
-                        Must be prefixed with a type identifer. Valid type
-                        identifiers include: cn:, cs:, as:
-                        cn: - connection string
-                        cs: - <conectionString> from machine.config
-                        as: - <appSetting> from machine.config                        
-              Examples:
-                cn:""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-                cs:devcn - connectionString in machine.config named 'devcn'
-                as:devcn - appSetting in machine.config named 'devcn'
-
---data                  A comma separated list of tables that contain
-                        lookup data. The data for these tables will be 
-                        imported from the corresponding text files in the
-                        data directory. Regular expressions can be used to
-                        match multiple tables with the same naming pattern.
-              Examples:
-                --data ^lookup
-                --data VehicleMake, VehicleModel
-                --data ^lookup, VehicleMake, VehicleModel
+              Example:
+                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
 
 -d                      Delete existing database without prompt.
 ";

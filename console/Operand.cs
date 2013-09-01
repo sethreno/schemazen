@@ -13,24 +13,13 @@ namespace console {
 		public static Operand Parse(string text) {
 			if (string.IsNullOrEmpty(text)) return null;
 			var obj = new Operand();
-			if (text.StartsWith("cn:")) {
+			if (text.Contains("=")) {
 				obj.OpType = OpType.Database;
-				obj.Value = text.Substring(3);
-			}
-			else if (text.StartsWith("as:")) {
-				obj.OpType = OpType.Database;
-				obj.Value = ConfigHelper.GetAppSetting(text.Substring(3));
-			}
-			else if (text.StartsWith("cs:")) {
-				obj.OpType = OpType.Database;
-				obj.Value = ConfigHelper.GetConnectionString(text.Substring(3));
-			}
-			else if (text.StartsWith("dir:")) {
-				obj.OpType = OpType.ScriptDir;
-				obj.Value = text.Substring(4);
+				obj.Value = text;
 			}
 			else {
-				return null;
+				obj.OpType = OpType.ScriptDir;
+				obj.Value = text;
 			}
 			return obj;
 		}

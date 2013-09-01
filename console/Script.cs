@@ -31,32 +31,15 @@ namespace console {
 		}
 
 		public string GetUsageText() {
-			return @"script <source> <destination> [--data <tables>] [-d]
+			return @"script <source> <destination> [-d]
 
 Generate scripts for the specified database.
 
 <source>                The connection string to the database to script.
-                        Must be prefixed with a type identifer. Valid type
-                        identifiers include: cn:, cs:, as:
-                        cn: - connection string
-                        cs: - <conectionString> from machine.config
-                        as: - <appSetting> from machine.config                        
-              Examples:
-                cn:""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-                cs:devcn - connectionString in machine.config named 'devcn'
-                as:devcn - appSetting in machine.config named 'devcn'
+              Example:
+                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
 
-<destination>           Path to the directory where scripts will be created                
-
---data                  A comma separated list of tables that contain
-                        lookup data. The data from these tables will be 
-                        exported to text files. Regular expressions can 
-                        be used to match multiple tables with the same 
-                        naming pattern.
-              Examples:
-                --data ^lookup
-                --data VehicleMake, VehicleModel
-                --data ^lookup, VehicleMake, VehicleModel
+<destination>           Path to the directory where scripts will be created
 
 -d                      Delete existing scripts without prompt.
 ";

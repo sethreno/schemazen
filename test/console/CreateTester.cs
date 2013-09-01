@@ -20,7 +20,7 @@ namespace test {
 			DBHelper.DropDb(cnStr.ToString());
 
 			var cmd = new Create();
-			string[] args = {"create", db.Dir, "cn:" + cnStr};
+			string[] args = {"create", db.Dir, cnStr.ToString()};
 			Assert.IsTrue(cmd.Parse(args));
 
 			var consoleOut = new StringWriter();
