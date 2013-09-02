@@ -8,6 +8,8 @@ using NUnit.Framework;
 namespace test {
 	[TestFixture]
 	internal class CreateTester {
+
+		/*
 		[Test]
 		public void TestRun() {
 			var db = new Database();
@@ -39,5 +41,6 @@ namespace test {
 			Assert.IsTrue(consoleOut.ToString().Contains("already exists do you want to drop it"));
 			Assert.IsTrue(consoleOut.ToString().Contains("Database created successfully"));
 		}
+		*/
 	}
 }

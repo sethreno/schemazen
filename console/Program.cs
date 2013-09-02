@@ -1,36 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using ManyConsole;
 
 namespace console {
 	internal class Program {
-		private static int Main(string[] args) {
-			ICommand cmd = new Default();
-			if (args.Length > 0) {
-				var commands = new Dictionary<string, ICommand>();
-				commands.Add("script", new Script());
-				commands.Add("create", new Create());
-				commands.Add("compare", new Compare());
-				if (commands.ContainsKey(args[0].ToLower())) {
-					cmd = commands[args[0].ToLower()];
-				}
-			}
 
-			if (!cmd.Parse(args)) {
-				Console.WriteLine("schemazen");
-				Console.WriteLine("Copyright (c) Seth Reno. All rights reserved.");
-				Console.WriteLine();
-				Console.Write("usage: schemazen " + cmd.GetUsageText());
-				return -1;
-			}
+		private static int Main(string[] args) {
 			try {
-				if (!cmd.Run()) {
-					return -1;
-				}
+				return ConsoleCommandDispatcher.DispatchCommand(
+				  GetCommands(), args, Console.Out);
 			} catch (Exception ex) {
 				Console.WriteLine(ex.Message);
+				Console.WriteLine(ex.StackTrace);
 				return -1;
 			}
-			return 0;
+		}
+
+		static IEnumerable<ConsoleCommand> GetCommands() {
+			return ConsoleCommandDispatcher.FindCommandsInSameAssemblyAs(typeof(Program));
 		}
 	}
 }

@@ -1,50 +1,42 @@
 ﻿using System;
+using ManyConsole;
 using model;
+using NDesk.Options;
 
 namespace console {
-	internal class Compare : ICommand {
-		private Operand source;
-		private Operand target;
+	internal class Compare : ConsoleCommand {
 
-		public string GetUsageText() {
-			return @"compare <source> <target>
+		private string _source;
+		private string _target;
 
-Compares two databases.
-
-<source>                The connection strings to databases to compare. 
-<target>                
-              Example:
-                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-";
+		public Compare() {
+			IsCommand("Compare", "Compare two databases.");
+			Options = new OptionSet();
+			SkipsCommandSummaryBeforeRunning();
+			HasRequiredOption(
+				"s|source=",
+				"Connection string to a database to compare.",
+				o => _source = o);
+			HasRequiredOption(
+				"t|target=",
+				"Connection string to a database to compare.",
+				o => _target = o);
 		}
 
-		public bool Parse(string[] args) {
-			if (args.Length < 3) {
-				return false;
-			}
-			source = Operand.Parse(args[1]);
-			target = Operand.Parse(args[2]);
-
-			if (source == null || target == null) return false;
-			if (source.OpType != OpType.Database) return false;
-			if (target.OpType != OpType.Database) return false;
-			return true;
-		}
-
-		public Boolean Run() {
+		public override int Run(string[] remainingArguments) {
 			var sourceDb = new Database();
 			var targetDb = new Database();
-			sourceDb.Connection = source.Value;
-			targetDb.Connection = target.Value;
+			sourceDb.Connection = _source;
+			targetDb.Connection = _target;
 			sourceDb.Load();
 			targetDb.Load();
 			DatabaseDiff diff = sourceDb.Compare(targetDb);
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");
-				return false;
+				return 1;
 			}
 			Console.WriteLine("Databases are identical.");
-			return true;
+			return 0;
 		}
 	}
 }

@@ -1,90 +1,60 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
+using ManyConsole;
 using model;
+using NDesk.Options;
 
 namespace console {
-	public class Create : ICommand {
-		private DataArg data;
-		private bool delete;
-		private Operand destination;
-		private Operand source;
+	public class Create : ConsoleCommand {
 
-		public bool Parse(string[] args) {
-			if (args.Length < 3) {
-				return false;
-			}
-			source = Operand.Parse(args[1]);
-			destination = Operand.Parse(args[2]);
-			data = DataArg.Parse(args);
-			foreach (string arg in args) {
-				if (arg.ToLower() == "-d") delete = true;
-			}
+		private string _conn;
+		private string _dir;
+		private bool _overwrite;
 
-			if (source == null || destination == null) return false;
-			if (source.OpType != OpType.ScriptDir) return false;
-			if (destination.OpType != OpType.Database) return false;
-
-			return true;
+		public Create() {
+			IsCommand("Create", "Create the specified database from scripts.");
+			Options = new OptionSet();
+			SkipsCommandSummaryBeforeRunning();
+			HasRequiredOption(
+				"c|conn=",
+				"Connection string to a database to create.",
+				o => _conn = o);
+			HasRequiredOption(
+				"d|dir=",
+				"Path to the output directory where scripts will be created.",
+				o => _dir = o);
+			HasOption(
+				"o|overwrite=",
+				"Overwrite existing database without prompt.",
+				o => _overwrite = o != null);
 		}
 
-		public string GetUsageText() {
-			return @"create <source> <destination> [-d]
-
-Create the specified database from script
-
-<source>                Path to the directory where scripts are located.
-
-<destination>           The connection string to the database to create.
-              Example:
-                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-
--d                      Delete existing database without prompt.
-";
-		}
-
-		public bool Run() {
-			if (String.IsNullOrEmpty(source.Value)) {
-				Console.WriteLine("You must specify a snapshot dir with the create command.");
-				return false;
-			}
-			if (!Directory.Exists(source.Value)) {
-				Console.WriteLine("Snapshot dir {0} does not exist.", source.Value);
-				return false;
+		public override int Run(string[] remainingArguments) {
+			if (!Directory.Exists(_dir)){
+				Console.WriteLine("Snapshot dir {0} does not exist.", _dir);
+				return 1;
 			}
 
-			if (DBHelper.DbExists(destination.Value) && !delete) {
-				var cnBuilder = new SqlConnectionStringBuilder(destination.Value);
+			if (DBHelper.DbExists(_conn) && !_overwrite) {
+				var cnBuilder = new SqlConnectionStringBuilder(_conn);
 				Console.WriteLine("{0} {1} already exists do you want to drop it? (Y/N)",
 					cnBuilder.DataSource, cnBuilder.InitialCatalog);
 
-				char answer = char.ToUpper(Convert.ToChar(Console.Read()));
+				var answer = char.ToUpper(Convert.ToChar(Console.Read()));
 				while (answer != 'Y' && answer != 'N') {
 					answer = char.ToUpper(Convert.ToChar(Console.Read()));
 				}
 				if (answer == 'N') {
 					Console.WriteLine("create command cancelled.");
-					return false;
+					return 1;
 				}
-				delete = true;
+				_overwrite = true;
 			}
 
-			var db = new Database();
-			db.Connection = destination.Value;
-			db.Dir = source.Value;
-			if (data != null) {
-				foreach (string pattern in data.Value.Split(',')) {
-					if (string.IsNullOrEmpty(pattern)) {
-						continue;
-					}
-					foreach (Table t in db.FindTablesRegEx(pattern)) {
-						db.DataTables.Add(t);
-					}
-				}
-			}
-
+			var db = new Database() {Connection = _conn, Dir = _dir};
 			try {
-				db.CreateFromDir(delete);
+				db.CreateFromDir(_overwrite);
 				Console.WriteLine("Database created successfully.");
 			}
 			catch (BatchSqlFileException ex) {
@@ -97,15 +67,10 @@ Create the specified database from script
 			catch (SqlFileException ex) {
 				Console.Write(@"A SQL error occurred while executing scripts.
 {0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
-				return false;
-			}
-			catch (DataFileException ex) {
-				Console.Write(@"A SQL error occurred while loading data.
-{0}(Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
-				return false;
+				return -1;
 			}
 
-			return true;
+			return 0;
 		}
 	}
 }

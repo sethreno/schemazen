@@ -1,79 +1,52 @@
 ﻿using System;
 using System.IO;
+using ManyConsole;
 using model;
+using NDesk.Options;
 
 namespace console {
-	public class Script : ICommand {
-		private DataArg data;
-		private bool delete;
-		private Operand destination;
-		private Operand source;
+	public class Script : ConsoleCommand {
+		private string _conn;
+		private string _dir;
+		private bool _overwrite;
 
-		public bool Parse(string[] args) {
-			if (args.Length < 3) {
-				return false;
-			}
-			source = Operand.Parse(args[1]);
-			destination = Operand.Parse(args[2]);
-			data = DataArg.Parse(args);
-			foreach (string arg in args) {
-				if (arg.ToLower() == "-d") delete = true;
-			}
-
-			if (source == null || destination == null) return false;
-			if (source.OpType != OpType.Database) return false;
-			if (destination.OpType != OpType.ScriptDir) return false;
-
-			return true;
+		public Script() {
+			IsCommand("Script", "Generate scripts for the specified database.");
+			Options = new OptionSet();
+			SkipsCommandSummaryBeforeRunning();
+			HasRequiredOption(
+			  "c|conn=",
+			  "Connection string to a database to script.",
+			  o => _conn = o);
+			HasRequiredOption(
+			  "d|dir=",
+			  "Path to the output directory where scripts will be created.",
+			  o => _dir = o);
+			HasOption(
+			  "o|overwrite=",
+			  "Overwrite existing scripts without prompt.",
+			  o => _overwrite = o != null);
 		}
 
-		public string GetUsageText() {
-			return @"script <source> <destination> [-d]
-
-Generate scripts for the specified database.
-
-<source>                The connection string to the database to script.
-              Example:
-                ""server=localhost;database=DEVDB;Trusted_Connection=yes;""
-
-<destination>           Path to the directory where scripts will be created
-
--d                      Delete existing scripts without prompt.
-";
-		}
-
-		public bool Run() {
+		public override int Run(string[] args) {
 			// load the model
-			var db = new Database();
-			db.Connection = source.Value;
-			db.Dir = destination.Value;
+			var db = new Database() {Connection = _conn, Dir = _dir};
 			db.Load();
 
 			// generate scripts
-			if (!delete && Directory.Exists(destination.Value)) {
-				Console.Write("{0} already exists do you want to replace it? (Y/N)", destination.Value);
-				ConsoleKeyInfo key = Console.ReadKey();
+			if (!_overwrite && Directory.Exists(db.Dir)) {
+				Console.Write("{0} already exists do you want to replace it? (Y/N)", db.Dir);
+				var key = Console.ReadKey();
 				if (key.Key != ConsoleKey.Y) {
-					return false;
+					return 1;
 				}
 				Console.WriteLine();
 			}
 
-			if (data != null) {
-				foreach (string pattern in data.Value.Split(',')) {
-					if (string.IsNullOrEmpty(pattern)) {
-						continue;
-					}
-					foreach (Table t in db.FindTablesRegEx(pattern)) {
-						db.DataTables.Add(t);
-					}
-				}
-			}
+			db.ScriptToDir(_overwrite);
 
-			db.ScriptToDir(delete);
-
-			Console.WriteLine("Snapshot successfully created at " + destination.Value);
-			return true;
+			Console.WriteLine("Snapshot successfully created at " + db.Dir);
+			return 0;
 		}
 	}
 }
