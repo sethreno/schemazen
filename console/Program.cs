@@ -17,7 +17,9 @@ namespace console {
 		}
 
 		static IEnumerable<ConsoleCommand> GetCommands() {
-			return ConsoleCommandDispatcher.FindCommandsInSameAssemblyAs(typeof(Program));
+			return new List<ConsoleCommand>() {
+				new Script(), new Create(), new Compare()
+			};
 		}
 	}
 }

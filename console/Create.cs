@@ -1,45 +1,23 @@
 ﻿using System;
-using System.Data.SqlClient;
 using System.IO;
-using ManyConsole;
 using model;
-using NDesk.Options;
 
 namespace console {
-	public class Create : ConsoleCommand {
+	public class Create : DbCommand {
 
-		private string _conn;
-		private string _dir;
-		private bool _overwrite;
-
-		public Create() {
-			IsCommand("Create", "Create the specified database from scripts.");
-			Options = new OptionSet();
-			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption(
-				"c|conn=",
-				"Connection string to a database to create.",
-				o => _conn = o);
-			HasRequiredOption(
-				"d|dir=",
-				"Path to the output directory where scripts will be created.",
-				o => _dir = o);
-			HasOption(
-				"o|overwrite=",
-				"Overwrite existing database without prompt.",
-				o => _overwrite = o != null);
-		}
+		public Create() : base(
+		  "Create", "Create the specified database from scripts.") { }
 
 		public override int Run(string[] remainingArguments) {
-			if (!Directory.Exists(_dir)){
-				Console.WriteLine("Snapshot dir {0} does not exist.", _dir);
+			var db = CreateDatabase();
+			if (!Directory.Exists(db.Dir)){
+				Console.WriteLine("Snapshot dir {0} does not exist.", db.Dir);
 				return 1;
 			}
 
-			if (DBHelper.DbExists(_conn) && !_overwrite) {
-				var cnBuilder = new SqlConnectionStringBuilder(_conn);
+			if (DBHelper.DbExists(db.Connection) && !Overwrite) {
 				Console.WriteLine("{0} {1} already exists do you want to drop it? (Y/N)",
-					cnBuilder.DataSource, cnBuilder.InitialCatalog);
+					Server, DbName); 
 
 				var answer = char.ToUpper(Convert.ToChar(Console.Read()));
 				while (answer != 'Y' && answer != 'N') {
@@ -49,12 +27,11 @@ namespace console {
 					Console.WriteLine("create command cancelled.");
 					return 1;
 				}
-				_overwrite = true;
+				Overwrite = true;
 			}
 
-			var db = new Database() {Connection = _conn, Dir = _dir};
 			try {
-				db.CreateFromDir(_overwrite);
+				db.CreateFromDir(Overwrite);
 				Console.WriteLine("Database created successfully.");
 			}
 			catch (BatchSqlFileException ex) {
