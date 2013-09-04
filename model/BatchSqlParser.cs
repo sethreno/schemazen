@@ -29,12 +29,12 @@ namespace model {
 
 		private static bool IsGO(char p3, char p2, char p, char c, char n, char n2) {
 			/* valid GO is preceded by whitespace or the end of a multi-line
-             * comment, and followed by whitespace or the beginning of a single
-             * line or multi line comment. */
+			 * comment, and followed by whitespace or the beginning of a single
+			 * line or multi line comment. */
 			if (char.ToUpper(p) != 'G' || char.ToUpper(c) != 'O') return false;
 			if (!IsWhitespace(p2) && !IsEndMultiLineComment(p3, p2)) return false;
 			if (!IsWhitespace(n) && !IsOneLineComment(n, n2)
-			    && !IsMultiLineComment(n, n2)) return false;
+				&& !IsMultiLineComment(n, n2)) return false;
 
 			return true;
 		}
@@ -42,13 +42,13 @@ namespace model {
 		public static string[] SplitBatch(string batchSql) {
 			var scripts = new List<string>();
 			var state = State.Searching;
-			bool foundGO = false;
-			int commentDepth = 0;
+			var foundGO = false;
+			var commentDepth = 0;
 			// previous 3, current, & next 2 chars
 			char p3 = ' ', p2 = ' ', p = ' ', c = ' ', n = ' ', n2 = ' ';
-			int scriptStartIndex = 0;
+			var scriptStartIndex = 0;
 
-			for (int i = 0; i < batchSql.Length; i++) {
+			for (var i = 0; i < batchSql.Length; i++) {
 				// previous 3, current, & next 2 chars
 				// out of bounds chars are treated as whitespace
 				p3 = i > 2 ? batchSql[i - 3] : ' ';
@@ -92,23 +92,22 @@ namespace model {
 				if (foundGO) {
 					// store the current script and continue searching
 					// set length -1 so 'G' is not included in the script
-					int length = i - scriptStartIndex - 1;
+					var length = i - scriptStartIndex - 1;
 					scripts.Add(batchSql.Substring(scriptStartIndex, length));
 					// start the next script after the 'O' in "GO"
 					scriptStartIndex = i + 1;
 					foundGO = false;
-				}
-				else if (i == batchSql.Length - 1) {
+				} else if (i == batchSql.Length - 1) {
 					// end of batch
 					// set lenght +1 to include the current char
-					int length = i - scriptStartIndex + 1;
+					var length = i - scriptStartIndex + 1;
 					scripts.Add(batchSql.Substring(scriptStartIndex, length));
 				}
 			}
 
 			// return scripts that contain non-whitespace
 			var scriptsOut = new List<string>();
-			foreach (string s in scripts) {
+			foreach (var s in scripts) {
 				if (Regex.Match(s, "\\S", RegexOptions.Multiline).Success) {
 					scriptsOut.Add(s);
 				}
