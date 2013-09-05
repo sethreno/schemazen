@@ -10,7 +10,7 @@ namespace model {
 		InQuotes
 	}
 
-	internal class BatchSqlParser {
+	public class BatchSqlParser {
 		private static bool IsWhitespace(char c) {
 			return Regex.Match(c.ToString(), "\\s", RegexOptions.Multiline).Success;
 		}

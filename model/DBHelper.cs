@@ -21,7 +21,7 @@ namespace model {
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
-					foreach (string script in SplitBatchSql(sql)) {
+					foreach (string script in BatchSqlParser.SplitBatch(sql)) {
 						if (EchoSql) Console.WriteLine(script);
 						cm.CommandText = script;
 						try {
@@ -36,10 +36,6 @@ namespace model {
 					}
 				}
 			}
-		}
-
-		public static string[] SplitBatchSql(string batchSql) {
-			return BatchSqlParser.SplitBatch(batchSql);
 		}
 
 		public static void DropDb(string conn) {

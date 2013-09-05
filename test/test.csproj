@@ -90,7 +90,7 @@
     <Compile Include="console\CreateTester.cs" />
     <Compile Include="console\ScriptTester.cs" />
     <Compile Include="DatabaseTester.cs" />
-    <Compile Include="DBHelperTester.cs" />
+    <Compile Include="BatchSqlParserTester.cs" />
     <Compile Include="ForeignKeyTester.cs" />
     <Compile Include="FunctionTester.cs" />
     <Compile Include="ProcTester.cs" />
