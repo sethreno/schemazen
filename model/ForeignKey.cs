@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text;
 
 namespace model {
@@ -35,7 +36,20 @@ namespace model {
 			get { return Check ? "CHECK" : "NOCHECK"; }
 		}
 
+		private void AssertArgNotNull(object arg, string argName) {
+			if (arg == null) {
+				throw new ArgumentNullException(String.Format(
+					"Unable to Script FK {0}. {1} must not be null.",
+					Name, argName));
+			}
+		}
+
 		public string ScriptCreate() {
+			AssertArgNotNull(Table, "Table");
+			AssertArgNotNull(Columns, "Columns");
+			AssertArgNotNull(RefTable, "RefTable");
+			AssertArgNotNull(RefColumns, "RefColumns");
+
 			var text = new StringBuilder();
 			text.AppendFormat("ALTER TABLE [{0}].[{1}] WITH {2} ADD CONSTRAINT [{3}]\r\n", Table.Owner, Table.Name, CheckText,
 				Name);
