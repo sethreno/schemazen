@@ -387,26 +387,21 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 
 					//get foreign key columns and ref table
 					cm.CommandText = @"
-SELECT  
-     KCU1.CONSTRAINT_NAME AS CONSTRAINT_NAME 
-    ,KCU1.COLUMN_NAME AS COLUMN_NAME 
-    ,KCU1.ORDINAL_POSITION AS FK_ORDINAL_POSITION 
-    ,KCU2.TABLE_NAME AS REF_TABLE_NAME 
-    ,KCU2.COLUMN_NAME AS REF_COLUMN_NAME 
-FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS AS RC 
-
-INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU1 
-    ON KCU1.CONSTRAINT_CATALOG = RC.CONSTRAINT_CATALOG  
-    AND KCU1.CONSTRAINT_SCHEMA = RC.CONSTRAINT_SCHEMA 
-    AND KCU1.CONSTRAINT_NAME = RC.CONSTRAINT_NAME 
-
-INNER JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS KCU2 
-    ON KCU2.CONSTRAINT_CATALOG = RC.UNIQUE_CONSTRAINT_CATALOG  
-    AND KCU2.CONSTRAINT_SCHEMA = RC.UNIQUE_CONSTRAINT_SCHEMA 
-    AND KCU2.CONSTRAINT_NAME = RC.UNIQUE_CONSTRAINT_NAME 
-    AND KCU2.ORDINAL_POSITION = KCU1.ORDINAL_POSITION
-
-ORDER BY CONSTRAINT_NAME, FK_ORDINAL_POSITION
+select
+	fk.name as CONSTRAINT_NAME,
+	c1.name as COLUMN_NAME,
+	OBJECT_NAME(fk.referenced_object_id) as REF_TABLE_NAME,
+	c2.name as REF_COLUMN_NAME
+from sys.foreign_keys fk
+inner join sys.foreign_key_columns fkc
+	on fkc.constraint_object_id = fk.object_id
+inner join sys.columns c1
+	on fkc.parent_column_id = c1.column_id
+	and fkc.parent_object_id = c1.object_id
+inner join sys.columns c2
+	on fkc.referenced_column_id = c2.column_id
+	and fkc.referenced_object_id = c2.object_id
+order by fk.name
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
