@@ -79,6 +79,7 @@ namespace test {
 		[Test]
 		public void TestCopy() {
 			foreach (string script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
+				Console.WriteLine("Testing {0}", script);
 				TestCopySchema(script);
 			}
 		}
