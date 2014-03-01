@@ -74,6 +74,7 @@ namespace model {
 				case "smallmoney":
 				case "sql_variant":
 				case "text":
+				case "time":
 				case "timestamp":
 				case "tinyint":
 				case "uniqueidentifier":
