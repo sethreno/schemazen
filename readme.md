@@ -1,7 +1,7 @@
-Schemazen - Script and create SQL Server objects quickly
+Schema Zen - Script and create SQL Server objects quickly
 --------------------------------------------------------
 
-Schemazen has two commands:
+Schema Zen has two commands:
 
 **script**
 
