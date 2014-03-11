@@ -63,6 +63,8 @@ namespace model {
 				case "bit":
 				case "date":
 				case "datetime":
+				case "datetime2":
+				case "datetimeoffset":
 				case "float":
 				case "image":
 				case "int":
