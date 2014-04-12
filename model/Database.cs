@@ -106,7 +106,7 @@ namespace model {
 
 		#endregion
 
-		private static readonly string[] dirs = {"tables", "foreign_keys", "functions", "procs", "triggers"};
+		private static readonly string[] dirs = {"tables", "foreign_keys", "functions", "procs", "triggers", "views"};
 
 		private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
@@ -450,6 +450,9 @@ order by fk.name
 								case "SQL_SCALAR_FUNCTION":
 									r.Type = "FUNCTION";
 									break;
+								case "VIEW":
+									r.Type = "VIEW";
+									break;
 							}
 						}
 					}
@@ -614,6 +617,9 @@ order by fk.name
 				}
 				if (r.Type == "FUNCTION") {
 					dir = "functions";
+				}
+				if (r.Type == "VIEW") {
+					dir = "views";
 				}
 				File.WriteAllText(
 					String.Format("{0}/{1}/{2}.sql", Dir, dir, r.Name),
