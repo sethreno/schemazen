@@ -56,6 +56,7 @@ namespace model {
 		public List<DbProp> Props = new List<DbProp>();
 		public List<Routine> Routines = new List<Routine>();
 		public List<Table> Tables = new List<Table>();
+		public List<Schema> Schemas = new List<Schema>();
 
 		public DbProp FindProp(string name) {
 			foreach (DbProp p in Props) {
@@ -64,9 +65,9 @@ namespace model {
 			return null;
 		}
 
-		public Table FindTable(string name) {
+		public Table FindTable(string name, string owner) {
 			foreach (Table t in Tables) {
-				if (t.Name == name) return t;
+				if (t.Name == name && t.Owner == owner) return t;
 			}
 			return null;
 		}
@@ -87,9 +88,9 @@ namespace model {
 			return null;
 		}
 
-		public Routine FindRoutine(string name) {
+		public Routine FindRoutine(string name, string schema) {
 			foreach (Routine r in Routines) {
-				if (r.Name == name) return r;
+				if (r.Name == name && r.Schema == schema) return r;
 			}
 			return null;
 		}
@@ -206,6 +207,23 @@ where name = @dbname
 						}
 					}
 
+					//get schemas
+					cm.CommandText = @"
+select s.name as schemaName, p.name as principalName
+	from sys.schemas s
+	inner join sys.database_principals p on s.principal_id = p.principal_id
+	where s.schema_id < 16384
+	and s.name not in ('dbo','guest','sys','INFORMATION_SCHEMA')
+	order by schema_id
+";
+					using (SqlDataReader dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							Schemas.Add(new Schema((string)dr["schemaName"], (string)dr["principalName"]));
+						}
+					}
+
 
 					//get tables
 					cm.CommandText = @"
@@ -223,6 +241,7 @@ where name = @dbname
 					//get columns
 					cm.CommandText = @"
 					select 
+						t.TABLE_SCHEMA,
 						c.TABLE_NAME,
 						c.COLUMN_NAME,
 						c.DATA_TYPE,
@@ -261,31 +280,33 @@ where name = @dbname
 									break;
 							}
 
-							FindTable((string) dr["TABLE_NAME"]).Columns.Add(c);
+							FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]).Columns.Add(c);
 						}
 					}
 
 					//get column identities
 					cm.CommandText = @"
 					select 
+						s.name as TABLE_SCHEMA,
 						t.name as TABLE_NAME, 
 						c.name AS COLUMN_NAME,
 						i.SEED_VALUE, i.INCREMENT_VALUE
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.identity_columns i on i.object_id = c.object_id
-							and i.column_id = c.column_id";
+							and i.column_id = c.column_id
+						inner join sys.schemas s on s.schema_id = t.schema_id ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							try {
-								Table t = FindTable((string) dr["TABLE_NAME"]);
+								Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 								Column c = t.Columns.Find((string) dr["COLUMN_NAME"]);
 								string seed = dr["SEED_VALUE"].ToString();
 								string increment = dr["INCREMENT_VALUE"].ToString();
 								c.Identity = new Identity(seed, increment);
 							}
 							catch (Exception ex) {
-								throw new ApplicationException(string.Format("{0} : {1}", dr["TABLE_NAME"], ex.Message), ex);
+								throw new ApplicationException(string.Format("{0}.{1} : {2}", dr["TABLE_SCHEMA"], dr["TABLE_NAME"], ex.Message), ex);
 							}
 						}
 					}
@@ -293,6 +314,7 @@ where name = @dbname
 					//get column defaults
 					cm.CommandText = @"
 					select 
+						s.name as TABLE_SCHEMA,
 						t.name as TABLE_NAME, 
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
@@ -300,10 +322,11 @@ where name = @dbname
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
-							and d.parent_object_id = c.object_id";
+							and d.parent_object_id = c.object_id
+						inner join sys.schemas s on s.schema_id = t.schema_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							Table t = FindTable((string) dr["TABLE_NAME"]);
+							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 							t.Columns.Find((string) dr["COLUMN_NAME"]).Default =
 								new Default((string) dr["DEFAULT_NAME"], (string) dr["DEFAULT_VALUE"]);
 						}
@@ -312,6 +335,7 @@ where name = @dbname
 					//get constraints & indexes
 					cm.CommandText = @"
 					select 
+						s.name as schemaName,
 						t.name as tableName, 
 						i.name as indexName, 
 						c.name as columnName,
@@ -326,10 +350,11 @@ where name = @dbname
 							and ic.index_id = i.index_id
 						inner join sys.columns c on c.object_id = t.object_id
 							and c.column_id = ic.column_id
-					order by t.name, i.name, ic.key_ordinal, ic.index_column_id";
+						inner join sys.schemas s on s.schema_id = t.schema_id
+					order by s.name, t.name, i.name, ic.key_ordinal, ic.index_column_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							Table t = FindTable((string) dr["tableName"]);
+							Table t = FindTable((string)dr["tableName"], (string)dr["schemaName"]);
 							Constraint c = t.FindConstraint((string) dr["indexName"]);
 							if (c == null) {
 								c = new Constraint((string) dr["indexName"], "", "");
@@ -354,13 +379,14 @@ where name = @dbname
 					//get foreign keys
 					cm.CommandText = @"
 					select 
+						TABLE_SCHEMA,
 						TABLE_NAME, 
-						CONSTRAINT_NAME 
+						CONSTRAINT_NAME, * 
 					from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
 					where CONSTRAINT_TYPE = 'FOREIGN KEY'";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							Table t = FindTable((string) dr["TABLE_NAME"]);
+							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 							var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]);
 							fk.Table = t;
 							ForeignKeys.Add(fk);
@@ -390,6 +416,7 @@ from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 select
 	fk.name as CONSTRAINT_NAME,
 	c1.name as COLUMN_NAME,
+	OBJECT_SCHEMA_NAME(fk.referenced_object_id) as REF_TABLE_SCHEMA,
 	OBJECT_NAME(fk.referenced_object_id) as REF_TABLE_NAME,
 	c2.name as REF_COLUMN_NAME
 from sys.foreign_keys fk
@@ -412,7 +439,7 @@ order by fk.name
 							fk.Columns.Add((string) dr["COLUMN_NAME"]);
 							fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
 							if (fk.RefTable == null) {
-								fk.RefTable = FindTable((string) dr["REF_TABLE_NAME"]);
+								fk.RefTable = FindTable((string)dr["REF_TABLE_NAME"], (string)dr["REF_TABLE_SCHEMA"]);
 							}
 						}
 					}
@@ -473,7 +500,7 @@ order by fk.name
 
 			//get tables added and changed
 			foreach (Table t in Tables) {
-				Table t2 = db.FindTable(t.Name);
+				Table t2 = db.FindTable(t.Name, t.Owner);
 				if (t2 == null) {
 					diff.TablesAdded.Add(t);
 				}
@@ -487,14 +514,14 @@ order by fk.name
 			}
 			//get deleted tables
 			foreach (Table t in db.Tables) {
-				if (FindTable(t.Name) == null) {
+				if (FindTable(t.Name, t.Owner) == null) {
 					diff.TablesDeleted.Add(t);
 				}
 			}
 
 			//get procs added and changed
 			foreach (Routine r in Routines) {
-				Routine r2 = db.FindRoutine(r.Name);
+				Routine r2 = db.FindRoutine(r.Name, r.Schema);
 				if (r2 == null) {
 					diff.RoutinesAdded.Add(r);
 				}
@@ -507,7 +534,7 @@ order by fk.name
 			}
 			//get procs deleted
 			foreach (Routine r in db.Routines) {
-				if (FindRoutine(r.Name) == null) {
+				if (FindRoutine(r.Name, r.Schema) == null) {
 					diff.RoutinesDeleted.Add(r);
 				}
 			}
@@ -547,6 +574,12 @@ order by fk.name
 
 			if (Props.Count > 0) {
 				text.Append(ScriptPropList(Props));
+				text.AppendLine("GO");
+				text.AppendLine();
+			}
+
+			if (Schemas.Count > 0) {
+				text.Append(ScriptSchemas(Schemas));
 				text.AppendLine("GO");
 				text.AppendLine();
 			}
@@ -596,16 +629,26 @@ order by fk.name
 			File.WriteAllText(string.Format("{0}/props.sql", Dir),
 				text.ToString());
 
+			if (Schemas.Count > 0) {
+				text = new StringBuilder();
+				text.Append(ScriptSchemas(Schemas));
+				text.AppendLine("GO");
+				text.AppendLine();
+				File.WriteAllText(string.Format("{0}/schemas.sql", Dir),
+					text.ToString());
+
+			}
+
 			foreach (Table t in Tables) {
 				File.WriteAllText(
-					String.Format("{0}/tables/{1}.sql", Dir, t.Name),
+					String.Format("{0}/tables/[{2}].[{1}].sql", Dir, t.Name, t.Owner),
 					t.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
 
 			foreach (ForeignKey fk in ForeignKeys) {
 				File.AppendAllText(
-					String.Format("{0}/foreign_keys/{1}.sql", Dir, fk.Table.Name),
+					String.Format("{0}/foreign_keys/[{2}].[{1}].sql", Dir, fk.Table.Name, fk.Table.Owner),
 					fk.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -622,7 +665,7 @@ order by fk.name
 					dir = "views";
 				}
 				File.WriteAllText(
-					String.Format("{0}/{1}/{2}.sql", Dir, dir, r.Name),
+					String.Format("{0}/{1}/[{3}].[{2}].sql", Dir, dir, r.Name, r.Schema),
 					r.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -636,7 +679,7 @@ order by fk.name
 				Directory.CreateDirectory(dataDir);
 			}
 			foreach (Table t in DataTables) {
-				File.WriteAllText(dataDir + "/" + t.Name, t.ExportData(Connection));
+				File.WriteAllText(dataDir + "/" + t.Owner + "." + t.Name, t.ExportData(Connection));
 			}
 		}
 
@@ -646,16 +689,24 @@ order by fk.name
 			if (!Directory.Exists(dataDir)) {
 				return;
 			}
+			Regex reFI = new Regex(@"\[(?<schema>[^\]]+)\]\.\[(?<objectname>[^\]]+)\]\.sql",RegexOptions.IgnoreCase);
 			foreach (string f in Directory.GetFiles(dataDir)) {
-				Table t = FindTable(f.Replace(String.Concat(dataDir, "\\"), ""));
+				FileInfo fi = new FileInfo(f);
+				Match m = reFI.Match(fi.Name);
+				if (!m.Success)
+				{
+					throw new Exception(String.Format("File '{0}' does not match the expected naming pattern '[schema].[objectname].sql' (in folder '{1}')", 
+						fi.Name, fi.DirectoryName));
+				}
+				Table t = FindTable(m.Groups["schema"].Value, m.Groups["objectname"].Value);
 				if (t == null) {
 					continue;
 				}
 				try {
-					t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Name));
+					t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Owner + "." + t.Name));
 				}
 				catch (DataException ex) {
-					throw new DataFileException(ex.Message, f, ex.LineNumber);
+					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				}
 			}
 		}
@@ -681,6 +732,18 @@ order by fk.name
 				// COLLATE can cause connection to be reset
 				// so clear the pool so we get a new connection
 				DBHelper.ClearPool(Connection);
+			}
+
+			if (File.Exists(Dir + "/schemas.sql"))
+			{
+				try
+				{
+					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
+				}
+				catch (SqlBatchException ex)
+				{
+					throw new SqlFileException(Dir + "/schemas.sql", ex);
+				}
 			}
 
 			// create db objects
@@ -768,6 +831,23 @@ order by fk.name
 				if (!string.IsNullOrEmpty(p.Script())) {
 					text.AppendLine(p.Script());
 				}
+			}
+			return text.ToString();
+		}
+
+		public static string ScriptSchemas(IList<Schema> schemas)
+		{
+			var text = new StringBuilder();
+			foreach (Schema s in schemas)
+			{
+				string schemaName = s.Name.Replace("'", "''");
+				string owner = s.Owner.Replace("'", "''");
+				text.AppendFormat(@"
+if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
+	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
+	exec sp_executesql N'create schema [{0}] authorization [{1}]'
+end
+", schemaName, owner);
 			}
 			return text.ToString();
 		}

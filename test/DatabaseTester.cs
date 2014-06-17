@@ -172,8 +172,8 @@ namespace test {
 			TestHelper.DropDb("TEST_TEMP");
 
 			foreach (Table t in db.Tables) {
-				Assert.IsNotNull(db2.FindTable(t.Name));
-				Assert.IsFalse(db2.FindTable(t.Name).Compare(t).IsDiff);
+				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
+				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
 			}
 		}
 
@@ -181,8 +181,8 @@ namespace test {
 		public void TestScriptDeletedProc() {
 			var source = new Database();
 			source.Routines.Add(new Routine("dbo", "test"));
-			source.FindRoutine("test").Type = "PROCEDURE";
-			source.FindRoutine("test").Text = @"
+			source.FindRoutine("test", "dbo").Type = "PROCEDURE";
+			source.FindRoutine("test", "dbo").Text = @"
 create procedure [dbo].[test]
 as 
 select * from Table1

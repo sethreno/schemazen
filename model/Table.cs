@@ -6,6 +6,18 @@ using System.Linq;
 using System.Text;
 
 namespace model {
+	public class Schema
+	{
+		public string Name;
+		public string Owner;
+
+		public Schema(string name, string owner)
+		{
+			Owner = owner;
+			Name = name;
+		}
+	}
+
 	public class Table {
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
