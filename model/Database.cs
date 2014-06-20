@@ -381,7 +381,7 @@ select s.name as schemaName, p.name as principalName
 					select 
 						TABLE_SCHEMA,
 						TABLE_NAME, 
-						CONSTRAINT_NAME, * 
+						CONSTRAINT_NAME
 					from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
 					where CONSTRAINT_TYPE = 'FOREIGN KEY'";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
