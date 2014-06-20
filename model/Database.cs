@@ -714,12 +714,12 @@ order by fk.name
 					schema = fi.Name.Split('.')[0];
 					table = fi.Name.Split('.')[1];
 				}
-				var t = FindTable(schema, table);
+				var t = FindTable(table, schema);
 				if (t == null) {
 					continue;
 				}
 				try {
-					t.ImportData(Connection, File.ReadAllText(dataDir + "/" + t.Owner + "." + t.Name));
+					t.ImportData(Connection, File.ReadAllText(dataDir + "/" + MakeFileName(t)));
 				}
 				catch (DataException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
