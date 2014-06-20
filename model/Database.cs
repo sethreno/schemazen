@@ -665,7 +665,7 @@ order by fk.name
 					dir = "views";
 				}
 				File.WriteAllText(
-					String.Format("{0}/{1}/[{3}].[{2}].sql", Dir, dir, r.Name, r.Schema),
+					String.Format("{0}/{1}/{2}.sql", Dir, dir, MakeFileName(r)),
 					r.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -673,12 +673,20 @@ order by fk.name
 			ExportData();
 		}
 
+		private static string MakeFileName(Routine r) {
+			return MakeFileName(r.Schema, r.Name);
+		}
+
 		private static string MakeFileName(Table t) {
-			// Dont' include schema name for tables in the dbo schema.
+			return MakeFileName(t.Owner, t.Name);
+		}
+
+		private static string MakeFileName(string schema, string name) {
+			// Dont' include schema name for objects in the dbo schema.
 			// This maintains backward compatability for those who use
 			// schemazen to keep their schemas under version control.
-			if (t.Owner.ToLower() == "dbo") return t.Name;
-			return String.Format("{0}.{1}", t.Owner, t.Name);
+			if (schema.ToLower() == "dbo") return name;
+			return String.Format("{0}.{1}", schema, name);
 		}
 
 		public void ExportData() {
