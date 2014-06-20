@@ -293,7 +293,8 @@ select * from Table1
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
 			}
 			foreach (ForeignKey fk in db.ForeignKeys) {
-				Assert.IsTrue(File.Exists(db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql"));
+				var expected = db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql";
+				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
 
 			var copy = new Database("ScriptToDirTestCopy");

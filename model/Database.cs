@@ -641,14 +641,14 @@ order by fk.name
 
 			foreach (Table t in Tables) {
 				File.WriteAllText(
-					String.Format("{0}/tables/[{2}].[{1}].sql", Dir, t.Name, t.Owner),
+					String.Format("{0}/tables/{1}.sql", Dir, MakeFileName(t)),
 					t.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
 
 			foreach (ForeignKey fk in ForeignKeys) {
 				File.AppendAllText(
-					String.Format("{0}/foreign_keys/[{2}].[{1}].sql", Dir, fk.Table.Name, fk.Table.Owner),
+					String.Format("{0}/foreign_keys/{1}.sql", Dir, MakeFileName(fk.Table)),
 					fk.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -673,13 +673,21 @@ order by fk.name
 			ExportData();
 		}
 
+		private static string MakeFileName(Table t) {
+			// Dont' include schema name for tables in the dbo schema.
+			// This maintains backward compatability for those who use
+			// schemazen to keep their schemas under version control.
+			if (t.Owner.ToLower() == "dbo") return t.Name;
+			return String.Format("{0}.{1}", t.Owner, t.Name);
+		}
+
 		public void ExportData() {
 			string dataDir = Dir + "/data";
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
 			}
 			foreach (Table t in DataTables) {
-				File.WriteAllText(dataDir + "/" + t.Owner + "." + t.Name, t.ExportData(Connection));
+				File.WriteAllText(dataDir + "/" + MakeFileName(t), t.ExportData(Connection));
 			}
 		}
 
@@ -689,16 +697,16 @@ order by fk.name
 			if (!Directory.Exists(dataDir)) {
 				return;
 			}
-			Regex reFI = new Regex(@"\[(?<schema>[^\]]+)\]\.\[(?<objectname>[^\]]+)\]\.sql",RegexOptions.IgnoreCase);
-			foreach (string f in Directory.GetFiles(dataDir)) {
-				FileInfo fi = new FileInfo(f);
-				Match m = reFI.Match(fi.Name);
-				if (!m.Success)
-				{
-					throw new Exception(String.Format("File '{0}' does not match the expected naming pattern '[schema].[objectname].sql' (in folder '{1}')", 
-						fi.Name, fi.DirectoryName));
+
+			foreach (var f in Directory.GetFiles(dataDir)) {
+				var fi = new FileInfo(f);
+				var schema = "dbo";
+				var table = fi.Name;
+				if (fi.Name.Contains(".")) {
+					schema = fi.Name.Split('.')[0];
+					table = fi.Name.Split('.')[1];
 				}
-				Table t = FindTable(m.Groups["schema"].Value, m.Groups["objectname"].Value);
+				var t = FindTable(schema, table);
 				if (t == null) {
 					continue;
 				}
