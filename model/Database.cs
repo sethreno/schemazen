@@ -489,6 +489,7 @@ order by fk.name
 
 		public DatabaseDiff Compare(Database db) {
 			var diff = new DatabaseDiff();
+			diff.Db = db;
 
 			//compare database properties           
 			foreach (DbProp p in Props) {
@@ -597,7 +598,7 @@ order by fk.name
 			text.AppendLine("GO");
 
 			foreach (Routine r in Routines) {
-				text.AppendLine(r.ScriptCreate());
+				text.AppendLine(r.ScriptCreate(this));
 				text.AppendLine();
 				text.AppendLine("GO");
 			}
@@ -666,7 +667,7 @@ order by fk.name
 				}
 				File.WriteAllText(
 					String.Format("{0}/{1}/{2}.sql", Dir, dir, MakeFileName(r)),
-					r.ScriptCreate() + "\r\nGO\r\n"
+					r.ScriptCreate(this) + "\r\nGO\r\n"
 					);
 			}
 
@@ -870,6 +871,7 @@ end
 	}
 
 	public class DatabaseDiff {
+		public Database Db;
 		public List<ForeignKey> ForeignKeysAdded = new List<ForeignKey>();
 		public List<ForeignKey> ForeignKeysDeleted = new List<ForeignKey>();
 		public List<ForeignKey> ForeignKeysDiff = new List<ForeignKey>();
@@ -958,13 +960,13 @@ end
 
 			//add & delete procs, functions, & triggers
 			foreach (Routine r in RoutinesAdded) {
-				text.AppendLine(r.ScriptCreate());
+				text.AppendLine(r.ScriptCreate(Db));
 				text.AppendLine("GO");
 			}
 			foreach (Routine r in RoutinesDiff) {
 				text.AppendLine(r.ScriptDrop());
 				text.AppendLine("GO");
-				text.AppendLine(r.ScriptCreate());
+				text.AppendLine(r.ScriptCreate(Db));
 				text.AppendLine("GO");
 			}
 			foreach (Routine r in RoutinesDeleted) {
