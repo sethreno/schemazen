@@ -1,13 +1,12 @@
 ﻿using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Text;
 
 namespace model {
 	public class ColumnList {
 		private readonly List<Column> mItems = new List<Column>();
 
-		public ReadOnlyCollection<Column> Items {
-			get { return mItems.AsReadOnly(); }
+		public List<Column> Items {
+			get { return mItems; }
 		}
 
 		public void Add(Column c) {
