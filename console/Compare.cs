@@ -1,4 +1,6 @@
 ﻿using System;
+using System.IO;
+using System.Xml.Serialization;
 using ManyConsole;
 using model;
 using NDesk.Options;
@@ -31,6 +33,13 @@ namespace console {
 			sourceDb.Load();
 			targetDb.Load();
 			DatabaseDiff diff = sourceDb.Compare(targetDb);
+
+		    var serializer = new XmlSerializer(typeof(DatabaseDiff));
+		    using (var stream = new StreamWriter("diff.xml", false))
+		    {
+		        serializer.Serialize(stream, diff);
+		    }
+
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");
 				return 1;
