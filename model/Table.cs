@@ -11,6 +11,10 @@ namespace model {
 		public string Name;
 		public string Owner;
 
+	    private Schema()
+	    {
+	    }
+
 		public Schema(string name, string owner)
 		{
 			Owner = owner;
@@ -23,6 +27,10 @@ namespace model {
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
 		public string Owner;
+
+	    private Table()
+	    {
+	    }
 
 		public Table(string owner, string name) {
 			Owner = owner;

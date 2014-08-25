@@ -13,6 +13,10 @@ namespace model {
 		public Table RefTable;
 		public Table Table;
 
+	    private ForeignKey()
+	    {
+	    }
+
 		public ForeignKey(string name) {
 			Name = name;
 		}

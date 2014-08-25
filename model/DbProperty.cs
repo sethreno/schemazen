@@ -2,6 +2,10 @@
 	public class DbProp {
 		public Database _db;
 
+	    private DbProp()
+	    {
+	    }
+
 		public DbProp(string name, string value) {
 			Name = name;
 			Value = value;

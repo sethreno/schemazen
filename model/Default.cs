@@ -3,6 +3,10 @@
 		public string Name;
 		public string Value;
 
+	    private Default()
+	    {
+	    }
+
 		public Default(string name, string value) {
 			Name = name;
 			Value = value;

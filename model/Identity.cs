@@ -3,6 +3,10 @@
 		public string Increment;
 		public string Seed;
 
+	    private Identity()
+	    {
+	    }
+
 		public Identity(string seed, string increment) {
 			Seed = seed;
 			Increment = increment;

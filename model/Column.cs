@@ -107,6 +107,10 @@ namespace model {
 		public Column Source;
 		public Column Target;
 
+	    private ColumnDiff()
+	    {
+	    }
+
 		public ColumnDiff(Column target, Column source) {
 			Source = source;
 			Target = target;

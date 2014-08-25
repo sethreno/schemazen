@@ -10,6 +10,10 @@ namespace model {
 		public string Type;
 		public bool Unique;
 
+	    private Constraint()
+	    {
+	    }
+
 		public Constraint(string name, string type, string columns) {
 			Name = name;
 			Type = type;
