@@ -28,9 +28,7 @@ namespace model {
 		public string Name;
 		public string Owner;
 
-	    private Table()
-	    {
-	    }
+	    private Table() { }
 
 		public Table(string owner, string name) {
 			Owner = owner;

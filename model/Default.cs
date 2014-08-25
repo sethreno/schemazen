@@ -3,9 +3,7 @@
 		public string Name;
 		public string Value;
 
-	    private Default()
-	    {
-	    }
+	    private Default() { }
 
 		public Default(string name, string value) {
 			Name = name;

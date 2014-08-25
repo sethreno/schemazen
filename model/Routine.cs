@@ -9,9 +9,7 @@ namespace model {
 		public string Text;
 		public string Type;
 
-	    private Routine()
-	    {
-	    }
+	    private Routine() { }
 
 		public Routine(string schema, string name) {
 			Schema = schema;
