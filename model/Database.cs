@@ -359,7 +359,8 @@ select s.name as schemaName, p.name as principalName
 							if (c == null) {
 								c = new Constraint((string) dr["indexName"], "", "");
 								t.Constraints.Add(c);
-								c.Table = t;
+							    c.TableName = t.Name;
+							    c.TableOwner = t.Owner;
 							}
 							c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 							c.Unique = (bool) dr["is_unique"];
