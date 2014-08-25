@@ -32,7 +32,7 @@ namespace console {
 			targetDb.Connection = _target;
 			sourceDb.Load();
 			targetDb.Load();
-			DatabaseDiff diff = sourceDb.Compare(targetDb);
+			DatabaseDiff diff = sourceDb.Compare(targetDb, new DefaultCompareCompareConfig());
 
 		    var serializer = new XmlSerializer(typeof(DatabaseDiff));
 		    using (var stream = new StreamWriter("diff.xml", false))

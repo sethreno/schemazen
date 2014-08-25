@@ -8,7 +8,13 @@ using NUnit.Framework;
 namespace test {
 	[TestFixture]
 	public class DatabaseTester {
-		public static void TestCopySchema(string pathToSchemaScript) {
+	    public DatabaseTester() {
+	        _defaultCompareCompareConfig = new TestCompareConfig();
+	    }
+
+	    private static ICompareConfig _defaultCompareCompareConfig;
+
+	    public static void TestCopySchema(string pathToSchemaScript) {
 			TestHelper.DropDb("TEST_SOURCE");
 			TestHelper.DropDb("TEST_COPY");
 
@@ -33,7 +39,7 @@ namespace test {
 
 		private static void TestCompare(Database source, Database copy) {
 			//compare the dbs to make sure they are the same                        
-			Assert.IsFalse(source.Compare(copy).IsDiff);
+			Assert.IsFalse(source.Compare(copy, _defaultCompareCompareConfig).IsDiff);
 
 			// get a second opinion
 			// if you ever find your license key
@@ -108,7 +114,7 @@ namespace test {
 			copy.Load();
 
 			//execute migration script to make SOURCE the same as COPY
-			DatabaseDiff diff = copy.Compare(source);
+			DatabaseDiff diff = copy.Compare(source, _defaultCompareCompareConfig);
 			TestHelper.ExecBatchSql(diff.Script(), "TEST_SOURCE");
 
 			//compare the dbs to make sure they are the same
@@ -173,7 +179,7 @@ namespace test {
 
 			foreach (Table t in db.Tables) {
 				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
-				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
+				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t, new TestCompareConfig()).IsDiff);
 			}
 		}
 
@@ -189,8 +195,8 @@ select * from Table1
 ";
 
 			var target = new Database();
-			string scriptUp = target.Compare(source).Script();
-			string scriptDown = source.Compare(target).Script();
+			string scriptUp = target.Compare(source, _defaultCompareCompareConfig).Script();
+			string scriptDown = source.Compare(target, _defaultCompareCompareConfig).Script();
 			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
 			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
 		}

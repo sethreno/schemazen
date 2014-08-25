@@ -71,6 +71,7 @@
     <Compile Include="Compare.cs" />
     <Compile Include="Create.cs" />
     <Compile Include="DbCommand.cs" />
+    <Compile Include="DefaultCompareCompareConfig.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Script.cs" />

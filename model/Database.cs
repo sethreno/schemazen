@@ -134,32 +134,32 @@ namespace model {
 					// query schema for database properties
 					cm.CommandText = @"
 select
-    [compatibility_level],
-    [collation_name],
-    [is_auto_close_on],
-    [is_auto_shrink_on],
-    [snapshot_isolation_state],
-    [is_read_committed_snapshot_on],
-    [recovery_model_desc],
-    [page_verify_option_desc],
-    [is_auto_create_stats_on],
-    [is_auto_update_stats_on],
-    [is_auto_update_stats_async_on],
-    [is_ansi_null_default_on],
-    [is_ansi_nulls_on],
-    [is_ansi_padding_on],
-    [is_ansi_warnings_on],
-    [is_arithabort_on],
-    [is_concat_null_yields_null_on],
-    [is_numeric_roundabort_on],
-    [is_quoted_identifier_on],
-    [is_recursive_triggers_on],
-    [is_cursor_close_on_commit_on],
-    [is_local_cursor_default],
-    [is_trustworthy_on],
-    [is_db_chaining_on],
-    [is_parameterization_forced],
-    [is_date_correlation_on]
+	[compatibility_level],
+	[collation_name],
+	[is_auto_close_on],
+	[is_auto_shrink_on],
+	[snapshot_isolation_state],
+	[is_read_committed_snapshot_on],
+	[recovery_model_desc],
+	[page_verify_option_desc],
+	[is_auto_create_stats_on],
+	[is_auto_update_stats_on],
+	[is_auto_update_stats_async_on],
+	[is_ansi_null_default_on],
+	[is_ansi_nulls_on],
+	[is_ansi_padding_on],
+	[is_ansi_warnings_on],
+	[is_arithabort_on],
+	[is_concat_null_yields_null_on],
+	[is_numeric_roundabort_on],
+	[is_quoted_identifier_on],
+	[is_recursive_triggers_on],
+	[is_cursor_close_on_commit_on],
+	[is_local_cursor_default],
+	[is_trustworthy_on],
+	[is_db_chaining_on],
+	[is_parameterization_forced],
+	[is_date_correlation_on]
 from sys.databases
 where name = @dbname
 ";
@@ -231,7 +231,7 @@ select s.name as schemaName, p.name as principalName
 						TABLE_SCHEMA, 
 						TABLE_NAME 
 					from INFORMATION_SCHEMA.TABLES
-                    where TABLE_TYPE = 'BASE TABLE'";
+					where TABLE_TYPE = 'BASE TABLE'";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							Tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]));
@@ -250,12 +250,12 @@ select s.name as schemaName, p.name as principalName
 						c.NUMERIC_PRECISION,
 						c.NUMERIC_SCALE 
 					from INFORMATION_SCHEMA.COLUMNS c
-                        inner join INFORMATION_SCHEMA.TABLES t
-                                on t.TABLE_NAME = c.TABLE_NAME
-                                    and t.TABLE_SCHEMA = c.TABLE_SCHEMA
-                                    and t.TABLE_CATALOG = c.TABLE_CATALOG
-                    where
-                        t.TABLE_TYPE = 'BASE TABLE'
+						inner join INFORMATION_SCHEMA.TABLES t
+								on t.TABLE_NAME = c.TABLE_NAME
+									and t.TABLE_SCHEMA = c.TABLE_SCHEMA
+									and t.TABLE_CATALOG = c.TABLE_CATALOG
+					where
+						t.TABLE_TYPE = 'BASE TABLE'
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -341,9 +341,9 @@ select s.name as schemaName, p.name as principalName
 						c.name as columnName,
 						i.is_primary_key, 
 						i.is_unique_constraint,
-                        i.is_unique, 
+						i.is_unique, 
 						i.type_desc,
-                        isnull(ic.is_included_column, 0) as is_included_column
+						isnull(ic.is_included_column, 0) as is_included_column
 					from sys.tables t 
 						inner join sys.indexes i on i.object_id = t.object_id
 						inner join sys.index_columns ic on ic.object_id = t.object_id
@@ -359,8 +359,8 @@ select s.name as schemaName, p.name as principalName
 							if (c == null) {
 								c = new Constraint((string) dr["indexName"], "", "");
 								t.Constraints.Add(c);
-							    c.TableName = t.Name;
-							    c.TableOwner = t.Owner;
+								c.TableName = t.Name;
+								c.TableOwner = t.Owner;
 							}
 							c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 							c.Unique = (bool) dr["is_unique"];
@@ -452,7 +452,7 @@ order by fk.name
 						o.name as routineName,
 						o.type_desc,
 						m.definition,
-                        m.uses_ansi_nulls,
+						m.uses_ansi_nulls,
 						m.uses_quoted_identifier,
 						t.name as tableName
 					from sys.sql_modules m
@@ -488,7 +488,7 @@ order by fk.name
 			}
 		}
 
-		public DatabaseDiff Compare(Database db) {
+		public DatabaseDiff Compare(Database db, ICompareConfig compareConfig) {
 			var diff = new DatabaseDiff();
 			diff.Db = db;
 
@@ -508,7 +508,7 @@ order by fk.name
 				}
 				else {
 					//compare mutual tables
-					TableDiff tDiff = t.Compare(t2);
+					TableDiff tDiff = t.Compare(t2, compareConfig);
 					if (tDiff.IsDiff) {
 						diff.TablesDiff.Add(tDiff);
 					}
@@ -888,15 +888,15 @@ end
 		public bool IsDiff {
 			get {
 				return PropsChanged.Count > 0
-				       || TablesAdded.Count > 0
-				       || TablesDiff.Count > 0
-				       || TablesDeleted.Count > 0
-				       || RoutinesAdded.Count > 0
-				       || RoutinesDiff.Count > 0
-				       || RoutinesDeleted.Count > 0
-				       || ForeignKeysAdded.Count > 0
-				       || ForeignKeysDiff.Count > 0
-				       || ForeignKeysDeleted.Count > 0;
+					   || TablesAdded.Count > 0
+					   || TablesDiff.Count > 0
+					   || TablesDeleted.Count > 0
+					   || RoutinesAdded.Count > 0
+					   || RoutinesDiff.Count > 0
+					   || RoutinesDeleted.Count > 0
+					   || ForeignKeysAdded.Count > 0
+					   || ForeignKeysDiff.Count > 0
+					   || ForeignKeysDeleted.Count > 0;
 			}
 		}
 

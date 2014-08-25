@@ -51,7 +51,7 @@ namespace model {
 			return null;
 		}
 
-		public TableDiff Compare(Table t) {
+		public TableDiff Compare(Table t, ICompareConfig compareConfig) {
 			var diff = new TableDiff();
 			diff.Owner = t.Owner;
 			diff.Name = t.Name;
@@ -64,7 +64,7 @@ namespace model {
 				}
 				else {
 					//compare mutual columns
-					ColumnDiff cDiff = c.Compare(c2);
+					ColumnDiff cDiff = c.Compare(c2, compareConfig);
 					if (cDiff.IsDiff) {
 						diff.ColumnsDiff.Add(cDiff);
 					}

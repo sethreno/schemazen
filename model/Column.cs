@@ -53,8 +53,8 @@ namespace model {
 			}
 		}
 
-		public ColumnDiff Compare(Column c) {
-			return new ColumnDiff(this, c);
+		public ColumnDiff Compare(Column c, ICompareConfig compareConfig) {
+			return new ColumnDiff(this, c, compareConfig);
 		}
 
 		public string Script() {
@@ -109,7 +109,7 @@ namespace model {
 
 	    private ColumnDiff() { }
 
-		public ColumnDiff(Column target, Column source) {
+		public ColumnDiff(Column target, Column source, ICompareConfig compareConfig) {
 			Source = source;
 			Target = target;
 		}
