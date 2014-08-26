@@ -531,7 +531,7 @@ order by fk.name
 						}
 						else {
 							//compare mutual procs
-							if (r.Text != r2.Text) {
+							if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {
 								diff.RoutinesDiff.Add(r);
 							}
 						}
