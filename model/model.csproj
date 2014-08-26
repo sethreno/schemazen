@@ -60,6 +60,7 @@
     <Compile Include="DBHelper.cs" />
     <Compile Include="DbProperty.cs" />
     <Compile Include="Default.cs" />
+    <Compile Include="DefaultCompareConfig.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />
     <Compile Include="ICompareConfig.cs" />

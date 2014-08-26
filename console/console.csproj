@@ -73,7 +73,7 @@
     <Compile Include="CompareWithDump.cs" />
     <Compile Include="Create.cs" />
     <Compile Include="DbCommand.cs" />
-    <Compile Include="DefaultCompareCompareConfig.cs" />
+    <Compile Include="CompareConfig.cs" />
     <Compile Include="Dump.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

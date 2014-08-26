@@ -35,7 +35,7 @@ namespace console {
                 targetDb = (Database) serializer.Deserialize(stream);
             }
 
-            DatabaseDiff diff = sourceDb.Compare(targetDb, new DefaultCompareCompareConfig());
+            DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
 
             var diffSerializer = new XmlSerializer(typeof(DatabaseDiff));
             using (var stream = new StreamWriter("diff.xml", false))
