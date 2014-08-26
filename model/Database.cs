@@ -497,11 +497,13 @@ order by fk.name
 			var diff = new DatabaseDiff();
 			diff.Db = otherDb;
 
-			//compare database properties           
-			foreach (DbProp p in Props) {
-				DbProp p2 = otherDb.FindProp(p.Name);
-				if (p.Script() != p2.Script()) {
-					diff.PropsChanged.Add(p);
+			if (!compareConfig.IgnoreProps) {
+				//compare database properties
+				foreach (DbProp p in Props) {
+					DbProp p2 = otherDb.FindProp(p.Name);
+					if (p.Script() != p2.Script()) {
+						diff.PropsChanged.Add(p);
+					}
 				}
 			}
 
