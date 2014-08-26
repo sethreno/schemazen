@@ -11,6 +11,9 @@ namespace model {
 		#region " Constructors "
 
 		public Database() {
+		}
+
+		private void InitProps() {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -128,6 +131,8 @@ namespace model {
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
+			InitProps();
+
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
