@@ -1,10 +1,9 @@
 ﻿namespace model{
     public interface ICompareConfig {
-        bool CompareColumnPosition { get; }
-        ConstraintCompareMethod ContraCompareMethod { get; }
+        CompareMethod RoutinesCompareMethod { get; }
     }
 
-    public enum ConstraintCompareMethod {
-        Name, Columns
+    public enum CompareMethod {
+        Ignore, FindAllDifferences, FindButIgnoreAdditionalItems
     }
 }

@@ -2,7 +2,6 @@
 
 namespace console {
     public class DefaultCompareCompareConfig : ICompareConfig {
-        public bool CompareColumnPosition { get { return true; } }
-        public ConstraintCompareMethod ContraCompareMethod { get{return ConstraintCompareMethod.Name;} }
+        public CompareMethod RoutinesCompareMethod { get { return CompareMethod.FindButIgnoreAdditionalItems; } }
     }
 }

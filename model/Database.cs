@@ -488,13 +488,13 @@ order by fk.name
 			}
 		}
 
-		public DatabaseDiff Compare(Database db, ICompareConfig compareConfig) {
+		public DatabaseDiff Compare(Database otherDb, ICompareConfig compareConfig) {
 			var diff = new DatabaseDiff();
-			diff.Db = db;
+			diff.Db = otherDb;
 
 			//compare database properties           
 			foreach (DbProp p in Props) {
-				DbProp p2 = db.FindProp(p.Name);
+				DbProp p2 = otherDb.FindProp(p.Name);
 				if (p.Script() != p2.Script()) {
 					diff.PropsChanged.Add(p);
 				}
@@ -502,7 +502,7 @@ order by fk.name
 
 			//get tables added and changed
 			foreach (Table t in Tables) {
-				Table t2 = db.FindTable(t.Name, t.Owner);
+				Table t2 = otherDb.FindTable(t.Name, t.Owner);
 				if (t2 == null) {
 					diff.TablesAdded.Add(t);
 				}
@@ -515,35 +515,44 @@ order by fk.name
 				}
 			}
 			//get deleted tables
-			foreach (Table t in db.Tables) {
+			foreach (Table t in otherDb.Tables) {
 				if (FindTable(t.Name, t.Owner) == null) {
 					diff.TablesDeleted.Add(t);
 				}
 			}
 
-			//get procs added and changed
-			foreach (Routine r in Routines) {
-				Routine r2 = db.FindRoutine(r.Name, r.Schema);
-				if (r2 == null) {
-					diff.RoutinesAdded.Add(r);
+			if (compareConfig.RoutinesCompareMethod == CompareMethod.FindAllDifferences
+				|| compareConfig.RoutinesCompareMethod == CompareMethod.FindButIgnoreAdditionalItems) {
+				//get procs added and changed
+				foreach (Routine r in Routines) {
+					Routine r2 = otherDb.FindRoutine(r.Name, r.Schema);
+						if (r2 == null) {
+							diff.RoutinesAdded.Add(r);
+						}
+						else {
+							//compare mutual procs
+							if (r.Text != r2.Text) {
+								diff.RoutinesDiff.Add(r);
+							}
+						}
 				}
-				else {
-					//compare mutual procs
-					if (r.Text != r2.Text) {
-						diff.RoutinesDiff.Add(r);
+
+				if (compareConfig.RoutinesCompareMethod == CompareMethod.FindAllDifferences) {
+					//get procs deleted in source db or added in target db
+					foreach (Routine r in otherDb.Routines)
+					{
+						if (FindRoutine(r.Name, r.Schema) == null)
+						{
+							diff.RoutinesDeleted.Add(r);
+						}
 					}
 				}
 			}
-			//get procs deleted
-			foreach (Routine r in db.Routines) {
-				if (FindRoutine(r.Name, r.Schema) == null) {
-					diff.RoutinesDeleted.Add(r);
-				}
-			}
+
 
 			//get added and compare mutual foreign keys
 			foreach (ForeignKey fk in ForeignKeys) {
-				ForeignKey fk2 = db.FindForeignKey(fk.Name);
+				ForeignKey fk2 = otherDb.FindForeignKey(fk.Name);
 				if (fk2 == null) {
 					diff.ForeignKeysAdded.Add(fk);
 				}
@@ -554,7 +563,7 @@ order by fk.name
 				}
 			}
 			//get deleted foreign keys
-			foreach (ForeignKey fk in db.ForeignKeys) {
+			foreach (ForeignKey fk in otherDb.ForeignKeys) {
 				if (FindForeignKey(fk.Name) == null) {
 					diff.ForeignKeysDeleted.Add(fk);
 				}
