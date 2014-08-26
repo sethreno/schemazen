@@ -104,21 +104,33 @@ namespace model {
 	}
 
 	public class ColumnDiff {
+		private readonly ICompareConfig _compareConfig;
+
 		public Column Source;
 		public Column Target;
 
-	    private ColumnDiff() { }
+		private ColumnDiff() { }
 
 		public ColumnDiff(Column target, Column source, ICompareConfig compareConfig) {
+			_compareConfig = compareConfig;
+
 			Source = source;
 			Target = target;
 		}
 
 		public bool IsDiff {
 			get {
-				return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable ||
-				       Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
-				       Source.Precision != Target.Precision || Source.Scale != Target.Scale;
+				var defaultMismatch = false;
+				if (_compareConfig.IgnoreDefaultsNameMismatch && Source.Default != null && Target.Default != null) {
+					defaultMismatch = Source.Default.Value != Target.Default.Value;
+				}
+				else {
+					defaultMismatch = Source.DefaultText != Target.DefaultText;
+				}
+
+				return  defaultMismatch || Source.IsNullable != Target.IsNullable ||
+					   Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
+					   Source.Precision != Target.Precision || Source.Scale != Target.Scale;
 			}
 		}
 
