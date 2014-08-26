@@ -11,9 +11,9 @@ namespace model {
 		public string Name;
 		public string Owner;
 
-	    private Schema()
-	    {
-	    }
+		private Schema()
+		{
+		}
 
 		public Schema(string name, string owner)
 		{
@@ -22,13 +22,13 @@ namespace model {
 		}
 	}
 
-	public class Table {
+	public class Table : CompareBase{
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
 		public string Owner;
 
-	    private Table() { }
+		private Table() { }
 
 		public Table(string owner, string name) {
 			Owner = owner;
@@ -51,36 +51,16 @@ namespace model {
 			return null;
 		}
 
-		public TableDiff Compare(Table t, ICompareConfig compareConfig) {
+		public TableDiff Compare(Table otherTable, ICompareConfig compareConfig) {
 			var diff = new TableDiff();
-			diff.Owner = t.Owner;
-			diff.Name = t.Name;
+			diff.Owner = otherTable.Owner;
+			diff.Name = otherTable.Name;
 
-			//get additions and compare mutual columns
-			foreach (Column c in Columns.Items) {
-				Column c2 = t.Columns.Find(c.Name);
-				if (c2 == null) {
-					diff.ColumnsAdded.Add(c);
-				}
-				else {
-					//compare mutual columns
-					ColumnDiff cDiff = c.Compare(c2, compareConfig);
-					if (cDiff.IsDiff) {
-						diff.ColumnsDiff.Add(cDiff);
-					}
-				}
-			}
-
-			//get deletions
-			foreach (Column c in t.Columns.Items) {
-				if (Columns.Find(c.Name) == null) {
-					diff.ColumnsDroped.Add(c);
-				}
-			}
+			CompareColumns(otherTable, compareConfig, diff);
 
 			//get added and compare mutual constraints
 			foreach (Constraint c in Constraints) {
-				Constraint c2 = t.FindConstraint(c.Name);
+				Constraint c2 = otherTable.FindConstraint(c.Name);
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
 				}
@@ -91,7 +71,7 @@ namespace model {
 				}
 			}
 			//get deleted constraints
-			foreach (Constraint c in t.Constraints) {
+			foreach (Constraint c in otherTable.Constraints) {
 				if (FindConstraint(c.Name) == null) {
 					diff.ConstraintsDeleted.Add(c);
 				}
@@ -100,7 +80,28 @@ namespace model {
 			return diff;
 		}
 
-		public string ScriptCreate() {
+	    private void CompareColumns(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
+	        Action<Column, Column> checkIfColumnChanged = (c, c2) => {
+	            //compare mutual columns
+	            ColumnDiff cDiff = c.Compare(c2, compareConfig);
+	            if (cDiff.IsDiff) {
+	                diff.ColumnsDiff.Add(cDiff);
+	            }
+	        };
+
+	        CheckSource(compareConfig.ColumnsCompareMethod,
+	            Columns.Items,
+	            c => otherTable.Columns.Find(c.Name),
+	            c => diff.ColumnsAdded.Add(c),
+	            checkIfColumnChanged);
+
+	        CheckTarget(compareConfig.RoutinesCompareMethod,
+	            otherTable.Columns.Items,
+	            c => Columns.Find(c.Name) == null,
+	            c => diff.ColumnsDroped.Add(c));
+	    }
+
+	    public string ScriptCreate() {
 			var text = new StringBuilder();
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
 			text.Append(Columns.Script());
@@ -214,7 +215,7 @@ namespace model {
 		public bool IsDiff {
 			get {
 				return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+					   ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
 			}
 		}
 
