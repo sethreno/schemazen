@@ -34,11 +34,11 @@ namespace console {
 			targetDb.Load();
 			DatabaseDiff diff = sourceDb.Compare(targetDb, new DefaultCompareCompareConfig());
 
-		    var serializer = new XmlSerializer(typeof(DatabaseDiff));
-		    using (var stream = new StreamWriter("diff.xml", false))
-		    {
-		        serializer.Serialize(stream, diff);
-		    }
+			var serializer = new XmlSerializer(typeof(DatabaseDiff));
+			using (var stream = new StreamWriter("diff.xml", false))
+			{
+				serializer.Serialize(stream, diff);
+			}
 
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");

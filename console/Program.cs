@@ -18,7 +18,7 @@ namespace console {
 
 		static IEnumerable<ConsoleCommand> GetCommands() {
 			return new List<ConsoleCommand>() {
-				new Script(), new Create(), new Compare()
+				new Script(), new Create(), new Compare(), new Dump()
 			};
 		}
 	}
