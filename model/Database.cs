@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -507,76 +508,96 @@ order by fk.name
 				}
 			}
 
-			//get tables added and changed
-			foreach (Table t in Tables) {
-				Table t2 = otherDb.FindTable(t.Name, t.Owner);
-				if (t2 == null) {
-					diff.TablesAdded.Add(t);
-				}
-				else {
-					//compare mutual tables
-					TableDiff tDiff = t.Compare(t2, compareConfig);
-					if (tDiff.IsDiff) {
-						diff.TablesDiff.Add(tDiff);
-					}
-				}
-			}
-			//get deleted tables
-			foreach (Table t in otherDb.Tables) {
-				if (FindTable(t.Name, t.Owner) == null) {
-					diff.TablesDeleted.Add(t);
-				}
-			}
-
-			if (compareConfig.RoutinesCompareMethod == CompareMethod.FindAllDifferences
-				|| compareConfig.RoutinesCompareMethod == CompareMethod.FindButIgnoreAdditionalItems) {
-				//get procs added and changed
-				foreach (Routine r in Routines) {
-					Routine r2 = otherDb.FindRoutine(r.Name, r.Schema);
-						if (r2 == null) {
-							diff.RoutinesAdded.Add(r);
-						}
-						else {
-							//compare mutual procs
-							if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {
-								diff.RoutinesDiff.Add(r);
-							}
-						}
-				}
-
-				if (compareConfig.RoutinesCompareMethod == CompareMethod.FindAllDifferences) {
-					//get procs deleted in source db or added in target db
-					foreach (Routine r in otherDb.Routines)
-					{
-						if (FindRoutine(r.Name, r.Schema) == null)
-						{
-							diff.RoutinesDeleted.Add(r);
-						}
-					}
-				}
-			}
-
-
-			//get added and compare mutual foreign keys
-			foreach (ForeignKey fk in ForeignKeys) {
-				ForeignKey fk2 = otherDb.FindForeignKey(fk.Name);
-				if (fk2 == null) {
-					diff.ForeignKeysAdded.Add(fk);
-				}
-				else {
-					if (fk.ScriptCreate() != fk2.ScriptCreate()) {
-						diff.ForeignKeysDiff.Add(fk);
-					}
-				}
-			}
-			//get deleted foreign keys
-			foreach (ForeignKey fk in otherDb.ForeignKeys) {
-				if (FindForeignKey(fk.Name) == null) {
-					diff.ForeignKeysDeleted.Add(fk);
-				}
-			}
+			CompareTables(otherDb, compareConfig, diff);
+			CompareRoutines(otherDb, compareConfig, diff);
+			CompareForeignKeys(otherDb, compareConfig, diff);
 
 			return diff;
+		}
+
+		private void CompareForeignKeys(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+			Action<ForeignKey, ForeignKey> checkIfFkChanged = (fk1, fk2) => {
+				if (fk1.ScriptCreate() != fk2.ScriptCreate()) {
+					diff.ForeignKeysDiff.Add(fk1);
+				}
+			};
+
+			CheckSource(compareConfig.ForeignKeysCompareMethod,
+				ForeignKeys,
+				fk => otherDb.FindForeignKey(fk.Name),
+				fk => diff.ForeignKeysAdded.Add(fk),
+				checkIfFkChanged);
+
+			//get deleted foreign keys
+			CheckTarget(compareConfig.ForeignKeysCompareMethod, otherDb.ForeignKeys,
+				fk => FindForeignKey(fk.Name) == null, fk => diff.ForeignKeysDeleted.Add(fk));
+		}
+
+		private void CompareRoutines(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+			Action<Routine, Routine> checkIfRoutineChanged = (r, r2) => {
+				//compare mutual procs
+				if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {
+					diff.RoutinesDiff.Add(r);
+				}
+			};
+
+			CheckSource(compareConfig.RoutinesCompareMethod,
+				Routines,
+				r => otherDb.FindRoutine(r.Name, r.Schema),
+				r => diff.RoutinesAdded.Add(r),
+				checkIfRoutineChanged);
+
+			//get procs deleted in source db or added in target db
+			CheckTarget(compareConfig.RoutinesCompareMethod,
+				otherDb.Routines,
+				r => FindRoutine(r.Name, r.Schema) == null,
+				r => diff.RoutinesDeleted.Add(r));
+		}
+
+		private void CompareTables(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+			Action<Table, Table> checkIfTableChanged = (t, t2) => {
+				//compare mutual tables
+				TableDiff tDiff = t.Compare(t2, compareConfig);
+				if (tDiff.IsDiff) {
+					diff.TablesDiff.Add(tDiff);
+				}
+			};
+
+			CheckSource(compareConfig.TablesCompareMethod,
+				Tables,
+				t => otherDb.FindTable(t.Name, t.Owner),
+				t => diff.TablesAdded.Add(t),
+				checkIfTableChanged);
+
+			//get deleted tables
+			CheckTarget(compareConfig.TablesCompareMethod,
+				otherDb.Tables,
+				t => FindTable(t.Name, t.Owner) == null,
+				t => diff.TablesDeleted.Add(t));
+		}
+
+		private void CheckSource<T>(CompareMethod setting, IEnumerable<T> elements, Func<T, T> getOther,
+			Action<T> setAsAdded, Action<T,T> checkIfChanged) where T : class {
+		   if (setting != CompareMethod.FindAllDifferences && setting != CompareMethod.FindButIgnoreAdditionalItems) 
+			   return;
+
+			foreach (var element in elements) {
+				var other = getOther(element);
+				if (other == null)
+					setAsAdded(element);
+				else {
+					checkIfChanged(element, other);
+				}
+			}
+		}
+
+		private void CheckTarget<T>(CompareMethod setting, IEnumerable<T> elements, Func<T, bool> existsOnlyInTarget,
+			Action<T> setAsDeleted) {
+			if (setting != CompareMethod.FindAllDifferences) return;
+
+			foreach (var element in elements.Where(existsOnlyInTarget)) {
+				setAsDeleted(element);
+			};
 		}
 
 		public string ScriptCreate() {
