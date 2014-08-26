@@ -57,51 +57,52 @@ namespace model {
 			diff.Name = otherTable.Name;
 
 			CompareColumns(otherTable, compareConfig, diff);
+			CompareConstraints(otherTable, compareConfig, diff);
 
-			//get added and compare mutual constraints
-			foreach (Constraint c in Constraints) {
-				Constraint c2 = otherTable.FindConstraint(c.Name);
-				if (c2 == null) {
-					diff.ConstraintsAdded.Add(c);
-				}
-				else {
-					if (c.Script() != c2.Script()) {
-						diff.ConstraintsChanged.Add(c);
-					}
-				}
-			}
-			//get deleted constraints
-			foreach (Constraint c in otherTable.Constraints) {
-				if (FindConstraint(c.Name) == null) {
-					diff.ConstraintsDeleted.Add(c);
-				}
-			}
-
-			return diff;
+		    return diff;
 		}
 
-	    private void CompareColumns(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
-	        Action<Column, Column> checkIfColumnChanged = (c, c2) => {
-	            //compare mutual columns
-	            ColumnDiff cDiff = c.Compare(c2, compareConfig);
-	            if (cDiff.IsDiff) {
-	                diff.ColumnsDiff.Add(cDiff);
+	    private void CompareConstraints(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
+	        Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
+	            if (c.Script() != c2.Script()) {
+	                diff.ConstraintsChanged.Add(c);
 	            }
 	        };
 
-	        CheckSource(compareConfig.ColumnsCompareMethod,
-	            Columns.Items,
-	            c => otherTable.Columns.Find(c.Name),
-	            c => diff.ColumnsAdded.Add(c),
-	            checkIfColumnChanged);
+	        CheckSource(compareConfig.ConstraintsCompareMethod,
+	            Constraints,
+	            c => otherTable.FindConstraint(c.Name),
+	            c => diff.ConstraintsAdded.Add(c),
+	            checkIfConstraintChanged);
 
-	        CheckTarget(compareConfig.RoutinesCompareMethod,
-	            otherTable.Columns.Items,
-	            c => Columns.Find(c.Name) == null,
-	            c => diff.ColumnsDroped.Add(c));
+	        CheckTarget(compareConfig.ConstraintsCompareMethod,
+	            otherTable.Constraints,
+	            c => FindConstraint(c.Name) == null,
+	            c => diff.ConstraintsDeleted.Add(c));
 	    }
 
-	    public string ScriptCreate() {
+	    private void CompareColumns(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
+			Action<Column, Column> checkIfColumnChanged = (c, c2) => {
+				//compare mutual columns
+				ColumnDiff cDiff = c.Compare(c2, compareConfig);
+				if (cDiff.IsDiff) {
+					diff.ColumnsDiff.Add(cDiff);
+				}
+			};
+
+			CheckSource(compareConfig.ColumnsCompareMethod,
+				Columns.Items,
+				c => otherTable.Columns.Find(c.Name),
+				c => diff.ColumnsAdded.Add(c),
+				checkIfColumnChanged);
+
+			CheckTarget(compareConfig.RoutinesCompareMethod,
+				otherTable.Columns.Items,
+				c => Columns.Find(c.Name) == null,
+				c => diff.ColumnsDroped.Add(c));
+		}
+
+		public string ScriptCreate() {
 			var text = new StringBuilder();
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
 			text.Append(Columns.Script());

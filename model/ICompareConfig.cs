@@ -4,6 +4,7 @@
         CompareMethod TablesCompareMethod { get; }
         CompareMethod ColumnsCompareMethod { get; }
         CompareMethod ForeignKeysCompareMethod { get; }
+        CompareMethod ConstraintsCompareMethod { get; }
 
         bool IgnoreProps { get; }
         bool IgnoreDefaultsNameMismatch { get; }
