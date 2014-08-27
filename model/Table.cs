@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
@@ -25,11 +26,12 @@ namespace model {
 		}
 	}
 
-	public class Table : CompareBase{
+	public class Table : CompareBase, ITableInfo {
 		[XmlAttribute]
-		public string Name;
+		public string Name { get; set; }
 		[XmlAttribute]
-		public string Owner;
+		[DefaultValue("dbo")]
+		public string Owner { get; set; }
 
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();

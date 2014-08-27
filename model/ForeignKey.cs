@@ -22,8 +22,8 @@ namespace model {
 		public List<string> Columns = new List<string>();
 		[XmlArrayItem("Column")]
 		public List<string> RefColumns = new List<string>();
-		public Table RefTable;
-		public Table Table;
+		public TableInfo RefTable;
+		public TableInfo Table;
 
 		private ForeignKey() { }
 
@@ -37,10 +37,10 @@ namespace model {
 
 		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns, string onUpdate,
 			string onDelete) {
-			Table = table;
+			Table = new TableInfo(table.Owner, table.Name);
 			Name = name;
 			Columns = new List<string>(columns.Split(','));
-			RefTable = refTable;
+			RefTable = new TableInfo(refTable.Owner, refTable.Name);
 			RefColumns = new List<string>(refColumns.Split(','));
 			OnUpdate = onUpdate;
 			OnDelete = onDelete;

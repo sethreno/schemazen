@@ -398,7 +398,7 @@ select s.name as schemaName, p.name as principalName
 						while (dr.Read()) {
 							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 							var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]);
-							fk.Table = t;
+							fk.Table = new TableInfo(t.Owner, t.Name);
 							ForeignKeys.Add(fk);
 						}
 					}
@@ -449,7 +449,8 @@ order by fk.name
 							fk.Columns.Add((string) dr["COLUMN_NAME"]);
 							fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
 							if (fk.RefTable == null) {
-								fk.RefTable = FindTable((string)dr["REF_TABLE_NAME"], (string)dr["REF_TABLE_SCHEMA"]);
+							    var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
+								fk.RefTable =  new TableInfo(table.Owner, table.Name);
 							}
 						}
 					}
@@ -701,7 +702,7 @@ order by fk.name
 			return MakeFileName(r.Schema, r.Name);
 		}
 
-		private static string MakeFileName(Table t) {
+		private static string MakeFileName(ITableInfo t) {
 			return MakeFileName(t.Owner, t.Name);
 		}
 

@@ -224,17 +224,17 @@ select * from Table1
 			formType.Constraints[0].Clustered = true;
 
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
-			fk_policy_formType.Table = policy;
+			fk_policy_formType.Table = new TableInfo(policy.Owner, policy.Name);
 			fk_policy_formType.Columns.Add("form");
-			fk_policy_formType.RefTable = formType;
+			fk_policy_formType.RefTable = new TableInfo(formType.Owner, formType.Name);
 			fk_policy_formType.RefColumns.Add("code");
 			fk_policy_formType.OnUpdate = "NO ACTION";
 			fk_policy_formType.OnDelete = "NO ACTION";
 
 			var fk_location_policy = new ForeignKey("FK_Location_Policy");
-			fk_location_policy.Table = loc;
+			fk_location_policy.Table = new TableInfo(loc.Owner, loc.Name);
 			fk_location_policy.Columns.Add("policyId");
-			fk_location_policy.RefTable = policy;
+			fk_location_policy.RefTable = new TableInfo(policy.Owner, policy.Name);
 			fk_location_policy.RefColumns.Add("id");
 			fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
