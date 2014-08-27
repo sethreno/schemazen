@@ -14,10 +14,7 @@ namespace model {
         public bool Clustered;
         [XmlAttribute]
         public string Name;
-        [XmlAttribute]
-        public string TableName { get; set; }
-        [XmlAttribute]
-        public string TableOwner { get; set; }
+        public TableInfo Table { get; set; }
         [XmlAttribute]
         public string Type;
         [XmlAttribute]
@@ -53,7 +50,7 @@ namespace model {
         public string Script() {
             if (Type == "INDEX") {
                 string sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])",
-                    UniqueText, ClusteredText, Name, TableOwner, TableName,
+                    UniqueText, ClusteredText, Name, Table.Owner, Table.Name,
                     string.Join("], [", Columns.ToArray()));
                 if (IncludedColumns.Count > 0) {
                     sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
