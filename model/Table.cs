@@ -27,16 +27,20 @@ namespace model {
 	}
 
 	public class Table : CompareBase, ITableInfo {
+	    private const string DefaultOwner = "dbo";
+
 		[XmlAttribute]
 		public string Name { get; set; }
 		[XmlAttribute]
-		[DefaultValue("dbo")]
+		[DefaultValue(DefaultOwner)]
 		public string Owner { get; set; }
 
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 
-		private Table() { }
+	    private Table() {
+	        Owner = DefaultOwner;
+	    }
 
 		public Table(string owner, string name) {
 			Owner = owner;

@@ -12,10 +12,8 @@ namespace model {
 		[XmlAttribute]
 		public string Name;
 		[XmlAttribute]
-		[DefaultValue("")]
 		public string OnDelete;
 		[XmlAttribute]
-		[DefaultValue("")]
 		public string OnUpdate;
 
 		[XmlArrayItem("Column")]
