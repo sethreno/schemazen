@@ -1,14 +1,27 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
+using System.Xml.Serialization;
 
 namespace model {
     public class Constraint {
-        public bool Clustered;
+        [XmlArrayItem("Column")]
         public List<string> Columns = new List<string>();
+        [XmlArrayItem("Column")]
         public List<string> IncludedColumns = new List<string>();
+
+        [XmlAttribute]
+        [DefaultValue(false)]
+        public bool Clustered;
+        [XmlAttribute]
         public string Name;
+        [XmlAttribute]
         public string TableName { get; set; }
+        [XmlAttribute]
         public string TableOwner { get; set; }
+        [XmlAttribute]
         public string Type;
+        [XmlAttribute]
+        [DefaultValue(false)]
         public bool Unique;
 
         private Constraint() { }

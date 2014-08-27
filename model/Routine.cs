@@ -1,15 +1,22 @@
 ﻿using System;
+using System.Xml.Serialization;
 
 namespace model {
 	public class Routine {
+		[XmlAttribute]
 		public bool AnsiNull;
+		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
 		public bool QuotedId;
+		[XmlAttribute]
 		public string Schema;
+		[XmlAttribute]
 		public string Text;
+		[XmlAttribute]
 		public string Type;
 
-	    private Routine() { }
+		private Routine() { }
 
 		public Routine(string schema, string name) {
 			Schema = schema;

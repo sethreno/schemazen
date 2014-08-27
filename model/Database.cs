@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 
 namespace model {
 	public class Database : CompareBase {
@@ -52,8 +54,10 @@ namespace model {
 
 		public string Connection = "";
 		public List<Table> DataTables = new List<Table>();
+		[DefaultValue("")]
 		public string Dir = "";
 		public List<ForeignKey> ForeignKeys = new List<ForeignKey>();
+		[XmlAttribute]
 		public string Name;
 
 		public List<DbProp> Props = new List<DbProp>();
@@ -494,7 +498,7 @@ order by fk.name
 		}
 
 		public DatabaseDiff Compare(Database otherDb, CompareConfig compareConfig = null) {
-		    compareConfig = compareConfig ?? new CompareConfig();
+			compareConfig = compareConfig ?? new CompareConfig();
 
 			var diff = new DatabaseDiff();
 			diff.Db = otherDb;
@@ -536,9 +540,9 @@ order by fk.name
 
 		private void CompareRoutines(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
 			Action<Routine, Routine> checkIfRoutineChanged = (r, r2) => {
-			    if (compareConfig.IgnoreRoutinesTextMismatch) {
-			        return;
-			    }
+				if (compareConfig.IgnoreRoutinesTextMismatch) {
+					return;
+				}
 
 				//compare mutual procs
 				if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {

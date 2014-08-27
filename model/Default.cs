@@ -1,9 +1,13 @@
-﻿namespace model {
+﻿using System.Xml.Serialization;
+
+namespace model {
 	public class Default {
+		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
 		public string Value;
 
-	    private Default() { }
+		private Default() { }
 
 		public Default(string name, string value) {
 			Name = name;

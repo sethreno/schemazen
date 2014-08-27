@@ -1,19 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace model {
 	public class ForeignKey {
+		[XmlAttribute]
+		[DefaultValue(false)]
 		public bool Check;
-		public List<string> Columns = new List<string>();
+		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
+		[DefaultValue("")]
 		public string OnDelete;
+		[XmlAttribute]
+		[DefaultValue("")]
 		public string OnUpdate;
+
+		[XmlArrayItem("Column")]
+		public List<string> Columns = new List<string>();
+		[XmlArrayItem("Column")]
 		public List<string> RefColumns = new List<string>();
 		public Table RefTable;
 		public Table Table;
 
-	    private ForeignKey() { }
+		private ForeignKey() { }
 
 		public ForeignKey(string name) {
 			Name = name;

@@ -1,17 +1,21 @@
-﻿namespace model {
+﻿using System.Xml.Serialization;
+
+namespace model {
 	public class DbProp {
 		public Database _db;
 
-	    private DbProp()
-	    {
-	    }
+		private DbProp()
+		{
+		}
 
 		public DbProp(string name, string value) {
 			Name = name;
 			Value = value;
 		}
 
+		[XmlAttribute]
 		public string Name { get; set; }
+		[XmlAttribute]
 		public string Value { get; set; }
 
 		public string Script() {

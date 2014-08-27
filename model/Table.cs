@@ -9,7 +9,9 @@ using System.Xml.Serialization;
 namespace model {
 	public class Schema
 	{
+		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
 		public string Owner;
 
 		private Schema()
@@ -24,12 +26,13 @@ namespace model {
 	}
 
 	public class Table : CompareBase{
-		public ColumnList Columns = new ColumnList();
-		public List<Constraint> Constraints = new List<Constraint>();
 		[XmlAttribute]
 		public string Name;
 		[XmlAttribute]
 		public string Owner;
+
+		public ColumnList Columns = new ColumnList();
+		public List<Constraint> Constraints = new List<Constraint>();
 
 		private Table() { }
 

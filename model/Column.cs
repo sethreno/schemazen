@@ -1,15 +1,30 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Xml.Serialization;
 
 namespace model {
 	public class Column {
 		public Default Default;
 		public Identity Identity;
+
+		[XmlAttribute]
+        [DefaultValue(false)]
 		public bool IsNullable;
+		[XmlAttribute]
+        [DefaultValue(0)]
 		public int Length;
+		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
+        [DefaultValue(0)]
 		public int Position;
+		[XmlAttribute]
+        [DefaultValue(0)]
 		public byte Precision;
+		[XmlAttribute]
+        [DefaultValue(0)]
 		public int Scale;
+		[XmlAttribute]
 		public string Type;
 
 		public Column() {
