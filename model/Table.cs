@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using System.Text;
+using System.Xml.Serialization;
 
 namespace model {
 	public class Schema
@@ -61,29 +62,29 @@ namespace model {
 			CompareColumns(otherTable, compareConfig, diff);
 			CompareConstraints(otherTable, compareConfig, diff);
 
-		    return diff;
+			return diff;
 		}
 
-	    private void CompareConstraints(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
-	        Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
-	            if (c.Script() != c2.Script()) {
-	                diff.ConstraintsChanged.Add(c);
-	            }
-	        };
+		private void CompareConstraints(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
+			Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
+				if (c.Script() != c2.Script()) {
+					diff.ConstraintsChanged.Add(c);
+				}
+			};
 
-	        CheckSource(compareConfig.ConstraintsCompareMethod,
-	            Constraints,
-	            c => otherTable.FindConstraint(c.Name),
-	            c => diff.ConstraintsAdded.Add(c),
-	            checkIfConstraintChanged);
+			CheckSource(compareConfig.ConstraintsCompareMethod,
+				Constraints,
+				c => otherTable.FindConstraint(c.Name),
+				c => diff.ConstraintsAdded.Add(c),
+				checkIfConstraintChanged);
 
-	        CheckTarget(compareConfig.ConstraintsCompareMethod,
-	            otherTable.Constraints,
-	            c => FindConstraint(c.Name) == null,
-	            c => diff.ConstraintsDeleted.Add(c));
-	    }
+			CheckTarget(compareConfig.ConstraintsCompareMethod,
+				otherTable.Constraints,
+				c => FindConstraint(c.Name) == null,
+				c => diff.ConstraintsDeleted.Add(c));
+		}
 
-	    private void CompareColumns(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
+		private void CompareColumns(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
 			Action<Column, Column> checkIfColumnChanged = (c, c2) => {
 				//compare mutual columns
 				ColumnDiff cDiff = c.Compare(c2, compareConfig);
@@ -93,13 +94,13 @@ namespace model {
 			};
 
 			CheckSource(compareConfig.ColumnsCompareMethod,
-				Columns.Items,
+				Columns,
 				c => otherTable.Columns.Find(c.Name),
 				c => diff.ColumnsAdded.Add(c),
 				checkIfColumnChanged);
 
 			CheckTarget(compareConfig.RoutinesCompareMethod,
-				otherTable.Columns.Items,
+				otherTable.Columns,
 				c => Columns.Find(c.Name) == null,
 				c => diff.ColumnsDroped.Add(c));
 		}
@@ -130,7 +131,7 @@ namespace model {
 			var data = new StringBuilder();
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -141,7 +142,7 @@ namespace model {
 					cm.CommandText = sql.ToString();
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							foreach (Column c in Columns.Items) {
+							foreach (Column c in Columns) {
 								data.AppendFormat("{0}\t", dr[c.Name]);
 							}
 							data.Remove(data.Length - 1, 1);
@@ -156,7 +157,7 @@ namespace model {
 
 		public void ImportData(string conn, string data) {
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns) {
 				dt.Columns.Add(new DataColumn(c.Name));
 			}
 			string[] lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
@@ -164,12 +165,12 @@ namespace model {
 				string line = lines[i];
 				DataRow row = dt.NewRow();
 				string[] fields = line.Split('\t');
-				if (fields.Length != Columns.Items.Count) {
+				if (fields.Length != Columns.Count) {
 					throw new DataException("Incorrect number of columns", i + 1);
 				}
 				for (int j = 0; j < fields.Length; j++) {
 					try {
-						row[j] = ConvertType(Columns.Items[j].Type, fields[j]);
+						row[j] = ConvertType(Columns[j].Type, fields[j]);
 					}
 					catch (FormatException ex) {
 						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i + 1);

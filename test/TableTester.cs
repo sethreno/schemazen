@@ -51,7 +51,7 @@ namespace test {
 			Assert.AreEqual(1, diff.ColumnsDroped.Count);
 
 			//test diff
-			t1.Columns.Items[0].Length = 20;
+			t1.Columns[0].Length = 20;
 			diff = t1.Compare(t2, new CompareConfig());
 			Assert.IsTrue(diff.IsDiff);
 			Assert.AreEqual(1, diff.ColumnsDiff.Count);

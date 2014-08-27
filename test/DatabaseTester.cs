@@ -206,7 +206,7 @@ select * from Table1
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
 			policy.Constraints[0].Clustered = true;
 			policy.Constraints[0].Unique = true;
-			policy.Columns.Items[0].Identity = new Identity(1, 1);
+			policy.Columns[0].Identity = new Identity(1, 1);
 
 			var loc = new Table("dbo", "Location");
 			loc.Columns.Add(new Column("id", "int", false, null));
@@ -215,7 +215,7 @@ select * from Table1
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
 			loc.Constraints[0].Clustered = true;
 			loc.Constraints[0].Unique = true;
-			loc.Columns.Items[0].Identity = new Identity(1, 1);
+			loc.Columns[0].Identity = new Identity(1, 1);
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null));

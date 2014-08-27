@@ -1,34 +1,18 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace model {
-	public class ColumnList {
-		private readonly List<Column> mItems = new List<Column>();
-
-		public List<Column> Items {
-			get { return mItems; }
-		}
-
-		public void Add(Column c) {
-			mItems.Add(c);
-		}
-
-		public void Remove(Column c) {
-			mItems.Remove(c);
-		}
-
+	public class ColumnList : List<Column> {
 		public Column Find(string name) {
-			foreach (Column c in mItems) {
-				if (c.Name == name) return c;
-			}
-			return null;
+		    return this.FirstOrDefault(c => c.Name == name);
 		}
 
-		public string Script() {
+	    public string Script() {
 			var text = new StringBuilder();
-			foreach (Column c in mItems) {
+			foreach (Column c in this) {
 				text.Append("   " + c.Script());
-				if (mItems.IndexOf(c) < mItems.Count - 1) {
+				if (this.IndexOf(c) < this.Count - 1) {
 					text.AppendLine(",");
 				}
 				else {
