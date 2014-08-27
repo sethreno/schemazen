@@ -493,7 +493,9 @@ order by fk.name
 			}
 		}
 
-		public DatabaseDiff Compare(Database otherDb, ICompareConfig compareConfig) {
+		public DatabaseDiff Compare(Database otherDb, CompareConfig compareConfig = null) {
+		    compareConfig = compareConfig ?? new CompareConfig();
+
 			var diff = new DatabaseDiff();
 			diff.Db = otherDb;
 
@@ -514,7 +516,7 @@ order by fk.name
 			return diff;
 		}
 
-		private void CompareForeignKeys(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+		private void CompareForeignKeys(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
 			Action<ForeignKey, ForeignKey> checkIfFkChanged = (fk1, fk2) => {
 				if (fk1.ScriptCreate() != fk2.ScriptCreate()) {
 					diff.ForeignKeysDiff.Add(fk1);
@@ -532,7 +534,7 @@ order by fk.name
 				fk => FindForeignKey(fk.Name) == null, fk => diff.ForeignKeysDeleted.Add(fk));
 		}
 
-		private void CompareRoutines(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+		private void CompareRoutines(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
 			Action<Routine, Routine> checkIfRoutineChanged = (r, r2) => {
 			    if (compareConfig.IgnoreRoutinesTextMismatch) {
 			        return;
@@ -557,7 +559,7 @@ order by fk.name
 				r => diff.RoutinesDeleted.Add(r));
 		}
 
-		private void CompareTables(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
+		private void CompareTables(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
 			Action<Table, Table> checkIfTableChanged = (t, t2) => {
 				//compare mutual tables
 				TableDiff tDiff = t.Compare(t2, compareConfig);

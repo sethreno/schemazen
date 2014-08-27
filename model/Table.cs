@@ -51,7 +51,7 @@ namespace model {
 			return null;
 		}
 
-		public TableDiff Compare(Table otherTable, ICompareConfig compareConfig) {
+		public TableDiff Compare(Table otherTable, CompareConfig compareConfig) {
 			var diff = new TableDiff();
 			diff.Owner = otherTable.Owner;
 			diff.Name = otherTable.Name;
@@ -62,7 +62,7 @@ namespace model {
 		    return diff;
 		}
 
-	    private void CompareConstraints(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
+	    private void CompareConstraints(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
 	        Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
 	            if (c.Script() != c2.Script()) {
 	                diff.ConstraintsChanged.Add(c);
@@ -81,7 +81,7 @@ namespace model {
 	            c => diff.ConstraintsDeleted.Add(c));
 	    }
 
-	    private void CompareColumns(Table otherTable, ICompareConfig compareConfig, TableDiff diff) {
+	    private void CompareColumns(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
 			Action<Column, Column> checkIfColumnChanged = (c, c2) => {
 				//compare mutual columns
 				ColumnDiff cDiff = c.Compare(c2, compareConfig);

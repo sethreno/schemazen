@@ -53,7 +53,7 @@ namespace model {
 			}
 		}
 
-		public ColumnDiff Compare(Column c, ICompareConfig compareConfig) {
+		public ColumnDiff Compare(Column c, CompareConfig compareConfig) {
 			return new ColumnDiff(this, c, compareConfig);
 		}
 
@@ -104,14 +104,14 @@ namespace model {
 	}
 
 	public class ColumnDiff {
-		private readonly ICompareConfig _compareConfig;
+		private readonly CompareConfig _compareConfig;
 
 		public Column Source;
 		public Column Target;
 
 		private ColumnDiff() { }
 
-		public ColumnDiff(Column target, Column source, ICompareConfig compareConfig) {
+		public ColumnDiff(Column target, Column source, CompareConfig compareConfig) {
 			_compareConfig = compareConfig;
 
 			Source = source;
