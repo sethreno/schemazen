@@ -8,6 +8,7 @@
 
         bool IgnoreProps { get; }
         bool IgnoreDefaultsNameMismatch { get; }
+        bool IgnoreRoutinesTextMismatch { get; }
     }
 
     public enum CompareMethod {

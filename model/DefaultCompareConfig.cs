@@ -8,5 +8,6 @@
 
         public virtual bool IgnoreProps { get { return false; } }
         public virtual bool IgnoreDefaultsNameMismatch { get { return true; } }
+        public virtual bool IgnoreRoutinesTextMismatch { get { return false; } }
     }
 }

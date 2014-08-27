@@ -534,6 +534,10 @@ order by fk.name
 
 		private void CompareRoutines(Database otherDb, ICompareConfig compareConfig, DatabaseDiff diff) {
 			Action<Routine, Routine> checkIfRoutineChanged = (r, r2) => {
+			    if (compareConfig.IgnoreRoutinesTextMismatch) {
+			        return;
+			    }
+
 				//compare mutual procs
 				if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {
 					diff.RoutinesDiff.Add(r);
