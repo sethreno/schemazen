@@ -1039,15 +1039,15 @@ end
 						var constraints = diffEntry.AddCategory("Constraints");
 
 						foreach (var constraint in tableDiff.ConstraintsAdded) {
-							constraints.AddEntry(constraint.Name, DiffEntryType.Added);
+							constraints.AddEntry(constraint.Name, DiffEntryType.Added, constraint.Script());
 						}
 
 						foreach (var constraint in tableDiff.ConstraintsDeleted) {
-							constraints.AddEntry(constraint.Name, DiffEntryType.Deleted);
+							constraints.AddEntry(constraint.Name, DiffEntryType.Deleted, constraint.Script());
 						}
 
 						foreach (var constraint in tableDiff.ConstraintsChanged) {
-							constraints.AddEntry(constraint.Name, DiffEntryType.Changed);
+							constraints.AddEntry(constraint.Name, DiffEntryType.Changed, constraint.Script());
 						}
 					}
 				}
