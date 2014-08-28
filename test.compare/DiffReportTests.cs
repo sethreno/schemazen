@@ -56,6 +56,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForDeletedTable()
+        {
+            var diff = new DatabaseDiff();
+            diff.TablesDeleted.Add(new Table("dbo", "MyTable"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyTable");
+            entry.Type.Should().Be(DiffEntryType.Deleted);
+        }
+
+        [Test]
         public void CanAddCategoryWithChangedTable()
         {
             var diff = new DatabaseDiff();

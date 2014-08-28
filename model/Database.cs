@@ -1010,11 +1010,11 @@ end
 				report.Categories.Add(tables);
 
 				foreach (var addedTable in TablesAdded) {
-					tables.Entries.Add(new DiffEntry{ Name = addedTable.Name , Type = DiffEntryType.Added});
+					tables.Entries.Add(new DiffEntry{ Name = addedTable.Name , Type = DiffEntryType.Added });
 				}
 
 				foreach (var deletedTable in TablesDeleted) {
-					tables.Entries.Add(new DiffEntry());
+					tables.Entries.Add(new DiffEntry { Name = deletedTable.Name, Type = DiffEntryType.Deleted });
 				}
 
 				foreach (var tableDiff in TablesDiff) {
