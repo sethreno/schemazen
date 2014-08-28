@@ -1073,15 +1073,15 @@ end
 				var routines = report.AddCategory("Routines");
 
 				foreach (var routine in RoutinesAdded) {
-					routines.AddEntry(routine.Name, DiffEntryType.Added);
+					routines.AddEntry(routine.Name, DiffEntryType.Added, routine.ScriptCreate(Db));
 				}
 
 				foreach (var routine in RoutinesDeleted) {
-					routines.AddEntry(routine.Name, DiffEntryType.Deleted);
+					routines.AddEntry(routine.Name, DiffEntryType.Deleted, routine.ScriptDrop());
 				}
 
 				foreach (var routine in RoutinesDiff) {
-					routines.AddEntry(routine.Name, DiffEntryType.Changed);
+					routines.AddEntry(routine.Name, DiffEntryType.Changed, routine.ScriptCreate(Db));
 				}
 			}
 
