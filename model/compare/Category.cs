@@ -9,5 +9,9 @@ namespace model.compare {
         public string Name { get; set; }
 
         public List<DiffEntry> Entries { get; set; }
+
+        public void AddEntry(string name, DiffEntryType diffEntryType) {
+                Entries.Add(new DiffEntry { Name = name, Type = diffEntryType });
+        }
     }
 }

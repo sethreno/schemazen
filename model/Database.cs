@@ -1028,19 +1028,30 @@ end
 							columns.Entries.Add(new DiffEntry {Name = column.Name, Type = DiffEntryType.Added});
 						}
 
-						foreach (var column in tableDiff.ColumnsDroped)
-						{
+						foreach (var column in tableDiff.ColumnsDroped) {
 							columns.Entries.Add(new DiffEntry { Name = column.Name, Type = DiffEntryType.Deleted });
 						}
 
-						foreach (var columnDiff in tableDiff.ColumnsDiff)
-						{
+						foreach (var columnDiff in tableDiff.ColumnsDiff) {
 							columns.Entries.Add(new DiffEntry { Name = columnDiff.Source.Name, Type = DiffEntryType.Changed });
 						}
 					}
 
 					if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
-						diffEntry.Categories.Add(new Category() {Name = "Constraints"});
+						var constraints = new Category() {Name = "Constraints"};
+						diffEntry.Categories.Add(constraints);
+
+						foreach (var constraint in tableDiff.ConstraintsAdded) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Added);
+						}
+
+						foreach (var constraint in tableDiff.ConstraintsDeleted) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Deleted);
+						}
+
+						foreach (var constraint in tableDiff.ConstraintsChanged) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Changed);
+						}
 					}
 
 					tables.Entries.Add(diffEntry);

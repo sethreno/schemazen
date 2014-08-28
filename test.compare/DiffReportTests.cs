@@ -201,6 +201,22 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForAddedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsAdded.Add(new Constraint("MyConstraint","",""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyConstraint");
+            entry.Type.Should().Be(DiffEntryType.Added);
+        }
+
+        [Test]
         public void CanAddCategoryToCategoryForDeletedConstraint()
         {
             var diff = new DatabaseDiff();
@@ -215,6 +231,22 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForDeletedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsDeleted.Add(new Constraint("MyConstraint", "", ""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyConstraint");
+            entry.Type.Should().Be(DiffEntryType.Deleted);
+        }
+
+        [Test]
         public void CanAddCategoryToCategoryForChangedConstraint()
         {
             var diff = new DatabaseDiff();
@@ -226,6 +258,22 @@ namespace test.compare
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCorrectEntryForChangedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsChanged.Add(new Constraint("MyConstraint", "", ""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyConstraint");
+            entry.Type.Should().Be(DiffEntryType.Changed);
         }
 
         [Test]
