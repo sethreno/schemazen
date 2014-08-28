@@ -1,5 +1,7 @@
-﻿using FluentAssertions;
+﻿using System.Linq;
+using FluentAssertions;
 using model;
+using model.compare;
 using NUnit.Framework;
 
 namespace test.compare
@@ -26,6 +28,20 @@ namespace test.compare
 
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Tables");
+        }
+
+        [Test]
+        public void CanAddCorrectEntryForAddedTable()
+        {
+            var diff = new DatabaseDiff();
+            diff.TablesAdded.Add(new Table("dbo", "MyTable"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyTable");
+            entry.Type.Should().Be(DiffEntryType.Added);
         }
 
         [Test]
