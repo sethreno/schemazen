@@ -2,10 +2,13 @@
 using model;
 using NUnit.Framework;
 
-namespace test.compare {
-    public class DiffReportTests {
+namespace test.compare
+{
+    public class DiffReportTests
+    {
         [Test]
-        public void CanCreateDiffReport() {
+        public void CanCreateDiffReport()
+        {
             var databaseDiff = new DatabaseDiff();
 
             var report = databaseDiff.CreateDiffReport();
@@ -14,7 +17,8 @@ namespace test.compare {
         }
 
         [Test]
-        public void CanAddCategoryWithAddedTable() {
+        public void CanAddCategoryWithAddedTable()
+        {
             var diff = new DatabaseDiff();
             diff.TablesAdded.Add(new Table("dbo", "MyTable"));
 
@@ -25,7 +29,8 @@ namespace test.compare {
         }
 
         [Test]
-        public void CanAddCategoryWithDeletedTable() {
+        public void CanAddCategoryWithDeletedTable()
+        {
             var diff = new DatabaseDiff();
             diff.TablesDeleted.Add(new Table("dbo", "MyTable"));
 
@@ -72,7 +77,6 @@ namespace test.compare {
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
-            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Columns");
         }
 
         [Test]
@@ -87,11 +91,54 @@ namespace test.compare {
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
-            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Columns");
         }
 
         [Test]
-        public void CanAddCategoryWithAddedForeinKey() {
+        public void CanAddCategoryToCategoryForAddedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsAdded.Add(new Constraint("", "", ""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Constraints");
+        }
+
+        [Test]
+        public void CanAddCategoryToCategoryForDeletedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsDeleted.Add(new Constraint("", "", ""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryToCategoryForChangedConstraint()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ConstraintsChanged.Add(new Constraint("", "", ""));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithAddedForeinKey()
+        {
             var diff = new DatabaseDiff();
             diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
 
@@ -127,7 +174,7 @@ namespace test.compare {
         public void CanAddCategoryWithAddedRoutine()
         {
             var diff = new DatabaseDiff();
-            diff.RoutinesAdded.Add(new Routine("dbo","MySP"));
+            diff.RoutinesAdded.Add(new Routine("dbo", "MySP"));
 
             var report = diff.CreateDiffReport();
 
@@ -158,7 +205,7 @@ namespace test.compare {
         }
 
         [Test]
-        public void CanAddCategoryWithChangedProperty ()
+        public void CanAddCategoryWithChangedProperty()
         {
             var diff = new DatabaseDiff();
             diff.PropsChanged.Add(new DbProp("prop", "value"));

@@ -1023,6 +1023,11 @@ end
 					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
 						diffEntry.Categories.Add(new Category() { Name = "Columns" });
 					}
+
+				    if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
+				        diffEntry.Categories.Add(new Category() {Name = "Constraints"});
+				    }
+
 					tables.Entries.Add(diffEntry);
 				}
 			}
