@@ -439,5 +439,19 @@ namespace test.compare
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Properties");
         }
+
+        [Test]
+        public void CanAddCorrectEntryForChangedProperty()
+        {
+            var diff = new DatabaseDiff();
+            diff.PropsChanged.Add(new DbProp("prop", "value"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("prop");
+            entry.Type.Should().Be(DiffEntryType.Changed);
+        }
     }
 }

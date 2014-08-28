@@ -1093,6 +1093,10 @@ end
 			if (PropsChanged.Any()) {
 				var props = new Category() { Name = "Properties" };
 				report.Categories.Add(props);
+
+			    foreach (var dbProp in PropsChanged) {
+			        props.AddEntry(dbProp.Name, DiffEntryType.Changed);
+			    }
 			}
 
 			return report;
