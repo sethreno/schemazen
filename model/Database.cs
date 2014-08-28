@@ -1010,30 +1010,30 @@ end
 				report.Categories.Add(tables);
 
 				foreach (var addedTable in TablesAdded) {
-					tables.Entries.Add(new DiffEntry{ Name = addedTable.Name , Type = DiffEntryType.Added });
+					tables.AddEntry(addedTable.Name, DiffEntryType.Added);
 				}
 
 				foreach (var deletedTable in TablesDeleted) {
-					tables.Entries.Add(new DiffEntry { Name = deletedTable.Name, Type = DiffEntryType.Deleted });
+					tables.AddEntry(deletedTable.Name, DiffEntryType.Deleted);
 				}
 
 				foreach (var tableDiff in TablesDiff) {
-					var diffEntry = new DiffEntry { Name = tableDiff.Name, Type = DiffEntryType.Changed };
+					var diffEntry = tables.AddEntry(tableDiff.Name, DiffEntryType.Changed );
 
 					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
 						var columns = new Category() {Name = "Columns"};
 						diffEntry.Categories.Add(columns);
 
 						foreach (var column in tableDiff.ColumnsAdded) {
-							columns.Entries.Add(new DiffEntry {Name = column.Name, Type = DiffEntryType.Added});
+							columns.AddEntry(column.Name, DiffEntryType.Added);
 						}
 
 						foreach (var column in tableDiff.ColumnsDroped) {
-							columns.Entries.Add(new DiffEntry { Name = column.Name, Type = DiffEntryType.Deleted });
+							columns.AddEntry(column.Name, DiffEntryType.Deleted);
 						}
 
 						foreach (var columnDiff in tableDiff.ColumnsDiff) {
-							columns.Entries.Add(new DiffEntry { Name = columnDiff.Source.Name, Type = DiffEntryType.Changed });
+							columns.AddEntry(columnDiff.Source.Name, DiffEntryType.Changed);
 						}
 					}
 
@@ -1053,8 +1053,6 @@ end
 							constraints.AddEntry(constraint.Name, DiffEntryType.Changed);
 						}
 					}
-
-					tables.Entries.Add(diffEntry);
 				}
 			}
 
