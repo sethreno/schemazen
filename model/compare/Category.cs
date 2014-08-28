@@ -12,8 +12,8 @@ namespace model.compare {
 
         public List<DiffEntry> Entries { get; set; }
 
-        public DiffEntry AddEntry(string name, DiffEntryType diffEntryType) {
-            var entry = new DiffEntry {Name = name, Type = diffEntryType};
+        public DiffEntry AddEntry(string name, DiffEntryType diffEntryType, string details = null) {
+            var entry = new DiffEntry {Name = name, Type = diffEntryType, Details = details};
             Entries.Add(entry);
 
             return entry;
