@@ -13,7 +13,7 @@ namespace test.compare
         {
             var databaseDiff = new DatabaseDiff();
 
-            var report = databaseDiff.CreateDiffReport();
+            var report = databaseDiff.GetDiffReport();
 
             report.Should().NotBeNull();
         }
@@ -24,7 +24,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesAdded.Add(new Table("dbo", "MyTable"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Tables");
@@ -36,7 +36,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesAdded.Add(new Table("dbo", "MyTable"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -50,7 +50,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesDeleted.Add(new Table("dbo", "MyTable"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -61,7 +61,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesDeleted.Add(new Table("dbo", "MyTable"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -75,7 +75,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesDiff.Add(new TableDiff());
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -86,7 +86,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.TablesDiff.Add(new TableDiff { Name = "MyTable"});
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -102,7 +102,7 @@ namespace test.compare
             tableDiff.ColumnsAdded.Add(new Column());
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -117,7 +117,7 @@ namespace test.compare
             tableDiff.ColumnsAdded.Add(new Column { Name = "MyColumn"});
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -133,7 +133,7 @@ namespace test.compare
             tableDiff.ColumnsDroped.Add(new Column());
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -147,7 +147,7 @@ namespace test.compare
             tableDiff.ColumnsDroped.Add(new Column { Name = "MyColumn" });
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -163,7 +163,7 @@ namespace test.compare
             tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column(), new Column(), new CompareConfig()));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -177,7 +177,7 @@ namespace test.compare
             tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column {Name = "TargetColumn"}, new Column { Name = "SourceColumn"}, new CompareConfig()));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -193,7 +193,7 @@ namespace test.compare
             tableDiff.ConstraintsAdded.Add(new Constraint("", "", ""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -208,7 +208,7 @@ namespace test.compare
             tableDiff.ConstraintsAdded.Add(new Constraint("MyConstraint","",""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -224,7 +224,7 @@ namespace test.compare
             tableDiff.ConstraintsDeleted.Add(new Constraint("", "", ""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -238,7 +238,7 @@ namespace test.compare
             tableDiff.ConstraintsDeleted.Add(new Constraint("MyConstraint", "", ""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -254,7 +254,7 @@ namespace test.compare
             tableDiff.ConstraintsChanged.Add(new Constraint("", "", ""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
@@ -268,7 +268,7 @@ namespace test.compare
             tableDiff.ConstraintsChanged.Add(new Constraint("MyConstraint", "", ""));
             diff.TablesDiff.Add(tableDiff);
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -282,7 +282,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Foreign Keys");
@@ -294,7 +294,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -308,7 +308,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -319,7 +319,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -333,7 +333,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -344,7 +344,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -358,7 +358,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesAdded.Add(new Routine("dbo", "MySP"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Routines");
@@ -370,7 +370,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesAdded.Add(new Routine("dbo", "My_Routine"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -384,7 +384,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesDeleted.Add(new Routine("dbo", "MySP"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -395,7 +395,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesDeleted.Add(new Routine("dbo", "My_Routine"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -409,7 +409,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesDiff.Add(new Routine("dbo", "MySP"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
         }
@@ -420,7 +420,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.RoutinesDiff.Add(new Routine("dbo","My_Routine"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
@@ -434,7 +434,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.PropsChanged.Add(new DbProp("prop", "value"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             report.Categories.Count.Should().Be(1);
             report.Categories[0].Name.Should().Be("Properties");
@@ -446,7 +446,7 @@ namespace test.compare
             var diff = new DatabaseDiff();
             diff.PropsChanged.Add(new DbProp("prop", "value"));
 
-            var report = diff.CreateDiffReport();
+            var report = diff.GetDiffReport();
 
             DiffEntry entry;
             (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();

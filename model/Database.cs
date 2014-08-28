@@ -1002,7 +1002,7 @@ end
 			return text.ToString();
 		}
 
-		public DiffReport CreateDiffReport() {
+		public DiffReport GetDiffReport() {
 			var report = new DiffReport();
 
 			if (TablesAdded.Any() || TablesDeleted.Any() || TablesDiff.Any()) {

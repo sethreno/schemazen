@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Xml.Serialization;
 
 namespace model.compare {
     public class Category {
@@ -6,6 +7,7 @@ namespace model.compare {
             Entries = new List<DiffEntry>();
         }
 
+        [XmlAttribute]
         public string Name { get; set; }
 
         public List<DiffEntry> Entries { get; set; }

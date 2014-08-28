@@ -3,6 +3,7 @@ using System.IO;
 using System.Xml.Serialization;
 using ManyConsole;
 using model;
+using model.compare;
 using NDesk.Options;
 
 namespace console {
@@ -37,10 +38,10 @@ namespace console {
 
             DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
 
-            var diffSerializer = new XmlSerializer(typeof(DatabaseDiff));
+            var diffSerializer = new XmlSerializer(typeof(DiffReport));
             using (var stream = new StreamWriter("diff.xml", false))
             {
-                diffSerializer.Serialize(stream, diff);
+                diffSerializer.Serialize(stream, diff.GetDiffReport());
             }
 
             if (diff.IsDiff)
