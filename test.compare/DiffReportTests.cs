@@ -365,6 +365,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForAddedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesAdded.Add(new Routine("dbo", "My_Routine"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_Routine");
+            entry.Type.Should().Be(DiffEntryType.Added);
+        }
+
+        [Test]
         public void CanAddCategoryWithDeletedRoutine()
         {
             var diff = new DatabaseDiff();
@@ -376,6 +390,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForDeletedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesDeleted.Add(new Routine("dbo", "My_Routine"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_Routine");
+            entry.Type.Should().Be(DiffEntryType.Deleted);
+        }
+
+        [Test]
         public void CanAddCategoryWithChangedRoutine()
         {
             var diff = new DatabaseDiff();
@@ -384,6 +412,20 @@ namespace test.compare
             var report = diff.CreateDiffReport();
 
             report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCorrectEntryForChangedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesDiff.Add(new Routine("dbo","My_Routine"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_Routine");
+            entry.Type.Should().Be(DiffEntryType.Changed);
         }
 
         [Test]

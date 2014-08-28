@@ -1076,6 +1076,18 @@ end
 			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {
 				var routines = new Category() { Name = "Routines" };
 				report.Categories.Add(routines);
+
+				foreach (var routine in RoutinesAdded) {
+					routines.AddEntry(routine.Name, DiffEntryType.Added);
+				}
+
+				foreach (var routine in RoutinesDeleted) {
+					routines.AddEntry(routine.Name, DiffEntryType.Deleted);
+				}
+
+				foreach (var routine in RoutinesDiff) {
+					routines.AddEntry(routine.Name, DiffEntryType.Changed);
+				}
 			}
 
 			if (PropsChanged.Any()) {
