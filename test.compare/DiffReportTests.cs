@@ -111,5 +111,17 @@ namespace test.compare {
 
             report.Categories.Count.Should().Be(1);
         }
+
+        [Test]
+        public void CanAddCategoryWithChangedProperty ()
+        {
+            var diff = new DatabaseDiff();
+            diff.PropsChanged.Add(new DbProp("prop", "value"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+            report.Categories[0].Name.Should().Be("Properties");
+        }
     }
 }

@@ -1028,8 +1028,13 @@ end
 			}
 
 			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {
-				var foreignKeys = new Category() { Name = "Routines" };
-				report.Categories.Add(foreignKeys);
+				var routines = new Category() { Name = "Routines" };
+				report.Categories.Add(routines);
+			}
+
+			if (PropsChanged.Any()) {
+				var props = new Category() { Name = "Properties" };
+				report.Categories.Add(props);
 			}
 
 			return report;
