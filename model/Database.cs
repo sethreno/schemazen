@@ -1022,6 +1022,16 @@ end
 				}
 			}
 
+			if (ForeignKeysAdded.Any() || ForeignKeysDeleted.Any() || ForeignKeysDiff.Any()) {
+				var foreignKeys = new Category() { Name = "Foreign Keys" };
+				report.Categories.Add(foreignKeys);
+			}
+
+			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {
+				var foreignKeys = new Category() { Name = "Routines" };
+				report.Categories.Add(foreignKeys);
+			}
+
 			return report;
 		}
 	}

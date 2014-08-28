@@ -21,6 +21,7 @@ namespace test.compare {
             var report = diff.CreateDiffReport();
 
             report.Categories.Count.Should().Be(1);
+            report.Categories[0].Name.Should().Be("Tables");
         }
 
         [Test]
@@ -38,6 +39,73 @@ namespace test.compare {
         {
             var diff = new DatabaseDiff();
             diff.TablesDiff.Add(new TableDiff());
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithAddedForeinKey() {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+            report.Categories[0].Name.Should().Be("Foreign Keys");
+        }
+
+        [Test]
+        public void CanAddCategoryWithDeletedForeinKey()
+        {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithChangedForeinKey()
+        {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithAddedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesAdded.Add(new Routine("dbo","MySP"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+            report.Categories[0].Name.Should().Be("Routines");
+        }
+
+        [Test]
+        public void CanAddCategoryWithDeletedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesDeleted.Add(new Routine("dbo", "MySP"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithChangedRoutine()
+        {
+            var diff = new DatabaseDiff();
+            diff.RoutinesDiff.Add(new Routine("dbo", "MySP"));
 
             var report = diff.CreateDiffReport();
 
