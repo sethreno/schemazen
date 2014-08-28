@@ -12,5 +12,36 @@ namespace test.compare {
 
             report.Should().NotBeNull();
         }
+
+        [Test]
+        public void CanAddCategoryWithAddedTable() {
+            var diff = new DatabaseDiff();
+            diff.TablesAdded.Add(new Table("dbo", "MyTable"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithDeletedTable() {
+            var diff = new DatabaseDiff();
+            diff.TablesDeleted.Add(new Table("dbo", "MyTable"));
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCategoryWithChangedTable()
+        {
+            var diff = new DatabaseDiff();
+            diff.TablesDiff.Add(new TableDiff());
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories.Count.Should().Be(1);
+        }
     }
 }

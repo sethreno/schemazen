@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
@@ -449,7 +450,7 @@ order by fk.name
 							fk.Columns.Add((string) dr["COLUMN_NAME"]);
 							fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
 							if (fk.RefTable == null) {
-							    var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
+								var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
 								fk.RefTable =  new TableInfo(table.Owner, table.Name);
 							}
 						}
@@ -1001,8 +1002,27 @@ end
 			return text.ToString();
 		}
 
-	    public DiffReport CreateDiffReport() {
-	        return new DiffReport();
-	    }
+		public DiffReport CreateDiffReport() {
+			var report = new DiffReport();
+
+			if (TablesAdded.Any() || TablesDeleted.Any() || TablesDiff.Any()) {
+				var tables = new Category {Name = "Tables"};
+				report.Categories.Add(tables);
+
+				foreach (var addedTable in TablesAdded) {
+					tables.Entries.Add(new DiffEntry());
+				}
+
+				foreach (var deletedTable in TablesDeleted) {
+					tables.Entries.Add(new DiffEntry());
+				}
+
+				foreach (var tableDiff in TablesDiff) {
+					tables.Entries.Add(new DiffEntry());
+				}
+			}
+
+			return report;
+		}
 	}
 }

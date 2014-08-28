@@ -2,6 +2,10 @@ using System.Collections.Generic;
 
 namespace model.compare {
     public class DiffReport {
-        public Category[] Categories { get; set; }
+        public DiffReport() {
+            Categories = new List<Category>();
+        }
+
+        public List<Category> Categories { get; set; }
     }
 }
