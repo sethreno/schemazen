@@ -1018,7 +1018,7 @@ end
 				}
 
 				foreach (var tableDiff in TablesDiff) {
-					var diffEntry = new DiffEntry();
+					var diffEntry = new DiffEntry { Name = tableDiff.Name, Type = DiffEntryType.Changed };
 
 					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
 						diffEntry.Categories.Add(new Category() { Name = "Columns" });

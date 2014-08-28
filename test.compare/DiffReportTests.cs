@@ -81,6 +81,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForChangedTable()
+        {
+            var diff = new DatabaseDiff();
+            diff.TablesDiff.Add(new TableDiff { Name = "MyTable"});
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyTable");
+            entry.Type.Should().Be(DiffEntryType.Changed);
+        }
+
+        [Test]
         public void CanAddCategoryToCategoryForAddedColumn()
         {
             var diff = new DatabaseDiff();
