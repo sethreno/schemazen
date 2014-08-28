@@ -1009,11 +1009,11 @@ end
 				var tables = report.AddCategory("Tables");
 
 				foreach (var addedTable in TablesAdded) {
-					tables.AddEntry(addedTable.Name, DiffEntryType.Added);
+					tables.AddEntry(addedTable.Name, DiffEntryType.Added, addedTable.ScriptCreate());
 				}
 
 				foreach (var deletedTable in TablesDeleted) {
-					tables.AddEntry(deletedTable.Name, DiffEntryType.Deleted);
+					tables.AddEntry(deletedTable.Name, DiffEntryType.Deleted, deletedTable.ScriptDrop());
 				}
 
 				foreach (var tableDiff in TablesDiff) {
@@ -1023,15 +1023,15 @@ end
 						var columns = diffEntry.AddCategory("Columns");
 
 						foreach (var column in tableDiff.ColumnsAdded) {
-							columns.AddEntry(column.Name, DiffEntryType.Added);
+							columns.AddEntry(column.Name, DiffEntryType.Added, column.Script());
 						}
 
 						foreach (var column in tableDiff.ColumnsDroped) {
-							columns.AddEntry(column.Name, DiffEntryType.Deleted);
+							columns.AddEntry(column.Name, DiffEntryType.Deleted, column.Script());
 						}
 
 						foreach (var columnDiff in tableDiff.ColumnsDiff) {
-							columns.AddEntry(columnDiff.Source.Name, DiffEntryType.Changed);
+							columns.AddEntry(columnDiff.Source.Name, DiffEntryType.Changed, columnDiff.Script());
 						}
 					}
 

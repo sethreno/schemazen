@@ -99,7 +99,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsAdded.Add(new Column());
+            tableDiff.ColumnsAdded.Add(new Column{Type = "text"});
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -114,7 +114,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsAdded.Add(new Column { Name = "MyColumn"});
+            tableDiff.ColumnsAdded.Add(new Column { Name = "MyColumn", Type = "text" });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -130,7 +130,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsDroped.Add(new Column());
+            tableDiff.ColumnsDroped.Add(new Column { Type = "text" });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -144,7 +144,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsDroped.Add(new Column { Name = "MyColumn" });
+            tableDiff.ColumnsDroped.Add(new Column { Name = "MyColumn", Type = "text" });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -160,7 +160,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column(), new Column(), new CompareConfig()));
+            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column { Type = "text" }, new Column { Type = "text" }, new CompareConfig()));
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -174,7 +174,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column {Name = "TargetColumn"}, new Column { Name = "SourceColumn"}, new CompareConfig()));
+            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column { Name = "TargetColumn", Type = "text" }, new Column { Name = "SourceColumn", Type = "text" }, new CompareConfig()));
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
