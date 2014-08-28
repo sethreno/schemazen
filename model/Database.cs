@@ -7,6 +7,7 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using model.compare;
 
 namespace model {
 	public class Database : CompareBase {
@@ -999,5 +1000,9 @@ end
 
 			return text.ToString();
 		}
+
+	    public DiffReport CreateDiffReport() {
+	        return new DiffReport();
+	    }
 	}
 }

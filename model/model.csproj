@@ -55,6 +55,8 @@
     <Compile Include="Column.cs" />
     <Compile Include="ColumnList.cs" />
     <Compile Include="CompareBase.cs" />
+    <Compile Include="compare\Category.cs" />
+    <Compile Include="compare\DiffEntry.cs" />
     <Compile Include="ConfigHelper.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="Database.cs" />
@@ -62,6 +64,7 @@
     <Compile Include="DbProperty.cs" />
     <Compile Include="Default.cs" />
     <Compile Include="CompareConfig.cs" />
+    <Compile Include="compare\DiffReport.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />
     <Compile Include="Identity.cs" />
