@@ -1018,7 +1018,12 @@ end
 				}
 
 				foreach (var tableDiff in TablesDiff) {
-					tables.Entries.Add(new DiffEntry());
+					var diffEntry = new DiffEntry();
+
+					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
+						diffEntry.Categories.Add(new Category() { Name = "Columns" });
+					}
+					tables.Entries.Add(diffEntry);
 				}
 			}
 

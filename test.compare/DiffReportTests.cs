@@ -46,6 +46,51 @@ namespace test.compare {
         }
 
         [Test]
+        public void CanAddCategoryToCategoryForAddedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsAdded.Add(new Column());
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Columns");
+        }
+
+        [Test]
+        public void CanAddCategoryToCategoryForDeletedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsDroped.Add(new Column());
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Columns");
+        }
+
+        [Test]
+        public void CanAddCategoryToCategoryForChangedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column(), new Column(), new CompareConfig()));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            report.Categories[0].Entries.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+            report.Categories[0].Entries[0].Categories[0].Name.Should().Be("Columns");
+        }
+
+        [Test]
         public void CanAddCategoryWithAddedForeinKey() {
             var diff = new DatabaseDiff();
             diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
