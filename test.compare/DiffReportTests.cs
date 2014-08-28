@@ -110,6 +110,22 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForAddedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsAdded.Add(new Column { Name = "MyColumn"});
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyColumn");
+            entry.Type.Should().Be(DiffEntryType.Added);
+        }
+
+        [Test]
         public void CanAddCategoryToCategoryForDeletedColumn()
         {
             var diff = new DatabaseDiff();
@@ -124,6 +140,22 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForDeletedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsDroped.Add(new Column { Name = "MyColumn" });
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("MyColumn");
+            entry.Type.Should().Be(DiffEntryType.Deleted);
+        }
+
+        [Test]
         public void CanAddCategoryToCategoryForChangedColumn()
         {
             var diff = new DatabaseDiff();
@@ -135,6 +167,22 @@ namespace test.compare
 
             report.Categories[0].Entries.Count.Should().Be(1);
             report.Categories[0].Entries[0].Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCorrectEntryForChangedColumn()
+        {
+            var diff = new DatabaseDiff();
+            var tableDiff = new TableDiff();
+            tableDiff.ColumnsDiff.Add(new ColumnDiff(new Column {Name = "TargetColumn"}, new Column { Name = "SourceColumn"}, new CompareConfig()));
+            diff.TablesDiff.Add(tableDiff);
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries[0].Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("SourceColumn");
+            entry.Type.Should().Be(DiffEntryType.Changed);
         }
 
         [Test]

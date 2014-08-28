@@ -1021,12 +1021,27 @@ end
 					var diffEntry = new DiffEntry { Name = tableDiff.Name, Type = DiffEntryType.Changed };
 
 					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
-						diffEntry.Categories.Add(new Category() { Name = "Columns" });
+						var columns = new Category() {Name = "Columns"};
+						diffEntry.Categories.Add(columns);
+
+						foreach (var column in tableDiff.ColumnsAdded) {
+							columns.Entries.Add(new DiffEntry {Name = column.Name, Type = DiffEntryType.Added});
+						}
+
+						foreach (var column in tableDiff.ColumnsDroped)
+						{
+							columns.Entries.Add(new DiffEntry { Name = column.Name, Type = DiffEntryType.Deleted });
+						}
+
+						foreach (var columnDiff in tableDiff.ColumnsDiff)
+						{
+							columns.Entries.Add(new DiffEntry { Name = columnDiff.Source.Name, Type = DiffEntryType.Changed });
+						}
 					}
 
-				    if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
-				        diffEntry.Categories.Add(new Category() {Name = "Constraints"});
-				    }
+					if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
+						diffEntry.Categories.Add(new Category() {Name = "Constraints"});
+					}
 
 					tables.Entries.Add(diffEntry);
 				}
