@@ -25,3 +25,5 @@ following directory structure:
 This will create a database named db from the sql scripts in c:\somedir.
 
 The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
+
+[![Build status](https://ci.appveyor.com/api/projects/status/3nobw7h1gq2gvpco)](https://ci.appveyor.com/project/brase/schemazen)
