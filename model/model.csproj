@@ -56,7 +56,9 @@
     <Compile Include="ColumnList.cs" />
     <Compile Include="CompareBase.cs" />
     <Compile Include="compare\Category.cs" />
+    <Compile Include="compare\CategoryContainerBase.cs" />
     <Compile Include="compare\DiffEntry.cs" />
+    <Compile Include="compare\ICategoryContainer.cs" />
     <Compile Include="ConfigHelper.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="Database.cs" />

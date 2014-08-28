@@ -1006,8 +1006,7 @@ end
 			var report = new DiffReport();
 
 			if (TablesAdded.Any() || TablesDeleted.Any() || TablesDiff.Any()) {
-				var tables = new Category {Name = "Tables"};
-				report.Categories.Add(tables);
+				var tables = report.AddCategory("Tables");
 
 				foreach (var addedTable in TablesAdded) {
 					tables.AddEntry(addedTable.Name, DiffEntryType.Added);
@@ -1021,8 +1020,7 @@ end
 					var diffEntry = tables.AddEntry(tableDiff.Name, DiffEntryType.Changed );
 
 					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
-						var columns = new Category() {Name = "Columns"};
-						diffEntry.Categories.Add(columns);
+						var columns = diffEntry.AddCategory("Columns");
 
 						foreach (var column in tableDiff.ColumnsAdded) {
 							columns.AddEntry(column.Name, DiffEntryType.Added);
@@ -1038,8 +1036,7 @@ end
 					}
 
 					if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
-						var constraints = new Category() {Name = "Constraints"};
-						diffEntry.Categories.Add(constraints);
+						var constraints = diffEntry.AddCategory("Constraints");
 
 						foreach (var constraint in tableDiff.ConstraintsAdded) {
 							constraints.AddEntry(constraint.Name, DiffEntryType.Added);
@@ -1057,8 +1054,7 @@ end
 			}
 
 			if (ForeignKeysAdded.Any() || ForeignKeysDeleted.Any() || ForeignKeysDiff.Any()) {
-				var foreignKeys = new Category() { Name = "Foreign Keys" };
-				report.Categories.Add(foreignKeys);
+				var foreignKeys = report.AddCategory("Foreign Keys");
 
 				foreach (var foreignKey in ForeignKeysAdded) {
 					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Added);
@@ -1074,8 +1070,7 @@ end
 			}
 
 			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {
-				var routines = new Category() { Name = "Routines" };
-				report.Categories.Add(routines);
+				var routines = report.AddCategory("Routines");
 
 				foreach (var routine in RoutinesAdded) {
 					routines.AddEntry(routine.Name, DiffEntryType.Added);
@@ -1091,12 +1086,11 @@ end
 			}
 
 			if (PropsChanged.Any()) {
-				var props = new Category() { Name = "Properties" };
-				report.Categories.Add(props);
+				var props = report.AddCategory("Properties");
 
-			    foreach (var dbProp in PropsChanged) {
-			        props.AddEntry(dbProp.Name, DiffEntryType.Changed);
-			    }
+				foreach (var dbProp in PropsChanged) {
+					props.AddEntry(dbProp.Name, DiffEntryType.Changed);
+				}
 			}
 
 			return report;
