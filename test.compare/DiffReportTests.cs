@@ -280,7 +280,7 @@ namespace test.compare
         public void CanAddCategoryWithAddedForeinKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysAdded.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 
@@ -288,11 +288,15 @@ namespace test.compare
             report.Categories[0].Name.Should().Be("Foreign Keys");
         }
 
+        private static ForeignKey GetForeignKey() {
+            return new ForeignKey("My_FK"){ Table = new TableInfo("dbo", "Table"), RefTable = new TableInfo("dbo","RefTable")};
+        }
+
         [Test]
         public void CanAddCorrectEntryForAddedForeignKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysAdded.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 
@@ -306,7 +310,7 @@ namespace test.compare
         public void CanAddCategoryWithDeletedForeinKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysDeleted.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 
@@ -317,7 +321,7 @@ namespace test.compare
         public void CanAddCorrectEntryForDeletedForeignKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysDeleted.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 
@@ -331,7 +335,7 @@ namespace test.compare
         public void CanAddCategoryWithChangedForeinKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysDiff.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 
@@ -342,7 +346,7 @@ namespace test.compare
         public void CanAddCorrectEntryForChangedForeignKey()
         {
             var diff = new DatabaseDiff();
-            diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
+            diff.ForeignKeysDiff.Add(GetForeignKey());
 
             var report = diff.GetDiffReport();
 

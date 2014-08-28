@@ -1057,15 +1057,15 @@ end
 				var foreignKeys = report.AddCategory("Foreign Keys");
 
 				foreach (var foreignKey in ForeignKeysAdded) {
-					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Added);
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Added, foreignKey.ScriptCreate());
 				}
 
 				foreach (var foreignKey in ForeignKeysDeleted) {
-					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Deleted);
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Deleted, foreignKey.ScriptDrop());
 				}
 
 				foreach (var foreignKey in ForeignKeysDiff) {
-					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed);
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed, foreignKey.ScriptCreate());
 				}
 			}
 
