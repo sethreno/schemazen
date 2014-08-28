@@ -8,7 +8,6 @@ namespace model.compare {
         [XmlAttribute]
         public DiffEntryType Type { get; set; }
 
-        [DefaultValue(null)]
         public string Details { get; set; }
     }
 
