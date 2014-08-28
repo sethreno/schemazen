@@ -1059,6 +1059,18 @@ end
 			if (ForeignKeysAdded.Any() || ForeignKeysDeleted.Any() || ForeignKeysDiff.Any()) {
 				var foreignKeys = new Category() { Name = "Foreign Keys" };
 				report.Categories.Add(foreignKeys);
+
+				foreach (var foreignKey in ForeignKeysAdded) {
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Added);
+				}
+
+				foreach (var foreignKey in ForeignKeysDeleted) {
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Deleted);
+				}
+
+				foreach (var foreignKey in ForeignKeysDiff) {
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed);
+				}
 			}
 
 			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {

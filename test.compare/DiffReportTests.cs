@@ -289,6 +289,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForAddedForeignKey()
+        {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysAdded.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_FK");
+            entry.Type.Should().Be(DiffEntryType.Added);
+        }
+
+        [Test]
         public void CanAddCategoryWithDeletedForeinKey()
         {
             var diff = new DatabaseDiff();
@@ -300,6 +314,20 @@ namespace test.compare
         }
 
         [Test]
+        public void CanAddCorrectEntryForDeletedForeignKey()
+        {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysDeleted.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_FK");
+            entry.Type.Should().Be(DiffEntryType.Deleted);
+        }
+
+        [Test]
         public void CanAddCategoryWithChangedForeinKey()
         {
             var diff = new DatabaseDiff();
@@ -308,6 +336,20 @@ namespace test.compare
             var report = diff.CreateDiffReport();
 
             report.Categories.Count.Should().Be(1);
+        }
+
+        [Test]
+        public void CanAddCorrectEntryForChangedForeignKey()
+        {
+            var diff = new DatabaseDiff();
+            diff.ForeignKeysDiff.Add(new ForeignKey("My_FK"));
+
+            var report = diff.CreateDiffReport();
+
+            DiffEntry entry;
+            (entry = report.Categories[0].Entries.FirstOrDefault()).Should().NotBeNull();
+            entry.Name.Should().Be("My_FK");
+            entry.Type.Should().Be(DiffEntryType.Changed);
         }
 
         [Test]
