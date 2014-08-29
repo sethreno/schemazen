@@ -4,9 +4,9 @@ using System.Xml.Serialization;
 namespace model {
 	public class Routine {
 		[XmlAttribute]
-		public bool AnsiNull;
-		[XmlAttribute]
 		public string Name;
+		[XmlAttribute]
+		public bool AnsiNull;
 		[XmlAttribute]
 		public bool QuotedId;
 		[XmlAttribute]

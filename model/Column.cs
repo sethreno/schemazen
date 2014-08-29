@@ -8,13 +8,13 @@ namespace model {
 		public Identity Identity;
 
 		[XmlAttribute]
+		public string Name;
+		[XmlAttribute]
 		[DefaultValue(false)]
 		public bool IsNullable;
 		[XmlAttribute]
 		[DefaultValue(0)]
 		public int Length;
-		[XmlAttribute]
-		public string Name;
 		[XmlAttribute]
 		[DefaultValue(0)]
 		public int Position;

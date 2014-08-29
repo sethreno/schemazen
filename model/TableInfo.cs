@@ -14,10 +14,10 @@ namespace model {
         }
 
         [XmlAttribute]
+        public string Name { get; set; }
+        [XmlAttribute]
         [DefaultValue(DefaultOwner)]
         public string Owner { get; set; }
-        [XmlAttribute]
-        public string Name { get; set; }
     }
 
     public interface ITableInfo {

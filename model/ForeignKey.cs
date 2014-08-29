@@ -7,10 +7,10 @@ using System.Xml.Serialization;
 namespace model {
 	public class ForeignKey {
 		[XmlAttribute]
+		public string Name;
+		[XmlAttribute]
 		[DefaultValue(false)]
 		public bool Check;
-		[XmlAttribute]
-		public string Name;
 		[XmlAttribute]
 		public string OnDelete;
 		[XmlAttribute]

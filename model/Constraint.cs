@@ -10,10 +10,10 @@ namespace model {
         public List<string> IncludedColumns = new List<string>();
 
         [XmlAttribute]
+        public string Name;
+        [XmlAttribute]
         [DefaultValue(false)]
         public bool Clustered;
-        [XmlAttribute]
-        public string Name;
         public TableInfo Table { get; set; }
         [XmlAttribute]
         public string Type;
