@@ -1089,7 +1089,7 @@ end
 				var props = report.AddCategory("Properties");
 
 				foreach (var dbProp in PropsChanged) {
-					props.AddEntry(dbProp.Name, DiffEntryType.Changed);
+					props.AddEntry(dbProp.Name, DiffEntryType.Changed, dbProp.Script());
 				}
 			}
 
