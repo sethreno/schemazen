@@ -1065,7 +1065,11 @@ end
 				}
 
 				foreach (var foreignKey in ForeignKeysDiff) {
-					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed, foreignKey.ScriptCreate());
+					var details = new StringBuilder();
+					details.AppendLine(foreignKey.ScriptDrop());
+					details.AppendLine("GO");
+					details.Append(foreignKey.ScriptCreate());
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed, details.ToString());
 				}
 			}
 
@@ -1081,10 +1085,10 @@ end
 				}
 
 				foreach (var routine in RoutinesDiff) {
-				    var details = new StringBuilder();
-				    details.AppendLine(routine.ScriptDrop());
-				    details.AppendLine("GO");
-				    details.Append(routine.ScriptCreate(Db));
+					var details = new StringBuilder();
+					details.AppendLine(routine.ScriptDrop());
+					details.AppendLine("GO");
+					details.Append(routine.ScriptCreate(Db));
 					routines.AddEntry(routine.Name, DiffEntryType.Changed, details.ToString());
 				}
 			}
