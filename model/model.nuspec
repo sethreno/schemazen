@@ -3,8 +3,8 @@
   <metadata>
     <id>schemazen</id>
     <version>$version$</version>
-    <title>Schemazen</title>
-    <authors>,Seth Reno, Sebastian Brandt, Benjamin Schröter</authors>    
+    <title>Schema Zen</title>
+    <authors>,Seth Reno, Sebastian Brandt, Benjamin Schröter</authors>
     <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/rheinspree/schemazen</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -13,7 +13,7 @@
     <copyright>Copyright 2014</copyright>
     <tags>sql diff</tags>
   </metadata>
-  <files>        
+  <files>
     <file src="..\console\bin\*\schemazen.exe" target="tools" />
 </files>
 </package>
