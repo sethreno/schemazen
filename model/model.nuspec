@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>schemazen</id>
-    <version>1.1.7-Pre1</version>
+    <version>$version$</version>
     <title>Schemazen</title>
     <authors>,Seth Reno, Sebastian Brandt, Benjamin Schröter</authors>    
     <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
