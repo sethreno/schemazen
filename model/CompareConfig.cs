@@ -21,6 +21,7 @@
         public bool IgnoreProps { get; set; }
         public bool IgnoreDefaultsNameMismatch { get; set; }
         public bool IgnoreRoutinesTextMismatch { get; set; }
+        public bool IgnoreConstraintsNameMismatch { get; set; }
     }
 
     public enum CompareMethod

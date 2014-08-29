@@ -27,7 +27,7 @@ namespace model {
 	}
 
 	public class Table : CompareBase, ITableInfo {
-	    private const string DefaultOwner = "dbo";
+		private const string DefaultOwner = "dbo";
 
 		[XmlAttribute]
 		public string Name { get; set; }
@@ -38,9 +38,9 @@ namespace model {
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 
-	    private Table() {
-	        Owner = DefaultOwner;
-	    }
+		private Table() {
+			Owner = DefaultOwner;
+		}
 
 		public Table(string owner, string name) {
 			Owner = owner;
@@ -63,6 +63,18 @@ namespace model {
 			return null;
 		}
 
+		public Constraint FindSimilarConstraint(Constraint otherConstraint) {
+			foreach (Constraint c in Constraints) {
+				if (c.Table == otherConstraint.Table 
+					&& c.Type == otherConstraint.Type
+					&& !c.Columns.Join(otherConstraint.Columns, x => x, y => y, (x,y) => x != y).Any()
+					&& !c.IncludedColumns.Join(otherConstraint.IncludedColumns, x => x, y => y, (x, y) => x != y).Any()){
+					return c;
+				}
+			}
+			return null;
+		}
+
 		public TableDiff Compare(Table otherTable, CompareConfig compareConfig) {
 			var diff = new TableDiff();
 			diff.Owner = otherTable.Owner;
@@ -81,15 +93,30 @@ namespace model {
 				}
 			};
 
+			Func<Constraint, Constraint> getOtherConstraint = (c) => {
+				var c2 = otherTable.FindConstraint(c.Name);
+				if(compareConfig.IgnoreConstraintsNameMismatch && c2 == null)
+					return  otherTable.FindSimilarConstraint(c);
+
+				return c2;
+			};
+
 			CheckSource(compareConfig.ConstraintsCompareMethod,
 				Constraints,
-				c => otherTable.FindConstraint(c.Name),
+				getOtherConstraint,
 				c => diff.ConstraintsAdded.Add(c),
 				checkIfConstraintChanged);
 
+			Func<Constraint, bool> constraintExistsOnlyInTaget = (c) => {
+				var c2 = FindConstraint(c.Name);
+				if (compareConfig.IgnoreConstraintsNameMismatch && c2 == null)
+					c2 = FindSimilarConstraint(c);
+
+				return c2 == null;
+			};
 			CheckTarget(compareConfig.ConstraintsCompareMethod,
 				otherTable.Constraints,
-				c => FindConstraint(c.Name) == null,
+				constraintExistsOnlyInTaget,
 				c => diff.ConstraintsDeleted.Add(c));
 		}
 
