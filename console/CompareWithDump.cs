@@ -6,12 +6,15 @@ using model;
 using model.compare;
 using NDesk.Options;
 
-namespace console {
-    internal class CompareWithDump : ConsoleCommand {
+namespace console
+{
+    internal class CompareWithDump : ConsoleCommand
+    {
         private string _source;
         private string _target;
 
-        public CompareWithDump() {
+        public CompareWithDump()
+        {
             IsCommand("CompareWithDump", "Compares a database with a xml dump.");
             Options = new OptionSet();
             SkipsCommandSummaryBeforeRunning();
@@ -25,18 +28,20 @@ namespace console {
                 o => _target = o);
         }
 
-        public override int Run(string[] remainingArguments) {
+        public override int Run(string[] remainingArguments)
+        {
             var sourceDb = new Database();
             sourceDb.Connection = _source;
             sourceDb.Load();
 
             Database targetDb;
             var serializer = new XmlSerializer(typeof(Database));
-            using (var stream = new StreamReader(_target, false)) {
-                targetDb = (Database) serializer.Deserialize(stream);
+            using (var stream = new StreamReader(_target, false))
+            {
+                targetDb = (Database)serializer.Deserialize(stream);
             }
 
-            DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
+            DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig { IgnoreConstraintsNameMismatch = false });
 
             var diffSerializer = new XmlSerializer(typeof(DiffReport));
             using (var stream = new StreamWriter("diff.xml", false))

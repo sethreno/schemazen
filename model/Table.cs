@@ -65,10 +65,7 @@ namespace model {
 
 		public Constraint FindSimilarConstraint(Constraint otherConstraint) {
 			foreach (Constraint c in Constraints) {
-				if (c.Table == otherConstraint.Table 
-					&& c.Type == otherConstraint.Type
-					&& !c.Columns.Join(otherConstraint.Columns, x => x, y => y, (x,y) => x != y).Any()
-					&& !c.IncludedColumns.Join(otherConstraint.IncludedColumns, x => x, y => y, (x, y) => x != y).Any()){
+				if (c.IsSimilar(otherConstraint)){
 					return c;
 				}
 			}
@@ -88,9 +85,9 @@ namespace model {
 
 		private void CompareConstraints(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
 			Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
-				if (c.Script() != c2.Script()) {
-					diff.ConstraintsChanged.Add(c);
-				}
+				if(!c.HasSameProperties(c2, compareConfig)) {
+				    diff.ConstraintsChanged.Add(c);
+				};
 			};
 
 			Func<Constraint, Constraint> getOtherConstraint = (c) => {

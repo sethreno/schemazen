@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace model {
@@ -45,7 +46,20 @@ namespace model {
             }
         }
 
+        public bool HasSameProperties(Constraint other, CompareConfig compareConfig) {
+            return IsSimilar(other)
+                   && (Name == other.Name || compareConfig.IgnoreConstraintsNameMismatch)
+                   && Clustered == other.Clustered
+                   && Unique == other.Unique;
+        }
 
+        public bool IsSimilar(Constraint other) {
+            return HasSameColumns(other)
+                   && HasSameIncludedColumns(other)
+                   && Table.Name == other.Table.Name
+                   && Table.Owner == other.Table.Owner
+                   && Type == other.Type;
+        }
 
         public string Script() {
             if (Type == "INDEX") {
@@ -59,6 +73,14 @@ namespace model {
             }
             return string.Format("CONSTRAINT [{0}] {1} {2} ([{3}])",
                 Name, Type, ClusteredText, string.Join("], [", Columns.ToArray()));
+        }
+
+        private bool HasSameColumns(Constraint other) {
+            return this.Columns.Join(other.Columns, x => x, y => y, (x, y) => x == y).All(equal => equal);
+        }
+
+        private bool HasSameIncludedColumns(Constraint other) {
+            return this.IncludedColumns.Join(other.IncludedColumns, x => x, y => y, (x, y) => x == y).All(equal => equal);
         }
     }
 }
