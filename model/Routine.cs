@@ -12,9 +12,9 @@ namespace model {
 		[XmlAttribute]
 		public string Schema;
 		[XmlAttribute]
-		public string Text;
-		[XmlAttribute]
 		public string Type;
+		[XmlText]
+		public string Text;
 
 		private Routine() { }
 
