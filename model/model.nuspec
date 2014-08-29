@@ -3,15 +3,17 @@
   <metadata>
     <id>schemazen</id>
     <version>$version$</version>
-    <title>Schamzen</title>
-    <authors>Seth Reno, Sebastian Brandt</authors>
-    <owners>Seth Reno, Rhein-Spree Software Engineering GmbH</owners>
+    <title>Schemazen</title>
+    <authors>,Seth Reno, Sebastian Brandt, Benjamin Schröter</authors>    
     <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
     <projectUrl>https://github.com/rheinspree/schemazen</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Schema Zen - Script and create SQL Server objects quickly</description>
     <releaseNotes></releaseNotes>
     <copyright>Copyright 2014</copyright>
-    <tags></tags>
+    <tags>sql diff</tags>
   </metadata>
+  <files>        
+    <file src="..\console\bin\*\schemazen.exe" target="tools" />
+</files>
 </package>
