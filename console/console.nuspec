@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>schemazen</id>
+    <version>$version$</version>
+    <title>Schamzen</title>
+    <authors>Seth Reno, Sebastian Brandt</authors>
+    <owners>Seth Reno, Rhein-Spree Software Engineering GmbH</owners>
+    <licenseUrl>http://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/rheinspree/schemazen</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Schema Zen - Script and create SQL Server objects quickly</description>
+    <releaseNotes></releaseNotes>
+    <copyright>Copyright 2014</copyright>
+    <tags></tags>
+  </metadata>
+</package>
