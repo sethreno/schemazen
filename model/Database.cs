@@ -1081,7 +1081,11 @@ end
 				}
 
 				foreach (var routine in RoutinesDiff) {
-					routines.AddEntry(routine.Name, DiffEntryType.Changed, routine.ScriptCreate(Db));
+				    var details = new StringBuilder();
+				    details.AppendLine(routine.ScriptDrop());
+				    details.AppendLine("GO");
+				    details.Append(routine.ScriptCreate(Db));
+					routines.AddEntry(routine.Name, DiffEntryType.Changed, details.ToString());
 				}
 			}
 
