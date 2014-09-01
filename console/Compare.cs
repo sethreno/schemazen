@@ -3,6 +3,7 @@ using System.IO;
 using System.Xml.Serialization;
 using ManyConsole;
 using model;
+using model.compare;
 using NDesk.Options;
 
 namespace console {
@@ -11,33 +12,56 @@ namespace console {
 		private string _source;
 		private string _target;
 
+		private string _sourceDump;
+		private string _targetDump;
+
+		private bool _debug;
+
 		public Compare() {
 			IsCommand("Compare", "Compare two databases.");
 			Options = new OptionSet();
 			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption(
+			HasOption(
 				"s|source=",
 				"Connection string to a database to compare.",
 				o => _source = o);
-			HasRequiredOption(
+			HasOption(
 				"t|target=",
 				"Connection string to a database to compare.",
 				o => _target = o);
+			HasOption(
+				"x|sourceDump=",
+				"File path to a database dump to compare.",
+				o => _sourceDump = o);
+			HasOption(
+				"c|targetDump=",
+				"File path to a database dump to compare.",
+				o => _targetDump = o);
+			HasOption(
+				"d|debug",
+				"Creates a diff.xml file with debug details.",
+				o => _debug = o != null);
 		}
 
 		public override int Run(string[] remainingArguments) {
-			var sourceDb = new Database();
-			var targetDb = new Database();
-			sourceDb.Connection = _source;
-			targetDb.Connection = _target;
-			sourceDb.Load();
-			targetDb.Load();
+			if (!(string.IsNullOrEmpty(_source) ^ string.IsNullOrEmpty(_sourceDump))) {
+				throw new Exception("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
+			}
+
+			if (!(string.IsNullOrEmpty(_target) ^ string.IsNullOrEmpty(_targetDump))) {
+				throw new Exception("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
+			}
+
+			var sourceDb = GetSourceDb();
+			var targetDb = GetTargetDb();
+
 			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
 
-			var serializer = new XmlSerializer(typeof(DatabaseDiff));
-			using (var stream = new StreamWriter("diff.xml", false))
-			{
-				serializer.Serialize(stream, diff);
+			if (_debug) {
+				var serializer = new XmlSerializer(typeof(DiffReport));
+				using (var stream = new StreamWriter("diff.xml", false)) {
+					serializer.Serialize(stream, diff.GetDiffReport());
+				}
 			}
 
 			if (diff.IsDiff) {
@@ -46,6 +70,30 @@ namespace console {
 			}
 			Console.WriteLine("Databases are identical.");
 			return 0;
+		}
+
+		private Database GetSourceDb() {
+			return GetDatabase(_source, _sourceDump);
+		}
+
+		private Database GetTargetDb() {
+			return GetDatabase(_target, _targetDump);
+		}
+
+		private Database GetDatabase(string connectionString, string filePath) {
+			Database db;
+			if (!string.IsNullOrEmpty(connectionString)) {
+				db = new Database();
+				db.Connection = connectionString;
+				db.Load();
+
+				return db;
+			}
+
+			var serializer = new XmlSerializer(typeof(Database));
+			using (var stream = new StreamReader(filePath, false)) {
+				return (Database)serializer.Deserialize(stream);
+			}
 		}
 	}
 }

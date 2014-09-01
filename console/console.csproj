@@ -70,7 +70,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compare.cs" />
-    <Compile Include="CompareWithDump.cs" />
     <Compile Include="Create.cs" />
     <Compile Include="DbCommand.cs" />
     <Compile Include="Dump.cs" />
