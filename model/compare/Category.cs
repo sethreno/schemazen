@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Text;
 using System.Xml.Serialization;
 
 namespace model.compare {
@@ -17,6 +18,15 @@ namespace model.compare {
             Entries.Add(entry);
 
             return entry;
+        }
+
+        public string Script() {
+            var stringBuilder = new StringBuilder();
+            foreach (var diffEntry in Entries) {
+                stringBuilder.Append(diffEntry.Details);
+            }
+
+            return stringBuilder.ToString();
         }
     }
 }

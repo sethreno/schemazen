@@ -56,16 +56,17 @@ namespace console {
 			var targetDb = GetTargetDb();
 
 			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
+			var diffreport = diff.GetDiffReport();
 
 			if (_debug) {
 				var serializer = new XmlSerializer(typeof(DiffReport));
 				using (var stream = new StreamWriter("diff.xml", false)) {
-					serializer.Serialize(stream, diff.GetDiffReport());
+					serializer.Serialize(stream, diffreport);
 				}
 			}
 
 			if (diff.IsDiff) {
-				Console.WriteLine("Databases are different.");
+				Console.WriteLine(diffreport.Script());
 				return 1;
 			}
 			Console.WriteLine("Databases are identical.");
