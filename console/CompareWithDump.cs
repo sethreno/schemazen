@@ -41,7 +41,18 @@ namespace console
                 targetDb = (Database)serializer.Deserialize(stream);
             }
 
-            DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig { IgnoreConstraintsNameMismatch = false });
+            DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig {
+                //IgnoreConstraintsNameMismatch = true,
+                //IgnoreDefaultsNameMismatch = true,
+                //IgnoreProps = true,
+                //IgnoreRoutinesTextMismatch = true,
+
+                //ColumnsCompareMethod = CompareMethod.FindButIgnoreAdditionalItems,
+                //ConstraintsCompareMethod = CompareMethod.FindButIgnoreAdditionalItems,
+                //ForeignKeysCompareMethod = CompareMethod.FindButIgnoreAdditionalItems,
+                //RoutinesCompareMethod = CompareMethod.FindButIgnoreAdditionalItems,
+                //TablesCompareMethod = CompareMethod.FindButIgnoreAdditionalItems
+            });
 
             var diffSerializer = new XmlSerializer(typeof(DiffReport));
             using (var stream = new StreamWriter("diff.xml", false))
