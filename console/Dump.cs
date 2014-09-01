@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
@@ -11,7 +12,7 @@ namespace console {
         private string _source;
         private string _target;
 
-        private string[] _ignore;
+        private IEnumerable<string> _ignore = new List<string>();
 
         public Dump() {
             IsCommand("Dump", "Dumps a databases to xml.");
@@ -27,7 +28,7 @@ namespace console {
                 o => _target = o);
             HasOption("i|ignore=",
                 "Comma separated list of names to ignore. Works for tables and stored procedures.",
-                o => _ignore = GetIgnoredNames(o));
+                o => _ignore = GetIgnoredNames(o ?? ""));
         }
 
         public override int Run(string[] remainingArguments) {
@@ -47,13 +48,11 @@ namespace console {
             return 0;
         }
 
-        private static string[] GetIgnoredNames(string ignoreString) {
+        private static IEnumerable<string> GetIgnoredNames(string ignoreString) {
             var arr = ignoreString.Split(new[] {','}, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < arr.Length; i++) {
-                arr[i] = arr[i].Trim();
+            foreach (string t in arr) {
+                yield return t.Trim();
             }
-
-            return arr;
         }
     }
 }
