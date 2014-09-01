@@ -75,6 +75,22 @@ namespace model {
                 Name, Type, ClusteredText, string.Join("], [", Columns.ToArray()));
         }
 
+        public string ScriptCreate() {
+            if (Type == "INDEX") {
+                return Script();
+            }
+
+            return string.Format("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Table.Owner, Table.Name, Script());
+        }
+
+        public string ScriptDrop() {
+            if (Type == "INDEX") {
+                return string.Format("DROP INDEX [{0}]\r\n", Name);
+            }
+
+            return string.Format("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT [{2}]\r\n", Table.Owner, Table.Name, Name);
+        }
+
         private bool HasSameColumns(Constraint other) {
             return this.Columns.Join(other.Columns, x => x, y => y, (x, y) => x == y).All(equal => equal);
         }

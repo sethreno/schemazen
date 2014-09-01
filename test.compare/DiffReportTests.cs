@@ -190,7 +190,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsAdded.Add(new Constraint("", "", ""));
+            tableDiff.ConstraintsAdded.Add(new Constraint("", "", ""){Table = new TableInfo("dbo", "myTable")});
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -205,7 +205,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsAdded.Add(new Constraint("MyConstraint","",""));
+            tableDiff.ConstraintsAdded.Add(new Constraint("MyConstraint", "", "") { Table = new TableInfo("dbo", "myTable") });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -221,7 +221,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsDeleted.Add(new Constraint("", "", ""));
+            tableDiff.ConstraintsDeleted.Add(new Constraint("", "", "") { Table = new TableInfo("dbo", "myTable") });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -235,7 +235,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsDeleted.Add(new Constraint("MyConstraint", "", ""));
+            tableDiff.ConstraintsDeleted.Add(new Constraint("MyConstraint", "", "") { Table = new TableInfo("dbo", "myTable") });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -251,7 +251,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsChanged.Add(new Constraint("", "", ""));
+            tableDiff.ConstraintsChanged.Add(new Constraint("", "", "") { Table = new TableInfo("dbo", "myTable") });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();
@@ -265,7 +265,7 @@ namespace test.compare
         {
             var diff = new DatabaseDiff();
             var tableDiff = new TableDiff();
-            tableDiff.ConstraintsChanged.Add(new Constraint("MyConstraint", "", ""));
+            tableDiff.ConstraintsChanged.Add(new Constraint("MyConstraint", "", "") { Table = new TableInfo("dbo", "myTable") });
             diff.TablesDiff.Add(tableDiff);
 
             var report = diff.GetDiffReport();

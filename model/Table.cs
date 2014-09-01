@@ -86,7 +86,7 @@ namespace model {
 		private void CompareConstraints(Table otherTable, CompareConfig compareConfig, TableDiff diff) {
 			Action<Constraint, Constraint> checkIfConstraintChanged = (c, c2) => {
 				if(!c.HasSameProperties(c2, compareConfig)) {
-				    diff.ConstraintsChanged.Add(c);
+					diff.ConstraintsChanged.Add(c);
 				};
 			};
 
@@ -269,6 +269,19 @@ namespace model {
 
 			foreach (ColumnDiff c in ColumnsDiff) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Script());
+			}
+
+			foreach (var constraint in ConstraintsDeleted) {
+				text.Append(constraint.ScriptDrop());
+			}
+
+			foreach (var constraint in ConstraintsAdded) {
+				text.Append(constraint.ScriptCreate());
+			}
+
+			foreach (var constraint in ConstraintsChanged) {
+				text.Append(constraint.ScriptDrop());
+				text.Append(constraint.ScriptCreate());
 			}
 			return text.ToString();
 		}
