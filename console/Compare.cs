@@ -44,14 +44,6 @@ namespace console {
 		}
 
 		public override int Run(string[] remainingArguments) {
-			if (!(string.IsNullOrEmpty(_source) ^ string.IsNullOrEmpty(_sourceDump))) {
-				throw new Exception("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
-			}
-
-			if (!(string.IsNullOrEmpty(_target) ^ string.IsNullOrEmpty(_targetDump))) {
-				throw new Exception("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
-			}
-
 			var sourceDb = GetSourceDb();
 			var targetDb = GetTargetDb();
 
@@ -95,6 +87,21 @@ namespace console {
 			using (var stream = new StreamReader(filePath, false)) {
 				return (Database)serializer.Deserialize(stream);
 			}
+		}
+
+		public override void CheckRequiredArguments()
+		{
+			if (string.IsNullOrEmpty(_source) && string.IsNullOrEmpty(_sourceDump) && string.IsNullOrEmpty(_target) &&
+				string.IsNullOrEmpty(_targetDump))
+				throw new ConsoleHelpAsException("You have to specify at least source or sourceDump and target oder targetDump.");
+
+			if (!(string.IsNullOrEmpty(_source) ^ string.IsNullOrEmpty(_sourceDump)))
+			    throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
+
+			if (!(string.IsNullOrEmpty(_target) ^ string.IsNullOrEmpty(_targetDump)))
+			    throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
+
+			base.CheckRequiredArguments();
 		}
 	}
 }
