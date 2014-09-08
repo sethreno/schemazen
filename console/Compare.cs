@@ -17,6 +17,11 @@ namespace console {
 
 		private bool _debug;
 
+	    private bool _ignoreProps;
+	    private bool _ignoreDefaultsNameMismatch;
+	    private bool _ignoreRoutinesTextMismatch;
+	    private bool _IgnoreConstraintsNameMismatch;
+
 		public Compare() {
 			IsCommand("Compare", "Compare two databases.");
 			Options = new OptionSet();
@@ -41,13 +46,35 @@ namespace console {
 				"d|debug",
 				"Creates a diff.xml file with debug details.",
 				o => _debug = o != null);
+		    HasOption(
+		        "IgnoreProps",
+		        "Ignores properties while comparing database.",
+		        o => _ignoreProps = o != null);
+            HasOption(
+                "IgnoreDefaultsNameMismatch",
+                "Ignores different names of default constraints while comparing database.",
+                o => _ignoreDefaultsNameMismatch = o != null);
+            HasOption(
+                "IgnoreRoutinesTextMismatch",
+                "Ignores different text in routines while comparing database.",
+                o => _ignoreRoutinesTextMismatch = o != null);
+            HasOption(
+                "IgnoreConstraintsNameMismatch",
+                "Ignores different names of constraints while comparing database.",
+                o => _IgnoreConstraintsNameMismatch = o != null);
 		}
 
 		public override int Run(string[] remainingArguments) {
 			var sourceDb = GetSourceDb();
 			var targetDb = GetTargetDb();
 
-			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig());
+			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig
+			{
+			    IgnoreProps = _ignoreProps,
+                IgnoreConstraintsNameMismatch = _IgnoreConstraintsNameMismatch,
+                IgnoreDefaultsNameMismatch = _ignoreDefaultsNameMismatch,
+                IgnoreRoutinesTextMismatch = _ignoreRoutinesTextMismatch
+			});
 			var diffreport = diff.GetDiffReport();
 
 			if (_debug) {
