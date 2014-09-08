@@ -17,10 +17,13 @@ namespace console {
 
 		private bool _debug;
 
-	    private bool _ignoreProps;
-	    private bool _ignoreDefaultsNameMismatch;
-	    private bool _ignoreRoutinesTextMismatch;
-	    private bool _IgnoreConstraintsNameMismatch;
+		private bool _ignoreProps;
+		private bool _ignoreDefaultsNameMismatch;
+		private bool _ignoreRoutinesTextMismatch;
+		private bool _IgnoreConstraintsNameMismatch;
+
+		private string _compareMethod;
+		private CompareMethod _selectedCompareMethod = CompareMethod.FindAllDifferences;
 
 		public Compare() {
 			IsCommand("Compare", "Compare two databases.");
@@ -43,25 +46,29 @@ namespace console {
 				"File path to a database dump to compare.",
 				o => _targetDump = o);
 			HasOption(
+				"CompareMethod=",
+				"There are two possible values. \n \"FindAllDifferences\" (default) shows all differences between the two databases. \n \"FindButIgnoreAdditionalItems\" does ignore additional items (routines, tables, columns, constraints) of the target database ",
+				o => _compareMethod = o);
+			HasOption(
 				"d|debug",
 				"Creates a diff.xml file with debug details.",
 				o => _debug = o != null);
-		    HasOption(
-		        "IgnoreProps",
-		        "Ignores properties while comparing database.",
-		        o => _ignoreProps = o != null);
-            HasOption(
-                "IgnoreDefaultsNameMismatch",
-                "Ignores different names of default constraints while comparing database.",
-                o => _ignoreDefaultsNameMismatch = o != null);
-            HasOption(
-                "IgnoreRoutinesTextMismatch",
-                "Ignores different text in routines while comparing database.",
-                o => _ignoreRoutinesTextMismatch = o != null);
-            HasOption(
-                "IgnoreConstraintsNameMismatch",
-                "Ignores different names of constraints while comparing database.",
-                o => _IgnoreConstraintsNameMismatch = o != null);
+			HasOption(
+				"IgnoreProps",
+				"Ignores properties while comparing database.",
+				o => _ignoreProps = o != null);
+			HasOption(
+				"IgnoreDefaultsNameMismatch",
+				"Ignores different names of default constraints while comparing database.",
+				o => _ignoreDefaultsNameMismatch = o != null);
+			HasOption(
+				"IgnoreRoutinesTextMismatch",
+				"Ignores different text in routines while comparing database.",
+				o => _ignoreRoutinesTextMismatch = o != null);
+			HasOption(
+				"IgnoreConstraintsNameMismatch",
+				"Ignores different names of constraints while comparing database.",
+				o => _IgnoreConstraintsNameMismatch = o != null);
 		}
 
 		public override int Run(string[] remainingArguments) {
@@ -70,10 +77,15 @@ namespace console {
 
 			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig
 			{
-			    IgnoreProps = _ignoreProps,
-                IgnoreConstraintsNameMismatch = _IgnoreConstraintsNameMismatch,
-                IgnoreDefaultsNameMismatch = _ignoreDefaultsNameMismatch,
-                IgnoreRoutinesTextMismatch = _ignoreRoutinesTextMismatch
+				IgnoreProps = _ignoreProps,
+				IgnoreConstraintsNameMismatch = _IgnoreConstraintsNameMismatch,
+				IgnoreDefaultsNameMismatch = _ignoreDefaultsNameMismatch,
+				IgnoreRoutinesTextMismatch = _ignoreRoutinesTextMismatch,
+				ColumnsCompareMethod = _selectedCompareMethod,
+				ConstraintsCompareMethod = _selectedCompareMethod,
+				ForeignKeysCompareMethod = _selectedCompareMethod,
+				RoutinesCompareMethod = _selectedCompareMethod,
+				TablesCompareMethod = _selectedCompareMethod
 			});
 			var diffreport = diff.GetDiffReport();
 
@@ -123,10 +135,14 @@ namespace console {
 				throw new ConsoleHelpAsException("You have to specify at least source or sourceDump and target oder targetDump.");
 
 			if (!(string.IsNullOrEmpty(_source) ^ string.IsNullOrEmpty(_sourceDump)))
-			    throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
+				throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
 
 			if (!(string.IsNullOrEmpty(_target) ^ string.IsNullOrEmpty(_targetDump)))
-			    throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
+				throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
+
+			if (!string.IsNullOrEmpty(_compareMethod))
+				if (!Enum.TryParse(_compareMethod, true, out _selectedCompareMethod))
+					throw new ConsoleHelpAsException(string.Format("Unknown compare method: {0}", _compareMethod));
 
 			base.CheckRequiredArguments();
 		}
