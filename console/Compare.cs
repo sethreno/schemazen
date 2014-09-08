@@ -20,7 +20,7 @@ namespace console {
 		private bool _ignoreProps;
 		private bool _ignoreDefaultsNameMismatch;
 		private bool _ignoreRoutinesTextMismatch;
-		private bool _IgnoreConstraintsNameMismatch;
+		private bool _ignoreConstraintsNameMismatch;
 
 		private string _compareMethod;
 		private CompareMethod _selectedCompareMethod = CompareMethod.FindAllDifferences;
@@ -68,7 +68,7 @@ namespace console {
 			HasOption(
 				"IgnoreConstraintsNameMismatch",
 				"Ignores different names of constraints while comparing database.",
-				o => _IgnoreConstraintsNameMismatch = o != null);
+				o => _ignoreConstraintsNameMismatch = o != null);
 		}
 
 		public override int Run(string[] remainingArguments) {
@@ -78,7 +78,7 @@ namespace console {
 			DatabaseDiff diff = sourceDb.Compare(targetDb, new CompareConfig
 			{
 				IgnoreProps = _ignoreProps,
-				IgnoreConstraintsNameMismatch = _IgnoreConstraintsNameMismatch,
+				IgnoreConstraintsNameMismatch = _ignoreConstraintsNameMismatch,
 				IgnoreDefaultsNameMismatch = _ignoreDefaultsNameMismatch,
 				IgnoreRoutinesTextMismatch = _ignoreRoutinesTextMismatch,
 				ColumnsCompareMethod = _selectedCompareMethod,
