@@ -132,17 +132,28 @@ namespace console {
 		{
 			if (string.IsNullOrEmpty(_source) && string.IsNullOrEmpty(_sourceDump) && string.IsNullOrEmpty(_target) &&
 				string.IsNullOrEmpty(_targetDump))
-				throw new ConsoleHelpAsException("You have to specify at least source or sourceDump and target oder targetDump.");
+				throw new ConsoleHelpAsException(
+					"You have to specify at least source or sourceDump and target oder targetDump.");
 
 			if (!(string.IsNullOrEmpty(_source) ^ string.IsNullOrEmpty(_sourceDump)))
-				throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
+				throw new ConsoleHelpAsException(
+					"You have to specify a connectionstring or a file path as source using 'source=' or 'sourceDump='");
 
 			if (!(string.IsNullOrEmpty(_target) ^ string.IsNullOrEmpty(_targetDump)))
-				throw new ConsoleHelpAsException("You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
+				throw new ConsoleHelpAsException(
+					"You have to specify a connectionstring or a file path as target using 'target=' or 'targetDump='");
 
 			if (!string.IsNullOrEmpty(_compareMethod))
-				if (!Enum.TryParse(_compareMethod, true, out _selectedCompareMethod))
+			{
+				try
+				{
+					_selectedCompareMethod = (CompareMethod) Enum.Parse(typeof (CompareMethod), _compareMethod, true);
+				}
+				catch
+				{
 					throw new ConsoleHelpAsException(string.Format("Unknown compare method: {0}", _compareMethod));
+				}
+			}
 
 			base.CheckRequiredArguments();
 		}
