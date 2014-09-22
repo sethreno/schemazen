@@ -439,7 +439,7 @@ inner join sys.columns c1
 inner join sys.columns c2
 	on fkc.referenced_column_id = c2.column_id
 	and fkc.referenced_object_id = c2.object_id
-order by fk.name
+order by fk.name, c1.column_id
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
