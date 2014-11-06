@@ -893,6 +893,19 @@ end
 			}
 			return text.ToString();
 		}
+
+		public void Load(IEnumerable<string> ignore)
+		{
+			this.Load();
+			this.Ignore(ignore);
+		}
+
+		public void Ignore(IEnumerable<string> ignore)
+		{
+			Tables = Tables.Where(x => !ignore.Contains(x.Name)).ToList();
+			Routines = Routines.Where(x => !ignore.Contains(x.Name)).ToList();
+			ForeignKeys = ForeignKeys.Where(x => !ignore.Contains(x.Table.Name)).ToList();
+		}
 	}
 
 	public class DatabaseDiff {

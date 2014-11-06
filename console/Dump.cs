@@ -34,10 +34,11 @@ namespace console {
         public override int Run(string[] remainingArguments) {
             var sourceDb = new Database();
             sourceDb.Connection = _source;
-            sourceDb.Load();
+            sourceDb.Load(_ignore);
 
             sourceDb.Tables = sourceDb.Tables.Where(x => !_ignore.Contains(x.Name)).ToList();
             sourceDb.Routines = sourceDb.Routines.Where(x => !_ignore.Contains(x.Name)).ToList();
+            sourceDb.ForeignKeys = sourceDb.ForeignKeys.Where(x => !_ignore.Contains(x.Table.Name)).ToList();
 
             var serializer = new XmlSerializer(typeof(Database));
             using (var stream = new StreamWriter(_target, false))
