@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
+using model.compare;
 
 namespace model {
-	public class Database {
+	public class Database : CompareBase {
 		#region " Constructors "
 
 		public Database() {
+		}
+
+		private void InitProps() {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -49,8 +56,10 @@ namespace model {
 
 		public string Connection = "";
 		public List<Table> DataTables = new List<Table>();
+		[DefaultValue("")]
 		public string Dir = "";
 		public List<ForeignKey> ForeignKeys = new List<ForeignKey>();
+		[XmlAttribute]
 		public string Name;
 
 		public List<DbProp> Props = new List<DbProp>();
@@ -128,38 +137,40 @@ namespace model {
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
+			InitProps();
+
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
 					// query schema for database properties
 					cm.CommandText = @"
 select
-    [compatibility_level],
-    [collation_name],
-    [is_auto_close_on],
-    [is_auto_shrink_on],
-    [snapshot_isolation_state],
-    [is_read_committed_snapshot_on],
-    [recovery_model_desc],
-    [page_verify_option_desc],
-    [is_auto_create_stats_on],
-    [is_auto_update_stats_on],
-    [is_auto_update_stats_async_on],
-    [is_ansi_null_default_on],
-    [is_ansi_nulls_on],
-    [is_ansi_padding_on],
-    [is_ansi_warnings_on],
-    [is_arithabort_on],
-    [is_concat_null_yields_null_on],
-    [is_numeric_roundabort_on],
-    [is_quoted_identifier_on],
-    [is_recursive_triggers_on],
-    [is_cursor_close_on_commit_on],
-    [is_local_cursor_default],
-    [is_trustworthy_on],
-    [is_db_chaining_on],
-    [is_parameterization_forced],
-    [is_date_correlation_on]
+	[compatibility_level],
+	[collation_name],
+	[is_auto_close_on],
+	[is_auto_shrink_on],
+	[snapshot_isolation_state],
+	[is_read_committed_snapshot_on],
+	[recovery_model_desc],
+	[page_verify_option_desc],
+	[is_auto_create_stats_on],
+	[is_auto_update_stats_on],
+	[is_auto_update_stats_async_on],
+	[is_ansi_null_default_on],
+	[is_ansi_nulls_on],
+	[is_ansi_padding_on],
+	[is_ansi_warnings_on],
+	[is_arithabort_on],
+	[is_concat_null_yields_null_on],
+	[is_numeric_roundabort_on],
+	[is_quoted_identifier_on],
+	[is_recursive_triggers_on],
+	[is_cursor_close_on_commit_on],
+	[is_local_cursor_default],
+	[is_trustworthy_on],
+	[is_db_chaining_on],
+	[is_parameterization_forced],
+	[is_date_correlation_on]
 from sys.databases
 where name = @dbname
 ";
@@ -231,7 +242,7 @@ select s.name as schemaName, p.name as principalName
 						TABLE_SCHEMA, 
 						TABLE_NAME 
 					from INFORMATION_SCHEMA.TABLES
-                    where TABLE_TYPE = 'BASE TABLE'";
+					where TABLE_TYPE = 'BASE TABLE'";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							Tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]));
@@ -250,12 +261,12 @@ select s.name as schemaName, p.name as principalName
 						c.NUMERIC_PRECISION,
 						c.NUMERIC_SCALE 
 					from INFORMATION_SCHEMA.COLUMNS c
-                        inner join INFORMATION_SCHEMA.TABLES t
-                                on t.TABLE_NAME = c.TABLE_NAME
-                                    and t.TABLE_SCHEMA = c.TABLE_SCHEMA
-                                    and t.TABLE_CATALOG = c.TABLE_CATALOG
-                    where
-                        t.TABLE_TYPE = 'BASE TABLE'
+						inner join INFORMATION_SCHEMA.TABLES t
+								on t.TABLE_NAME = c.TABLE_NAME
+									and t.TABLE_SCHEMA = c.TABLE_SCHEMA
+									and t.TABLE_CATALOG = c.TABLE_CATALOG
+					where
+						t.TABLE_TYPE = 'BASE TABLE'
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -341,9 +352,9 @@ select s.name as schemaName, p.name as principalName
 						c.name as columnName,
 						i.is_primary_key, 
 						i.is_unique_constraint,
-                        i.is_unique, 
+						i.is_unique, 
 						i.type_desc,
-                        isnull(ic.is_included_column, 0) as is_included_column
+						isnull(ic.is_included_column, 0) as is_included_column
 					from sys.tables t 
 						inner join sys.indexes i on i.object_id = t.object_id
 						inner join sys.index_columns ic on ic.object_id = t.object_id
@@ -359,7 +370,7 @@ select s.name as schemaName, p.name as principalName
 							if (c == null) {
 								c = new Constraint((string) dr["indexName"], "", "");
 								t.Constraints.Add(c);
-								c.Table = t;
+								c.Table = new TableInfo(t.Owner, t.Name);
 							}
 							c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 							c.Unique = (bool) dr["is_unique"];
@@ -388,7 +399,7 @@ select s.name as schemaName, p.name as principalName
 						while (dr.Read()) {
 							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 							var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]);
-							fk.Table = t;
+							fk.Table = new TableInfo(t.Owner, t.Name);
 							ForeignKeys.Add(fk);
 						}
 					}
@@ -428,7 +439,7 @@ inner join sys.columns c1
 inner join sys.columns c2
 	on fkc.referenced_column_id = c2.column_id
 	and fkc.referenced_object_id = c2.object_id
-order by fk.name
+order by fk.name, c1.column_id
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -439,7 +450,8 @@ order by fk.name
 							fk.Columns.Add((string) dr["COLUMN_NAME"]);
 							fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
 							if (fk.RefTable == null) {
-								fk.RefTable = FindTable((string)dr["REF_TABLE_NAME"], (string)dr["REF_TABLE_SCHEMA"]);
+								var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
+								fk.RefTable =  new TableInfo(table.Owner, table.Name);
 							}
 						}
 					}
@@ -451,7 +463,7 @@ order by fk.name
 						o.name as routineName,
 						o.type_desc,
 						m.definition,
-                        m.uses_ansi_nulls,
+						m.uses_ansi_nulls,
 						m.uses_quoted_identifier,
 						t.name as tableName
 					from sys.sql_modules m
@@ -487,79 +499,92 @@ order by fk.name
 			}
 		}
 
-		public DatabaseDiff Compare(Database db) {
+		public DatabaseDiff Compare(Database otherDb, CompareConfig compareConfig = null) {
+			compareConfig = compareConfig ?? new CompareConfig();
+
 			var diff = new DatabaseDiff();
-			diff.Db = db;
+			diff.Db = otherDb;
 
-			//compare database properties           
-			foreach (DbProp p in Props) {
-				DbProp p2 = db.FindProp(p.Name);
-				if (p.Script() != p2.Script()) {
-					diff.PropsChanged.Add(p);
-				}
-			}
-
-			//get tables added and changed
-			foreach (Table t in Tables) {
-				Table t2 = db.FindTable(t.Name, t.Owner);
-				if (t2 == null) {
-					diff.TablesAdded.Add(t);
-				}
-				else {
-					//compare mutual tables
-					TableDiff tDiff = t.Compare(t2);
-					if (tDiff.IsDiff) {
-						diff.TablesDiff.Add(tDiff);
+			if (!compareConfig.IgnoreProps) {
+				//compare database properties
+				foreach (DbProp p in Props) {
+					DbProp p2 = otherDb.FindProp(p.Name);
+					if (p.Script() != p2.Script()) {
+						diff.PropsChanged.Add(p);
 					}
 				}
 			}
-			//get deleted tables
-			foreach (Table t in db.Tables) {
-				if (FindTable(t.Name, t.Owner) == null) {
-					diff.TablesDeleted.Add(t);
-				}
-			}
 
-			//get procs added and changed
-			foreach (Routine r in Routines) {
-				Routine r2 = db.FindRoutine(r.Name, r.Schema);
-				if (r2 == null) {
-					diff.RoutinesAdded.Add(r);
-				}
-				else {
-					//compare mutual procs
-					if (r.Text != r2.Text) {
-						diff.RoutinesDiff.Add(r);
-					}
-				}
-			}
-			//get procs deleted
-			foreach (Routine r in db.Routines) {
-				if (FindRoutine(r.Name, r.Schema) == null) {
-					diff.RoutinesDeleted.Add(r);
-				}
-			}
-
-			//get added and compare mutual foreign keys
-			foreach (ForeignKey fk in ForeignKeys) {
-				ForeignKey fk2 = db.FindForeignKey(fk.Name);
-				if (fk2 == null) {
-					diff.ForeignKeysAdded.Add(fk);
-				}
-				else {
-					if (fk.ScriptCreate() != fk2.ScriptCreate()) {
-						diff.ForeignKeysDiff.Add(fk);
-					}
-				}
-			}
-			//get deleted foreign keys
-			foreach (ForeignKey fk in db.ForeignKeys) {
-				if (FindForeignKey(fk.Name) == null) {
-					diff.ForeignKeysDeleted.Add(fk);
-				}
-			}
+			CompareTables(otherDb, compareConfig, diff);
+			CompareRoutines(otherDb, compareConfig, diff);
+			CompareForeignKeys(otherDb, compareConfig, diff);
 
 			return diff;
+		}
+
+		private void CompareForeignKeys(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
+			Action<ForeignKey, ForeignKey> checkIfFkChanged = (fk1, fk2) => {
+				if (fk1.ScriptCreate() != fk2.ScriptCreate()) {
+					diff.ForeignKeysDiff.Add(fk1);
+				}
+			};
+
+			CheckSource(compareConfig.ForeignKeysCompareMethod,
+				ForeignKeys,
+				fk => otherDb.FindForeignKey(fk.Name),
+				fk => diff.ForeignKeysAdded.Add(fk),
+				checkIfFkChanged);
+
+			//get deleted foreign keys
+			CheckTarget(compareConfig.ForeignKeysCompareMethod, otherDb.ForeignKeys,
+				fk => FindForeignKey(fk.Name) == null, fk => diff.ForeignKeysDeleted.Add(fk));
+		}
+
+		private void CompareRoutines(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
+			Action<Routine, Routine> checkIfRoutineChanged = (r, r2) => {
+				if (compareConfig.IgnoreRoutinesTextMismatch) {
+					return;
+				}
+
+				//compare mutual procs
+				if (r.Text.Replace("\r\n", "\n") != r2.Text.Replace("\r\n", "\n")) {
+					diff.RoutinesDiff.Add(r);
+				}
+			};
+
+			CheckSource(compareConfig.RoutinesCompareMethod,
+				Routines,
+				r => otherDb.FindRoutine(r.Name, r.Schema),
+				r => diff.RoutinesAdded.Add(r),
+				checkIfRoutineChanged);
+
+			//get procs deleted in source db or added in target db
+			CheckTarget(compareConfig.RoutinesCompareMethod,
+				otherDb.Routines,
+				r => FindRoutine(r.Name, r.Schema) == null,
+				r => diff.RoutinesDeleted.Add(r));
+		}
+
+		private void CompareTables(Database otherDb, CompareConfig compareConfig, DatabaseDiff diff) {
+			Action<Table, Table> checkIfTableChanged = (t, t2) => {
+				//compare mutual tables
+				TableDiff tDiff = t.Compare(t2, compareConfig);
+				if (tDiff.IsDiff) {
+					diff.TablesDiff.Add(tDiff);
+				}
+			};
+
+			CheckSource(compareConfig.TablesCompareMethod,
+				Tables,
+				t => otherDb.FindTable(t.Name, t.Owner),
+				t => diff.TablesAdded.Add(t),
+				checkIfTableChanged);
+
+			//get deleted tables
+			CheckTarget(compareConfig.TablesCompareMethod,
+				otherDb.Tables,
+				t => FindTable(t.Name, t.Owner) == null,
+				t => diff.TablesDeleted.Add(t));
 		}
 
 		public string ScriptCreate() {
@@ -678,7 +703,7 @@ order by fk.name
 			return MakeFileName(r.Schema, r.Name);
 		}
 
-		private static string MakeFileName(Table t) {
+		private static string MakeFileName(ITableInfo t) {
 			return MakeFileName(t.Owner, t.Name);
 		}
 
@@ -868,6 +893,19 @@ end
 			}
 			return text.ToString();
 		}
+
+		public void Load(IEnumerable<string> ignore)
+		{
+			this.Load();
+			this.Ignore(ignore);
+		}
+
+		public void Ignore(IEnumerable<string> ignore)
+		{
+			Tables = Tables.Where(x => !ignore.Contains(x.Name)).ToList();
+			Routines = Routines.Where(x => !ignore.Contains(x.Name)).ToList();
+			ForeignKeys = ForeignKeys.Where(x => !ignore.Contains(x.Table.Name)).ToList();
+		}
 	}
 
 	public class DatabaseDiff {
@@ -887,15 +925,15 @@ end
 		public bool IsDiff {
 			get {
 				return PropsChanged.Count > 0
-				       || TablesAdded.Count > 0
-				       || TablesDiff.Count > 0
-				       || TablesDeleted.Count > 0
-				       || RoutinesAdded.Count > 0
-				       || RoutinesDiff.Count > 0
-				       || RoutinesDeleted.Count > 0
-				       || ForeignKeysAdded.Count > 0
-				       || ForeignKeysDiff.Count > 0
-				       || ForeignKeysDeleted.Count > 0;
+					   || TablesAdded.Count > 0
+					   || TablesDiff.Count > 0
+					   || TablesDeleted.Count > 0
+					   || RoutinesAdded.Count > 0
+					   || RoutinesDiff.Count > 0
+					   || RoutinesDeleted.Count > 0
+					   || ForeignKeysAdded.Count > 0
+					   || ForeignKeysDiff.Count > 0
+					   || ForeignKeysDeleted.Count > 0;
 			}
 		}
 
@@ -975,6 +1013,108 @@ end
 			}
 
 			return text.ToString();
+		}
+
+		public DiffReport GetDiffReport() {
+			var report = new DiffReport();
+
+			if (TablesAdded.Any() || TablesDeleted.Any() || TablesDiff.Any()) {
+				var tables = report.AddCategory("Tables");
+
+				foreach (var addedTable in TablesAdded) {
+					tables.AddEntry(addedTable.Name, DiffEntryType.Added, addedTable.ScriptCreate());
+				}
+
+				foreach (var deletedTable in TablesDeleted) {
+					tables.AddEntry(deletedTable.Name, DiffEntryType.Deleted, deletedTable.ScriptDrop());
+				}
+
+				foreach (var tableDiff in TablesDiff) {
+					var diffEntry = tables.AddEntry(tableDiff.Name, DiffEntryType.Changed, tableDiff.Script() );
+
+					if (tableDiff.ColumnsAdded.Any() || tableDiff.ColumnsDroped.Any() || tableDiff.ColumnsDiff.Any()) {
+						var columns = diffEntry.AddCategory("Columns");
+
+						foreach (var column in tableDiff.ColumnsAdded) {
+							columns.AddEntry(column.Name, DiffEntryType.Added);
+						}
+
+						foreach (var column in tableDiff.ColumnsDroped) {
+							columns.AddEntry(column.Name, DiffEntryType.Deleted);
+						}
+
+						foreach (var columnDiff in tableDiff.ColumnsDiff) {
+							columns.AddEntry(columnDiff.Source.Name, DiffEntryType.Changed);
+						}
+					}
+
+					if (tableDiff.ConstraintsAdded.Any() || tableDiff.ConstraintsDeleted.Any() || tableDiff.ConstraintsChanged.Any()) {
+						var constraints = diffEntry.AddCategory("Constraints");
+
+						foreach (var constraint in tableDiff.ConstraintsAdded) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Added);
+						}
+
+						foreach (var constraint in tableDiff.ConstraintsDeleted) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Deleted);
+						}
+
+						foreach (var constraint in tableDiff.ConstraintsChanged) {
+							constraints.AddEntry(constraint.Name, DiffEntryType.Changed);
+						}
+					}
+				}
+			}
+
+			if (ForeignKeysAdded.Any() || ForeignKeysDeleted.Any() || ForeignKeysDiff.Any()) {
+				var foreignKeys = report.AddCategory("Foreign Keys");
+
+				foreach (var foreignKey in ForeignKeysAdded) {
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Added, foreignKey.ScriptCreate());
+				}
+
+				foreach (var foreignKey in ForeignKeysDeleted) {
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Deleted, foreignKey.ScriptDrop());
+				}
+
+				foreach (var foreignKey in ForeignKeysDiff) {
+					var details = new StringBuilder();
+					details.AppendLine(foreignKey.ScriptDrop());
+					details.AppendLine("GO");
+					details.Append(foreignKey.ScriptCreate());
+					foreignKeys.AddEntry(foreignKey.Name, DiffEntryType.Changed, details.ToString());
+				}
+			}
+
+			if (RoutinesAdded.Any() || RoutinesDeleted.Any() || RoutinesDiff.Any()) {
+				var routines = report.AddCategory("Routines");
+
+				foreach (var routine in RoutinesAdded) {
+					routines.AddEntry(routine.Name, DiffEntryType.Added, routine.ScriptCreate(Db));
+				}
+
+				foreach (var routine in RoutinesDeleted) {
+					routines.AddEntry(routine.Name, DiffEntryType.Deleted, routine.ScriptDrop());
+				}
+
+				foreach (var routine in RoutinesDiff) {
+					var details = new StringBuilder();
+					details.AppendLine(routine.ScriptDrop());
+					details.AppendLine("GO");
+					details.Append(routine.ScriptCreate(Db));
+					routines.AddEntry(routine.Name, DiffEntryType.Changed, details.ToString());
+				}
+			}
+
+			if (PropsChanged.Any()) {
+				var props = report.AddCategory("Properties");
+
+				foreach (var dbProp in PropsChanged) {
+					props.AddEntry(dbProp.Name, DiffEntryType.Changed, dbProp.Script());
+				}
+			}
+
+			return report;
 		}
 	}
 }

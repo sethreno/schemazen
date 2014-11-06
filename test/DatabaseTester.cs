@@ -8,6 +8,9 @@ using NUnit.Framework;
 namespace test {
 	[TestFixture]
 	public class DatabaseTester {
+		public DatabaseTester() {
+		}
+
 		public static void TestCopySchema(string pathToSchemaScript) {
 			TestHelper.DropDb("TEST_SOURCE");
 			TestHelper.DropDb("TEST_COPY");
@@ -32,7 +35,7 @@ namespace test {
 		}
 
 		private static void TestCompare(Database source, Database copy) {
-			//compare the dbs to make sure they are the same                        
+			//compare the dbs to make sure they are the same
 			Assert.IsFalse(source.Compare(copy).IsDiff);
 
 			// get a second opinion
@@ -173,7 +176,7 @@ namespace test {
 
 			foreach (Table t in db.Tables) {
 				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
-				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
+				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t, new CompareConfig()).IsDiff);
 			}
 		}
 
@@ -203,7 +206,7 @@ select * from Table1
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
 			policy.Constraints[0].Clustered = true;
 			policy.Constraints[0].Unique = true;
-			policy.Columns.Items[0].Identity = new Identity(1, 1);
+			policy.Columns[0].Identity = new Identity(1, 1);
 
 			var loc = new Table("dbo", "Location");
 			loc.Columns.Add(new Column("id", "int", false, null));
@@ -212,7 +215,7 @@ select * from Table1
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
 			loc.Constraints[0].Clustered = true;
 			loc.Constraints[0].Unique = true;
-			loc.Columns.Items[0].Identity = new Identity(1, 1);
+			loc.Columns[0].Identity = new Identity(1, 1);
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null));
@@ -221,17 +224,17 @@ select * from Table1
 			formType.Constraints[0].Clustered = true;
 
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
-			fk_policy_formType.Table = policy;
+			fk_policy_formType.Table = new TableInfo(policy.Owner, policy.Name);
 			fk_policy_formType.Columns.Add("form");
-			fk_policy_formType.RefTable = formType;
+			fk_policy_formType.RefTable = new TableInfo(formType.Owner, formType.Name);
 			fk_policy_formType.RefColumns.Add("code");
 			fk_policy_formType.OnUpdate = "NO ACTION";
 			fk_policy_formType.OnDelete = "NO ACTION";
 
 			var fk_location_policy = new ForeignKey("FK_Location_Policy");
-			fk_location_policy.Table = loc;
+			fk_location_policy.Table = new TableInfo(loc.Owner, loc.Name);
 			fk_location_policy.Columns.Add("policyId");
-			fk_location_policy.RefTable = policy;
+			fk_location_policy.RefTable = new TableInfo(policy.Owner, policy.Name);
 			fk_location_policy.RefColumns.Add("id");
 			fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
@@ -270,7 +273,7 @@ select * from Table1
 			db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
 
 			db.Connection = "server=localhost\\SQLEXPRESS;"
-			                + "database=" + db.Name + ";Trusted_Connection=yes;";
+							+ "database=" + db.Name + ";Trusted_Connection=yes;";
 			db.ExecCreate(true);
 
 			DBHelper.ExecSql(db.Connection,
@@ -300,7 +303,7 @@ select * from Table1
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
 			copy.Connection = "server=localhost\\SQLEXPRESS;"
-			                  + "database=" + copy.Name + ";Trusted_Connection=yes;";
+							  + "database=" + copy.Name + ";Trusted_Connection=yes;";
 			copy.CreateFromDir(true);
 			copy.Load();
 			TestCompare(db, copy);

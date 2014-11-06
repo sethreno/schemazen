@@ -1,7 +1,13 @@
-﻿namespace model {
+﻿using System.Xml.Serialization;
+
+namespace model {
 	public class Identity {
+		[XmlAttribute]
 		public string Increment;
+		[XmlAttribute]
 		public string Seed;
+
+		private Identity() { }
 
 		public Identity(string seed, string increment) {
 			Seed = seed;

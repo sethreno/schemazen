@@ -35,24 +35,24 @@ namespace test {
 			t1.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 			t2.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 
-			diff = t1.Compare(t2);
+			diff = t1.Compare(t2, new CompareConfig());
 			Assert.IsNotNull(diff);
 			Assert.IsFalse(diff.IsDiff);
 
 			//test add
 			t1.Columns.Add(new Column("second", "varchar", 30, false, null));
-			diff = t1.Compare(t2);
+			diff = t1.Compare(t2, new CompareConfig());
 			Assert.IsTrue(diff.IsDiff);
 			Assert.AreEqual(1, diff.ColumnsAdded.Count);
 
 			//test delete
-			diff = t2.Compare(t1);
+			diff = t2.Compare(t1, new CompareConfig());
 			Assert.IsTrue(diff.IsDiff);
 			Assert.AreEqual(1, diff.ColumnsDroped.Count);
 
 			//test diff
-			t1.Columns.Items[0].Length = 20;
-			diff = t1.Compare(t2);
+			t1.Columns[0].Length = 20;
+			diff = t1.Compare(t2, new CompareConfig());
 			Assert.IsTrue(diff.IsDiff);
 			Assert.AreEqual(1, diff.ColumnsDiff.Count);
 
@@ -60,10 +60,10 @@ namespace test {
 			Console.Write(t1.ScriptCreate());
 
 			Console.WriteLine("--- migrate up ---");
-			Console.Write(t1.Compare(t2).Script());
+			Console.Write(t1.Compare(t2, new CompareConfig()).Script());
 
 			Console.WriteLine("--- migrate down ---");
-			Console.Write(t2.Compare(t1).Script());
+			Console.Write(t2.Compare(t1, new CompareConfig()).Script());
 		}
 
 		[Test]
