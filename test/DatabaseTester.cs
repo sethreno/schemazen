@@ -269,8 +269,7 @@ select * from Table1
 			db.FindProp("PARAMETERIZATION").Value = "FORCED";
 			db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
 
-			db.Connection = "server=localhost\\SQLEXPRESS;"
-			                + "database=" + db.Name + ";Trusted_Connection=yes;";
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 			db.ExecCreate(true);
 
 			DBHelper.ExecSql(db.Connection,
@@ -299,8 +298,7 @@ select * from Table1
 
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
-			copy.Connection = "server=localhost\\SQLEXPRESS;"
-			                  + "database=" + copy.Name + ";Trusted_Connection=yes;";
+			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
 			copy.CreateFromDir(true);
 			copy.Load();
 			TestCompare(db, copy);
