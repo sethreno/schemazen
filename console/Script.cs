@@ -18,7 +18,7 @@ namespace console {
 			HasOption(
 				"dataTablesPattern=",
 				"A regular expression pattern that matches tables to export data from.",
-				o => DataTables = o);
+				o => DataTablesPattern = o);
 		}
 
 		public override int Run(string[] args) {
