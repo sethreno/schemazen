@@ -130,20 +130,27 @@ namespace model {
 			}
 		}
 
-		public void Load() {
-			var cnStrBuilder = new SqlConnectionStringBuilder(Connection);
+	    public void Load()
+	    {
+	        using (var cn = new SqlConnection(Connection))
+	        {
+	            cn.Open();
+	            Load(cn);
+	        }
+	    }
 
+		public void Load(SqlConnection cn) 
+        {
 			Tables.Clear();
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
 			InitProps();
 
-			using (var cn = new SqlConnection(Connection)) {
-				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
-					// query schema for database properties
-					cm.CommandText = @"
+		    using (SqlCommand cm = cn.CreateCommand())
+		    {
+		        // query schema for database properties
+		        cm.CommandText = @"
 select
 	[compatibility_level],
 	[collation_name],
@@ -174,52 +181,57 @@ select
 from sys.databases
 where name = @dbname
 ";
-					cm.Parameters.AddWithValue("@dbname", cnStrBuilder.InitialCatalog);
-					using (IDataReader dr = cm.ExecuteReader()) {
-						if (dr.Read()) {
-							SetPropString("COMPATIBILITY_LEVEL", dr["compatibility_level"]);
-							SetPropString("COLLATE", dr["collation_name"]);
-							SetPropOnOff("AUTO_CLOSE", dr["is_auto_close_on"]);
-							SetPropOnOff("AUTO_SHRINK", dr["is_auto_shrink_on"]);
-							if (dr["snapshot_isolation_state"] != DBNull.Value) {
-								FindProp("ALLOW_SNAPSHOT_ISOLATION").Value =
-									(byte) dr["snapshot_isolation_state"] == 0 ||
-									(byte) dr["snapshot_isolation_state"] == 2
-										? "OFF"
-										: "ON";
-							}
-							SetPropOnOff("READ_COMMITTED_SNAPSHOT", dr["is_read_committed_snapshot_on"]);
-							SetPropString("RECOVERY", dr["recovery_model_desc"]);
-							SetPropString("PAGE_VERIFY", dr["page_verify_option_desc"]);
-							SetPropOnOff("AUTO_CREATE_STATISTICS", dr["is_auto_create_stats_on"]);
-							SetPropOnOff("AUTO_UPDATE_STATISTICS", dr["is_auto_update_stats_on"]);
-							SetPropOnOff("AUTO_UPDATE_STATISTICS_ASYNC", dr["is_auto_update_stats_async_on"]);
-							SetPropOnOff("ANSI_NULL_DEFAULT", dr["is_ansi_null_default_on"]);
-							SetPropOnOff("ANSI_NULLS", dr["is_ansi_nulls_on"]);
-							SetPropOnOff("ANSI_PADDING", dr["is_ansi_padding_on"]);
-							SetPropOnOff("ANSI_WARNINGS", dr["is_ansi_warnings_on"]);
-							SetPropOnOff("ARITHABORT", dr["is_arithabort_on"]);
-							SetPropOnOff("CONCAT_NULL_YIELDS_NULL", dr["is_concat_null_yields_null_on"]);
-							SetPropOnOff("NUMERIC_ROUNDABORT", dr["is_numeric_roundabort_on"]);
-							SetPropOnOff("QUOTED_IDENTIFIER", dr["is_quoted_identifier_on"]);
-							SetPropOnOff("RECURSIVE_TRIGGERS", dr["is_recursive_triggers_on"]);
-							SetPropOnOff("CURSOR_CLOSE_ON_COMMIT", dr["is_cursor_close_on_commit_on"]);
-							if (dr["is_local_cursor_default"] != DBNull.Value) {
-								FindProp("CURSOR_DEFAULT").Value =
-									(bool) dr["is_local_cursor_default"] ? "LOCAL" : "GLOBAL";
-							}
-							SetPropOnOff("TRUSTWORTHY", dr["is_trustworthy_on"]);
-							SetPropOnOff("DB_CHAINING", dr["is_db_chaining_on"]);
-							if (dr["is_parameterization_forced"] != DBNull.Value) {
-								FindProp("PARAMETERIZATION").Value =
-									(bool) dr["is_parameterization_forced"] ? "FORCED" : "SIMPLE";
-							}
-							SetPropOnOff("DATE_CORRELATION_OPTIMIZATION", dr["is_date_correlation_on"]);
-						}
-					}
+                cm.Parameters.AddWithValue("@dbname", cn.Database);
+		        using (IDataReader dr = cm.ExecuteReader())
+		        {
+		            if (dr.Read())
+		            {
+		                SetPropString("COMPATIBILITY_LEVEL", dr["compatibility_level"]);
+		                SetPropString("COLLATE", dr["collation_name"]);
+		                SetPropOnOff("AUTO_CLOSE", dr["is_auto_close_on"]);
+		                SetPropOnOff("AUTO_SHRINK", dr["is_auto_shrink_on"]);
+		                if (dr["snapshot_isolation_state"] != DBNull.Value)
+		                {
+		                    FindProp("ALLOW_SNAPSHOT_ISOLATION").Value =
+		                        (byte) dr["snapshot_isolation_state"] == 0 ||
+		                        (byte) dr["snapshot_isolation_state"] == 2
+		                            ? "OFF"
+		                            : "ON";
+		                }
+		                SetPropOnOff("READ_COMMITTED_SNAPSHOT", dr["is_read_committed_snapshot_on"]);
+		                SetPropString("RECOVERY", dr["recovery_model_desc"]);
+		                SetPropString("PAGE_VERIFY", dr["page_verify_option_desc"]);
+		                SetPropOnOff("AUTO_CREATE_STATISTICS", dr["is_auto_create_stats_on"]);
+		                SetPropOnOff("AUTO_UPDATE_STATISTICS", dr["is_auto_update_stats_on"]);
+		                SetPropOnOff("AUTO_UPDATE_STATISTICS_ASYNC", dr["is_auto_update_stats_async_on"]);
+		                SetPropOnOff("ANSI_NULL_DEFAULT", dr["is_ansi_null_default_on"]);
+		                SetPropOnOff("ANSI_NULLS", dr["is_ansi_nulls_on"]);
+		                SetPropOnOff("ANSI_PADDING", dr["is_ansi_padding_on"]);
+		                SetPropOnOff("ANSI_WARNINGS", dr["is_ansi_warnings_on"]);
+		                SetPropOnOff("ARITHABORT", dr["is_arithabort_on"]);
+		                SetPropOnOff("CONCAT_NULL_YIELDS_NULL", dr["is_concat_null_yields_null_on"]);
+		                SetPropOnOff("NUMERIC_ROUNDABORT", dr["is_numeric_roundabort_on"]);
+		                SetPropOnOff("QUOTED_IDENTIFIER", dr["is_quoted_identifier_on"]);
+		                SetPropOnOff("RECURSIVE_TRIGGERS", dr["is_recursive_triggers_on"]);
+		                SetPropOnOff("CURSOR_CLOSE_ON_COMMIT", dr["is_cursor_close_on_commit_on"]);
+		                if (dr["is_local_cursor_default"] != DBNull.Value)
+		                {
+		                    FindProp("CURSOR_DEFAULT").Value =
+		                        (bool) dr["is_local_cursor_default"] ? "LOCAL" : "GLOBAL";
+		                }
+		                SetPropOnOff("TRUSTWORTHY", dr["is_trustworthy_on"]);
+		                SetPropOnOff("DB_CHAINING", dr["is_db_chaining_on"]);
+		                if (dr["is_parameterization_forced"] != DBNull.Value)
+		                {
+		                    FindProp("PARAMETERIZATION").Value =
+		                        (bool) dr["is_parameterization_forced"] ? "FORCED" : "SIMPLE";
+		                }
+		                SetPropOnOff("DATE_CORRELATION_OPTIMIZATION", dr["is_date_correlation_on"]);
+		            }
+		        }
 
-					//get schemas
-					cm.CommandText = @"
+		        //get schemas
+		        cm.CommandText = @"
 select s.name as schemaName, p.name as principalName
 	from sys.schemas s
 	inner join sys.database_principals p on s.principal_id = p.principal_id
@@ -227,30 +239,32 @@ select s.name as schemaName, p.name as principalName
 	and s.name not in ('dbo','guest','sys','INFORMATION_SCHEMA')
 	order by schema_id
 ";
-					using (SqlDataReader dr = cm.ExecuteReader())
-					{
-						while (dr.Read())
-						{
-							Schemas.Add(new Schema((string)dr["schemaName"], (string)dr["principalName"]));
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                Schemas.Add(new Schema((string) dr["schemaName"], (string) dr["principalName"]));
+		            }
+		        }
 
 
-					//get tables
-					cm.CommandText = @"
+		        //get tables
+		        cm.CommandText = @"
 					select 
 						TABLE_SCHEMA, 
 						TABLE_NAME 
 					from INFORMATION_SCHEMA.TABLES
 					where TABLE_TYPE = 'BASE TABLE'";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							Tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]));
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                Tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]));
+		            }
+		        }
 
-					//get columns
-					cm.CommandText = @"
+		        //get columns
+		        cm.CommandText = @"
 					select 
 						t.TABLE_SCHEMA,
 						c.TABLE_NAME,
@@ -268,35 +282,38 @@ select s.name as schemaName, p.name as principalName
 					where
 						t.TABLE_TYPE = 'BASE TABLE'
 ";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							var c = new Column();
-							c.Name = (string) dr["COLUMN_NAME"];
-							c.Type = (string) dr["DATA_TYPE"];
-							c.IsNullable = (string) dr["IS_NULLABLE"] == "YES";
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                var c = new Column();
+		                c.Name = (string) dr["COLUMN_NAME"];
+		                c.Type = (string) dr["DATA_TYPE"];
+		                c.IsNullable = (string) dr["IS_NULLABLE"] == "YES";
 
-							switch (c.Type) {
-								case "binary":
-								case "char":
-								case "nchar":
-								case "nvarchar":
-								case "varbinary":
-								case "varchar":
-									c.Length = (int) dr["CHARACTER_MAXIMUM_LENGTH"];
-									break;
-								case "decimal":
-								case "numeric":
-									c.Precision = (byte) dr["NUMERIC_PRECISION"];
-									c.Scale = (int) dr["NUMERIC_SCALE"];
-									break;
-							}
+		                switch (c.Type)
+		                {
+		                    case "binary":
+		                    case "char":
+		                    case "nchar":
+		                    case "nvarchar":
+		                    case "varbinary":
+		                    case "varchar":
+		                        c.Length = (int) dr["CHARACTER_MAXIMUM_LENGTH"];
+		                        break;
+		                    case "decimal":
+		                    case "numeric":
+		                        c.Precision = (byte) dr["NUMERIC_PRECISION"];
+		                        c.Scale = (int) dr["NUMERIC_SCALE"];
+		                        break;
+		                }
 
-							FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]).Columns.Add(c);
-						}
-					}
+		                FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]).Columns.Add(c);
+		            }
+		        }
 
-					//get column identities
-					cm.CommandText = @"
+		        //get column identities
+		        cm.CommandText = @"
 					select 
 						s.name as TABLE_SCHEMA,
 						t.name as TABLE_NAME, 
@@ -307,23 +324,28 @@ select s.name as schemaName, p.name as principalName
 						inner join sys.identity_columns i on i.object_id = c.object_id
 							and i.column_id = c.column_id
 						inner join sys.schemas s on s.schema_id = t.schema_id ";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							try {
-								Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-								Column c = t.Columns.Find((string) dr["COLUMN_NAME"]);
-								string seed = dr["SEED_VALUE"].ToString();
-								string increment = dr["INCREMENT_VALUE"].ToString();
-								c.Identity = new Identity(seed, increment);
-							}
-							catch (Exception ex) {
-								throw new ApplicationException(string.Format("{0}.{1} : {2}", dr["TABLE_SCHEMA"], dr["TABLE_NAME"], ex.Message), ex);
-							}
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                try
+		                {
+		                    Table t = FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
+		                    Column c = t.Columns.Find((string) dr["COLUMN_NAME"]);
+		                    string seed = dr["SEED_VALUE"].ToString();
+		                    string increment = dr["INCREMENT_VALUE"].ToString();
+		                    c.Identity = new Identity(seed, increment);
+		                }
+		                catch (Exception ex)
+		                {
+		                    throw new ApplicationException(
+		                        string.Format("{0}.{1} : {2}", dr["TABLE_SCHEMA"], dr["TABLE_NAME"], ex.Message), ex);
+		                }
+		            }
+		        }
 
-					//get column defaults
-					cm.CommandText = @"
+		        //get column defaults
+		        cm.CommandText = @"
 					select 
 						s.name as TABLE_SCHEMA,
 						t.name as TABLE_NAME, 
@@ -335,16 +357,18 @@ select s.name as schemaName, p.name as principalName
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
 							and d.parent_object_id = c.object_id
 						inner join sys.schemas s on s.schema_id = t.schema_id";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-							t.Columns.Find((string) dr["COLUMN_NAME"]).Default =
-								new Default((string) dr["DEFAULT_NAME"], (string) dr["DEFAULT_VALUE"]);
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                Table t = FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
+		                t.Columns.Find((string) dr["COLUMN_NAME"]).Default =
+		                    new Default((string) dr["DEFAULT_NAME"], (string) dr["DEFAULT_VALUE"]);
+		            }
+		        }
 
-					//get constraints & indexes
-					cm.CommandText = @"
+		        //get constraints & indexes
+		        cm.CommandText = @"
 					select 
 						s.name as schemaName,
 						t.name as tableName, 
@@ -363,49 +387,56 @@ select s.name as schemaName, p.name as principalName
 							and c.column_id = ic.column_id
 						inner join sys.schemas s on s.schema_id = t.schema_id
 					order by s.name, t.name, i.name, ic.key_ordinal, ic.index_column_id";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							Table t = FindTable((string)dr["tableName"], (string)dr["schemaName"]);
-							Constraint c = t.FindConstraint((string) dr["indexName"]);
-							if (c == null) {
-								c = new Constraint((string) dr["indexName"], "", "");
-								t.Constraints.Add(c);
-								c.Table = new TableInfo(t.Owner, t.Name);
-							}
-							c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
-							c.Unique = (bool) dr["is_unique"];
-							if ((bool) dr["is_included_column"]) {
-								c.IncludedColumns.Add((string) dr["columnName"]);
-							}
-							else {
-								c.Columns.Add((string) dr["columnName"]);
-							}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                Table t = FindTable((string) dr["tableName"], (string) dr["schemaName"]);
+		                Constraint c = t.FindConstraint((string) dr["indexName"]);
+		                if (c == null)
+		                {
+		                    c = new Constraint((string) dr["indexName"], "", "");
+		                    t.Constraints.Add(c);
+		                    c.Table = new TableInfo(t.Owner, t.Name);
+		                }
+		                c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
+		                c.Unique = (bool) dr["is_unique"];
+		                if ((bool) dr["is_included_column"])
+		                {
+		                    c.IncludedColumns.Add((string) dr["columnName"]);
+		                }
+		                else
+		                {
+		                    c.Columns.Add((string) dr["columnName"]);
+		                }
 
-							c.Type = "INDEX";
-							if ((bool) dr["is_primary_key"]) c.Type = "PRIMARY KEY";
-							if ((bool) dr["is_unique_constraint"]) c.Type = "UNIQUE";
-						}
-					}
+		                c.Type = "INDEX";
+		                if ((bool) dr["is_primary_key"]) c.Type = "PRIMARY KEY";
+		                if ((bool) dr["is_unique_constraint"]) c.Type = "UNIQUE";
+		            }
+		        }
 
-					//get foreign keys
-					cm.CommandText = @"
+		        //get foreign keys
+		        cm.CommandText = @"
 					select 
 						TABLE_SCHEMA,
 						TABLE_NAME, 
 						CONSTRAINT_NAME
 					from INFORMATION_SCHEMA.TABLE_CONSTRAINTS
 					where CONSTRAINT_TYPE = 'FOREIGN KEY'";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-							var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]);
-							fk.Table = new TableInfo(t.Owner, t.Name);
-							ForeignKeys.Add(fk);
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                Table t = FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
+		                var fk = new ForeignKey((string) dr["CONSTRAINT_NAME"]);
+		                fk.Table = new TableInfo(t.Owner, t.Name);
+		                ForeignKeys.Add(fk);
+		            }
+		        }
 
-					//get foreign key props
-					cm.CommandText = @"
+		        //get foreign key props
+		        cm.CommandText = @"
 select 
 	CONSTRAINT_NAME, 
 	UPDATE_RULE, 
@@ -413,17 +444,19 @@ select
 	fk.is_disabled
 from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 	inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							ForeignKey fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
-							fk.OnUpdate = (string) dr["UPDATE_RULE"];
-							fk.OnDelete = (string) dr["DELETE_RULE"];
-							fk.Check = !(bool) dr["is_disabled"];
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                ForeignKey fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
+		                fk.OnUpdate = (string) dr["UPDATE_RULE"];
+		                fk.OnDelete = (string) dr["DELETE_RULE"];
+		                fk.Check = !(bool) dr["is_disabled"];
+		            }
+		        }
 
-					//get foreign key columns and ref table
-					cm.CommandText = @"
+		        //get foreign key columns and ref table
+		        cm.CommandText = @"
 select
 	fk.name as CONSTRAINT_NAME,
 	c1.name as COLUMN_NAME,
@@ -441,23 +474,27 @@ inner join sys.columns c2
 	and fkc.referenced_object_id = c2.object_id
 order by fk.name, c1.column_id
 ";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							ForeignKey fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
-							if (fk == null) {
-								continue;
-							}
-							fk.Columns.Add((string) dr["COLUMN_NAME"]);
-							fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
-							if (fk.RefTable == null) {
-								var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
-								fk.RefTable =  new TableInfo(table.Owner, table.Name);
-							}
-						}
-					}
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                ForeignKey fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
+		                if (fk == null)
+		                {
+		                    continue;
+		                }
+		                fk.Columns.Add((string) dr["COLUMN_NAME"]);
+		                fk.RefColumns.Add((string) dr["REF_COLUMN_NAME"]);
+		                if (fk.RefTable == null)
+		                {
+		                    var table = FindTable((string) dr["REF_TABLE_NAME"], (string) dr["REF_TABLE_SCHEMA"]);
+		                    fk.RefTable = new TableInfo(table.Owner, table.Name);
+		                }
+		            }
+		        }
 
-					//get routines
-					cm.CommandText = @"
+		        //get routines
+		        cm.CommandText = @"
 					select
 						s.name as schemaName,
 						o.name as routineName,
@@ -471,33 +508,35 @@ order by fk.name, c1.column_id
 						inner join sys.schemas s on s.schema_id = o.schema_id
 						left join sys.triggers tr on m.object_id = tr.object_id
 						left join sys.tables t on tr.parent_id = t.object_id";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]);
-							r.Text = (string) dr["definition"];
-							r.AnsiNull = (bool) dr["uses_ansi_nulls"];
-							r.QuotedId = (bool) dr["uses_quoted_identifier"];
-							Routines.Add(r);
+		        using (SqlDataReader dr = cm.ExecuteReader())
+		        {
+		            while (dr.Read())
+		            {
+		                var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]);
+		                r.Text = (string) dr["definition"];
+		                r.AnsiNull = (bool) dr["uses_ansi_nulls"];
+		                r.QuotedId = (bool) dr["uses_quoted_identifier"];
+		                Routines.Add(r);
 
-							switch ((string) dr["type_desc"]) {
-								case "SQL_STORED_PROCEDURE":
-									r.Type = "PROCEDURE";
-									break;
-								case "SQL_TRIGGER":
-									r.Type = "TRIGGER";
-									break;
-								case "SQL_SCALAR_FUNCTION":
-									r.Type = "FUNCTION";
-									break;
-								case "VIEW":
-									r.Type = "VIEW";
-									break;
-							}
-						}
-					}
-				}
-			}
-		}
+		                switch ((string) dr["type_desc"])
+		                {
+		                    case "SQL_STORED_PROCEDURE":
+		                        r.Type = "PROCEDURE";
+		                        break;
+		                    case "SQL_TRIGGER":
+		                        r.Type = "TRIGGER";
+		                        break;
+		                    case "SQL_SCALAR_FUNCTION":
+		                        r.Type = "FUNCTION";
+		                        break;
+		                    case "VIEW":
+		                        r.Type = "VIEW";
+		                        break;
+		                }
+		            }
+		        }
+		    }
+        }
 
 		public DatabaseDiff Compare(Database otherDb, CompareConfig compareConfig = null) {
 			compareConfig = compareConfig ?? new CompareConfig();
