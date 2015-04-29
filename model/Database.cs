@@ -513,7 +513,12 @@ order by fk.name, c1.column_id
 		            while (dr.Read())
 		            {
 		                var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]);
-		                r.Text = (string) dr["definition"];
+
+		                var text = dr["definition"];
+                        if ( text is DBNull )
+                            continue; // this happens if the routine is Encrypted - e.g. aannot be read
+                        r.Text = (string) text;
+
 		                r.AnsiNull = (bool) dr["uses_ansi_nulls"];
 		                r.QuotedId = (bool) dr["uses_quoted_identifier"];
 		                Routines.Add(r);
