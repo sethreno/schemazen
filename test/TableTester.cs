@@ -1,17 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using model;
 using NUnit.Framework;
 
-namespace test {
+namespace test
+{
 	[TestFixture]
-	public class TableTester {
-		private List<List<string>> TabDataToList(string data) {
+	public class TableTester
+	{
+		private List<List<string>> TabDataToList(string data)
+		{
 			var lines = new List<List<string>>();
-			foreach (var line in data.Split('\t')) {
+			foreach (var line in data.Split('\t'))
+			{
 				lines.Add(new List<string>());
-				foreach (var field in line.Split('\t')) {
+				foreach (var field in line.Split('\t'))
+				{
 					lines[lines.Count - 1].Add(field);
 				}
 			}
@@ -24,7 +30,8 @@ namespace test {
 		}
 
 		[Test]
-		public void TestCompare() {
+		public void TestCompare()
+		{
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
 			var diff = default(TableDiff);
@@ -67,7 +74,8 @@ namespace test {
 		}
 
 		[Test]
-		public void TestExportData() {
+		public void TestExportData()
+		{
 			var t = new Table("dbo", "Status");
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
@@ -88,13 +96,14 @@ namespace test {
 ";
 
 			t.ImportData(conn, dataIn);
-
-			var dataOut = t.ExportData(conn);
-			Assert.AreEqual(dataIn, dataOut);
+			var sw = new StringWriter();
+			t.ExportData(conn, sw);
+			Assert.AreEqual(dataIn, sw.ToString());
 		}
 
 		[Test]
-		public void TestScript() {
+		public void TestScript()
+		{
 			//create a table with all known types, script it, and execute the script
 			var t = new Table("dbo", "AllTypesTest");
 			t.Columns.Add(new Column("a", "bigint", false, null));
@@ -133,8 +142,9 @@ namespace test {
 		}
 
 		[Test]
-		[ExpectedException(typeof (NotSupportedException))]
-		public void TestScriptNonSupportedColumn() {
+		[ExpectedException(typeof(NotSupportedException))]
+		public void TestScriptNonSupportedColumn()
+		{
 			var t = new Table("dbo", "bla");
 			t.Columns.Add(new Column("a", "madeuptype", true, null));
 			t.ScriptCreate();

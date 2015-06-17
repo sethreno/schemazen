@@ -765,7 +765,10 @@ where s.name != 'sys'";
 			}
 			foreach (var t in this.DataTables)
 			{
-				File.WriteAllText(dataDir + "/" + MakeFileName(t) + ".tsv", t.ExportData(this.Connection));
+				var sw = File.CreateText(dataDir + "/" + MakeFileName(t) + ".tsv");
+				t.ExportData(this.Connection, sw);
+				sw.Flush();
+				sw.Close();
 			}
 		}
 

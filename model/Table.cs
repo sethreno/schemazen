@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
@@ -133,9 +134,8 @@ namespace model
 		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string nullValue = "--SchemaZenNull--";
 
-		public string ExportData(string conn)
+		public void ExportData(string conn, TextWriter data)
 		{
-			var data = new StringBuilder(); // TODO: better to use a StringWriter... saves having to store the whole thing in memory first before writing to a file
 			var sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (var c in this.Columns.Items)
@@ -157,21 +157,19 @@ namespace model
 							foreach (var c in this.Columns.Items)
 							{
 								if (dr[c.Name] is DBNull)
-									data.Append(nullValue);
+									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
-									data.Append(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
 								else
-									data.Append(dr[c.Name].ToString().Replace(fieldSeparator, escapeFieldSeparator).Replace(rowSeparator, escapeRowSeparator));
-								data.Append(fieldSeparator);
+									data.Write(dr[c.Name].ToString().Replace(fieldSeparator, escapeFieldSeparator).Replace(rowSeparator, escapeRowSeparator));
+								if (c != this.Columns.Items.Last())
+									data.Write(fieldSeparator);
 							}
-							data.Remove(data.Length - fieldSeparator.Length, fieldSeparator.Length);
-							data.AppendLine();
+							data.WriteLine();
 						}
 					}
 				}
 			}
-
-			return data.ToString();
 		}
 
 		public void ImportData(string conn, string data)
