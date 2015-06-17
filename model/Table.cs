@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
-namespace model {
+namespace model
+{
 	public class Schema
 	{
 		public string Name;
@@ -13,80 +15,92 @@ namespace model {
 
 		public Schema(string name, string owner)
 		{
-			Owner = owner;
-			Name = name;
+			this.Owner = owner;
+			this.Name = name;
 		}
 	}
 
-	public class Table {
+	public class Table
+	{
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
 		public string Owner;
 
-		public Table(string owner, string name) {
-			Owner = owner;
-			Name = name;
+		public Table(string owner, string name)
+		{
+			this.Owner = owner;
+			this.Name = name;
 		}
 
-		public Constraint PrimaryKey {
-			get {
-				foreach (Constraint c in Constraints) {
-					if (c.Type == "PRIMARY KEY") return c;
-				}
-				return null;
+		public Constraint PrimaryKey
+		{
+			get
+			{
+				return this.Constraints.FirstOrDefault(c => c.Type == "PRIMARY KEY");
 			}
 		}
 
-		public Constraint FindConstraint(string name) {
-			foreach (Constraint c in Constraints) {
-				if (c.Name == name) return c;
-			}
-			return null;
+		public Constraint FindConstraint(string name)
+		{
+			return this.Constraints.FirstOrDefault(c => c.Name == name);
 		}
 
-		public TableDiff Compare(Table t) {
+		public TableDiff Compare(Table t)
+		{
 			var diff = new TableDiff();
 			diff.Owner = t.Owner;
 			diff.Name = t.Name;
 
 			//get additions and compare mutual columns
-			foreach (Column c in Columns.Items) {
-				Column c2 = t.Columns.Find(c.Name);
-				if (c2 == null) {
+			foreach (var c in this.Columns.Items)
+			{
+				var c2 = t.Columns.Find(c.Name);
+				if (c2 == null)
+				{
 					diff.ColumnsAdded.Add(c);
 				}
-				else {
+				else
+				{
 					//compare mutual columns
-					ColumnDiff cDiff = c.Compare(c2);
-					if (cDiff.IsDiff) {
+					var cDiff = c.Compare(c2);
+					if (cDiff.IsDiff)
+					{
 						diff.ColumnsDiff.Add(cDiff);
 					}
 				}
 			}
 
 			//get deletions
-			foreach (Column c in t.Columns.Items) {
-				if (Columns.Find(c.Name) == null) {
+			foreach (var c in t.Columns.Items)
+			{
+				if (this.Columns.Find(c.Name) == null)
+				{
 					diff.ColumnsDroped.Add(c);
 				}
 			}
 
 			//get added and compare mutual constraints
-			foreach (Constraint c in Constraints) {
-				Constraint c2 = t.FindConstraint(c.Name);
-				if (c2 == null) {
+			foreach (var c in this.Constraints)
+			{
+				var c2 = t.FindConstraint(c.Name);
+				if (c2 == null)
+				{
 					diff.ConstraintsAdded.Add(c);
 				}
-				else {
-					if (c.Script() != c2.Script()) {
+				else
+				{
+					if (c.Script() != c2.Script())
+					{
 						diff.ConstraintsChanged.Add(c);
 					}
 				}
 			}
 			//get deleted constraints
-			foreach (Constraint c in t.Constraints) {
-				if (FindConstraint(c.Name) == null) {
+			foreach (var c in t.Constraints)
+			{
+				if (this.FindConstraint(c.Name) == null)
+				{
 					diff.ConstraintsDeleted.Add(c);
 				}
 			}
@@ -94,47 +108,71 @@ namespace model {
 			return diff;
 		}
 
-		public string ScriptCreate() {
+		public string ScriptCreate()
+		{
 			var text = new StringBuilder();
-			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
-			text.Append(Columns.Script());
-			if (Constraints.Count > 0) text.AppendLine();
-			foreach (Constraint c in Constraints) {
+			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", this.Owner, this.Name);
+			text.Append(this.Columns.Script());
+			if (this.Constraints.Count > 0) text.AppendLine();
+			foreach (var c in this.Constraints)
+			{
 				if (c.Type == "INDEX") continue;
 				text.AppendLine("   ," + c.Script());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
-			foreach (Constraint c in Constraints) {
+			foreach (var c in this.Constraints)
+			{
 				if (c.Type != "INDEX") continue;
 				text.AppendLine(c.Script());
 			}
 			return text.ToString();
 		}
 
-		public string ScriptDrop() {
-			return string.Format("DROP TABLE [{0}].[{1}]", Owner, Name);
+		public string ScriptDrop()
+		{
+			return string.Format("DROP TABLE [{0}].[{1}]", this.Owner, this.Name);
 		}
 
-		public string ExportData(string conn) {
+
+		private const string fieldSeparator = "\t";
+		private const string escapeFieldSeparator = "--SchemaZenFieldSeparator--";
+		private const string rowSeparator = "\r\n";
+		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
+		private const string nullValue = "--SchemaZenNull--";
+
+		public string ExportData(string conn)
+		{
 			var data = new StringBuilder();
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items) {
+			foreach (var c in this.Columns.Items)
+			{
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
-			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
-			using (var cn = new SqlConnection(conn)) {
+			sql.AppendFormat(" from [{0}].[{1}]", this.Owner, this.Name);
+			using (var cn = new SqlConnection(conn))
+			{
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand())
+				{
 					cm.CommandText = sql.ToString();
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							foreach (Column c in Columns.Items) {
-								data.AppendFormat("{0}\t", dr[c.Name]);
+					using (var dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							foreach (var c in this.Columns.Items)
+							{
+								if (dr[c.Name] is DBNull)
+									data.Append(nullValue);
+								else if (dr[c.Name] is byte[])
+									data.Append(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+								else
+									data.Append(dr[c.Name].ToString().Replace(fieldSeparator, escapeFieldSeparator).Replace(rowSeparator, escapeRowSeparator));
+								data.Append(fieldSeparator);
 							}
-							data.Remove(data.Length - 1, 1);
+							data.Remove(data.Length - fieldSeparator.Length, fieldSeparator.Length);
 							data.AppendLine();
 						}
 					}
@@ -144,25 +182,33 @@ namespace model {
 			return data.ToString();
 		}
 
-		public void ImportData(string conn, string data) {
+		public void ImportData(string conn, string data)
+		{
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items) {
-				dt.Columns.Add(new DataColumn(c.Name));
+			foreach (var c in this.Columns.Items)
+			{
+				dt.Columns.Add(new DataColumn(c.Name, SqlTypeToNativeType(c.Type)));
 			}
-			string[] lines = data.Split("\r\n".Split(','), StringSplitOptions.RemoveEmptyEntries);
-			for (int i = 0; i < lines.Count(); i++) {
-				string line = lines[i];
-				DataRow row = dt.NewRow();
-				string[] fields = line.Split('\t');
-				if (fields.Length != Columns.Items.Count) {
-					throw new DataException("Incorrect number of columns", i + 1);
+			var lines = data.Split(new[] { rowSeparator }, StringSplitOptions.RemoveEmptyEntries);
+			var i = 0;
+			foreach (var line in lines)
+			{
+				i++;
+				var row = dt.NewRow();
+				var fields = line.Split(new[] { fieldSeparator }, StringSplitOptions.None);
+				if (fields.Length != this.Columns.Items.Count)
+				{
+					throw new DataException("Incorrect number of columns", i);
 				}
-				for (int j = 0; j < fields.Length; j++) {
-					try {
-						row[j] = ConvertType(Columns.Items[j].Type, fields[j]);
+				for (var j = 0; j < fields.Length; j++)
+				{
+					try
+					{
+						row[j] = this.ConvertType(this.Columns.Items[j].Type, fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
 					}
-					catch (FormatException ex) {
-						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i + 1);
+					catch (FormatException ex)
+					{
+						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i);
 					}
 				}
 				dt.Rows.Add(row);
@@ -170,13 +216,37 @@ namespace model {
 
 			var bulk = new SqlBulkCopy(conn,
 				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-			bulk.DestinationTableName = Name;
+			bulk.DestinationTableName = this.Name;
 			bulk.WriteToServer(dt);
 		}
 
-		public object ConvertType(string sqlType, string val) {
-			if (val.Length == 0) return DBNull.Value;
-			switch (sqlType.ToLower()) {
+		private static Type SqlTypeToNativeType(string sqlType)
+		{
+			switch (sqlType.ToLower())
+			{
+				case "bit":
+					return typeof(bool);
+				case "datetime":
+				case "smalldatetime":
+					return typeof(DateTime);
+				case "int":
+					return typeof(int);
+				case "uniqueidentifier":
+					return typeof(Guid);
+				case "varbinary":
+					return typeof(byte[]);
+				default:
+					return typeof(string);
+			}
+		}
+
+		public object ConvertType(string sqlType, string val)
+		{
+			if (val == nullValue)
+				return DBNull.Value;
+
+			switch (sqlType.ToLower())
+			{
 				case "bit":
 					//added for compatibility with bcp
 					if (val == "0") val = "False";
@@ -186,15 +256,19 @@ namespace model {
 				case "smalldatetime":
 					return DateTime.Parse(val);
 				case "int":
-					int.Parse(val);
-					return val;
+					return int.Parse(val);
+				case "uniqueidentifier":
+					return new Guid(val);
+				case "varbinary":
+					return SoapHexBinary.Parse(val).Value;
 				default:
 					return val;
 			}
 		}
 	}
 
-	public class TableDiff {
+	public class TableDiff
+	{
 		public List<Column> ColumnsAdded = new List<Column>();
 		public List<ColumnDiff> ColumnsDiff = new List<ColumnDiff>();
 		public List<Column> ColumnsDroped = new List<Column>();
@@ -205,26 +279,31 @@ namespace model {
 		public string Name;
 		public string Owner;
 
-		public bool IsDiff {
-			get {
-				return ColumnsAdded.Count + ColumnsDroped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+		public bool IsDiff
+		{
+			get
+			{
+				return this.ColumnsAdded.Count + this.ColumnsDroped.Count + this.ColumnsDiff.Count + this.ConstraintsAdded.Count + this.ConstraintsChanged.Count + this.ConstraintsDeleted.Count > 0;
 			}
 		}
 
-		public string Script() {
+		public string Script()
+		{
 			var text = new StringBuilder();
 
-			foreach (Column c in ColumnsAdded) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.Script());
+			foreach (var c in this.ColumnsAdded)
+			{
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", this.Owner, this.Name, c.Script());
 			}
 
-			foreach (Column c in ColumnsDroped) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
+			foreach (var c in this.ColumnsDroped)
+			{
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", this.Owner, this.Name, c.Name);
 			}
 
-			foreach (ColumnDiff c in ColumnsDiff) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Script());
+			foreach (var c in this.ColumnsDiff)
+			{
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", this.Owner, this.Name, c.Script());
 			}
 			return text.ToString();
 		}

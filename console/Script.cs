@@ -14,29 +14,29 @@ namespace console {
 			HasOption(
 				"dataTables=",
 				"A comma separated list of tables to export data from.",
-				o => DataTables = o);
+				o => this.DataTables = o);
 			HasOption(
 				"dataTablesPattern=",
 				"A regular expression pattern that matches tables to export data from.",
-				o => DataTablesPattern = o);
+				o => this.DataTablesPattern = o);
 		}
 
 		public override int Run(string[] args) {
-			var db = CreateDatabase();
+			var db = this.CreateDatabase();
 			db.Load();
 
-			if (!String.IsNullOrEmpty(DataTables)) {
-				HandleDataTables(db, DataTables);
+			if (!String.IsNullOrEmpty(this.DataTables)) {
+				HandleDataTables(db, this.DataTables);
 			}
-			if (!String.IsNullOrEmpty(DataTablesPattern)) {
-				var tables = db.FindTablesRegEx(DataTablesPattern);
+			if (!String.IsNullOrEmpty(this.DataTablesPattern)) {
+				var tables = db.FindTablesRegEx(this.DataTablesPattern);
 				foreach (var t in tables) {
 					if (db.DataTables.Contains(t)) continue;
 					db.DataTables.Add(t);
 				}
 			}
 
-	if (!Overwrite && Directory.Exists(db.Dir)) {
+	if (!this.Overwrite && Directory.Exists(db.Dir)) {
 				Console.Write("{0} already exists do you want to replace it? (Y/N)", db.Dir);
 				var key = Console.ReadKey();
 				if (key.Key != ConsoleKey.Y) {
@@ -45,7 +45,7 @@ namespace console {
 				Console.WriteLine();
 			}
 
-			db.ScriptToDir(Overwrite);
+			db.ScriptToDir(this.Overwrite);
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
 			return 0;

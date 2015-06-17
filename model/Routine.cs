@@ -1,42 +1,69 @@
 ﻿using System;
+using System.Linq;
 
-namespace model {
-	public class Routine {
+namespace model
+{
+	public class Routine
+	{
 		public bool AnsiNull;
 		public string Name;
 		public bool QuotedId;
 		public string Schema;
 		public string Text;
-		public string Type;
+		public RoutineKind RoutineType;
 
-		public Routine(string schema, string name) {
-			Schema = schema;
-			Name = name;
+		public enum RoutineKind
+		{
+			Procedure,
+			Function,
+			Trigger,
+			View,
+			XmlSchemaCollection
 		}
 
-		public string ScriptCreate(Database db) {
+		public Routine(string schema, string name)
+		{
+			this.Schema = schema;
+			this.Name = name;
+		}
+
+		public string ScriptCreate(Database db)
+		{
 			var script = "";
-			var defaultQuotedId = !QuotedId;
-			if (db != null && db.FindProp("QUOTED_IDENTIFIER") != null) {
+			var defaultQuotedId = !this.QuotedId;
+			if (db != null && db.FindProp("QUOTED_IDENTIFIER") != null)
+			{
 				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
-			if (defaultQuotedId != QuotedId) {
+			if (defaultQuotedId != this.QuotedId)
+			{
 				script = string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
-					(QuotedId ? "ON" : "OFF"), Environment.NewLine);
+					(this.QuotedId ? "ON" : "OFF"), Environment.NewLine);
 			}
-			var defaultAnsiNulls = !AnsiNull;
-			if (db != null && db.FindProp("ANSI_NULLS") != null) {
+			var defaultAnsiNulls = !this.AnsiNull;
+			if (db != null && db.FindProp("ANSI_NULLS") != null)
+			{
 				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
 			}
-			if (defaultAnsiNulls != AnsiNull) {
+			if (defaultAnsiNulls != this.AnsiNull)
+			{
 				script = string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",
-					(AnsiNull ? "ON" : "OFF"), Environment.NewLine);
+					(this.AnsiNull ? "ON" : "OFF"), Environment.NewLine);
 			}
-			return script + Text;
+			return script + this.Text;
 		}
 
-		public string ScriptDrop() {
-			return string.Format("DROP {0} [{1}].[{2}]", Type, Schema, Name);
+		public string GetSQLType()
+		{
+			var text = this.RoutineType.ToString();
+			return string.Join(string.Empty, text.AsEnumerable().Select(
+				(c, i) => ((Char.IsUpper(c) || i == 0) ? " " + Char.ToUpper(c).ToString() : c.ToString())
+			).ToArray()).Trim();
+		}
+
+		public string ScriptDrop()
+		{
+			return string.Format("DROP {0} [{1}].[{2}]", this.GetSQLType(), this.Schema, this.Name);
 		}
 	}
 }

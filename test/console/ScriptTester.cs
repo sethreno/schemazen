@@ -1,11 +1,14 @@
 ﻿using console;
 using NUnit.Framework;
 
-namespace test {
+namespace test.console
+{
 	[TestFixture]
-	internal class ScriptTester {
+	internal class ScriptTester
+	{
 		[Test]
-		public void TestParse() {
+		public void TestParse()
+		{
 			var cmd = new Script();
 			string[] args = {
 				"script",

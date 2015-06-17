@@ -1,13 +1,10 @@
-﻿using System;
-using System.Data.SqlClient;
-using System.IO;
-using console;
-using model;
-using NUnit.Framework;
+﻿using NUnit.Framework;
 
-namespace test {
+namespace test.console
+{
 	[TestFixture]
-	internal class CreateTester {
+	internal class CreateTester
+	{
 
 		/*
 		[Test]

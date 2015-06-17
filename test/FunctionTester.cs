@@ -12,7 +12,7 @@ namespace test {
 CREATE FUNCTION [dbo].[udf_GetDate]()
 RETURNS DATETIME AS
 BEGIN
-    RETURN GETDATE()
+	RETURN GETDATE()
 END
 ";
 			Console.WriteLine(f.ScriptCreate(null));

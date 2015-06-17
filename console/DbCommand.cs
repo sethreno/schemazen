@@ -18,33 +18,33 @@ namespace console {
 			IsCommand(command, oneLineDescription);
 			Options = new OptionSet();
 			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption("s|server=", "server", o => Server = o);
-			HasRequiredOption("b|database=", "database", o => DbName = o);
-			HasOption("u|user=", "user", o => User = o);
-			HasOption("p|pass=", "pass", o => Pass = o);
+			HasRequiredOption("s|server=", "server", o => this.Server = o);
+			HasRequiredOption("b|database=", "database", o => this.DbName = o);
+			HasOption("u|user=", "user", o => this.User = o);
+			HasOption("p|pass=", "pass", o => this.Pass = o);
 			HasRequiredOption(
 				"d|scriptDir=",
 				"Path to database script directory.",
-				o => ScriptDir = o);
+				o => this.ScriptDir = o);
 			HasOption(
 				"o|overwrite=",
 				"Overwrite existing target without prompt.",
-				o => Overwrite = o != null);
+				o => this.Overwrite = o != null);
 		}
 
 		protected Database CreateDatabase() {
 			var builder = new SqlConnectionStringBuilder() {
-				DataSource = Server,
-				InitialCatalog = DbName,
-				IntegratedSecurity = String.IsNullOrEmpty(User)
+				DataSource = this.Server,
+				InitialCatalog = this.DbName,
+				IntegratedSecurity = String.IsNullOrEmpty(this.User)
 			};
 			if (!builder.IntegratedSecurity){
-				builder.UserID = User;
-				builder.Password = Pass;
+				builder.UserID = this.User;
+				builder.Password = this.Pass;
 			}
 			return new Database() {
 				Connection = builder.ToString(),
-				Dir = ScriptDir
+				Dir = this.ScriptDir
 			};
 			
 		}

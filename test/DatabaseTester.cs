@@ -5,10 +5,13 @@ using System.IO;
 using model;
 using NUnit.Framework;
 
-namespace test {
+namespace test
+{
 	[TestFixture]
-	public class DatabaseTester {
-		public static void TestCopySchema(string pathToSchemaScript) {
+	public class DatabaseTester
+	{
+		public static void TestCopySchema(string pathToSchemaScript)
+		{
 			TestHelper.DropDb("TEST_SOURCE");
 			TestHelper.DropDb("TEST_COPY");
 
@@ -31,37 +34,42 @@ namespace test {
 			TestCompare(source, copy);
 		}
 
-		private static void TestCompare(Database source, Database copy) {
+		private static void TestCompare(Database source, Database copy)
+		{
 			//compare the dbs to make sure they are the same                        
 			Assert.IsFalse(source.Compare(copy).IsDiff);
 
 			// get a second opinion
 			// if you ever find your license key
 			return;
-			string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}",
-				ConfigHelper.SqlDbDiffPath,
-				"localhost\\SQLEXPRESS " + copy.Name + " NULL NULL Y",
-				"localhost\\SQLEXPRESS " + source.Name + " NULL NULL Y",
-				"SqlDbDiff.XML CompareResult.txt null");
+			/*
+						var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}",
+							ConfigHelper.SqlDbDiffPath,
+							"localhost\\SQLEXPRESS " + copy.Name + " NULL NULL Y",
+							"localhost\\SQLEXPRESS " + source.Name + " NULL NULL Y",
+							"SqlDbDiff.XML CompareResult.txt null");
 
-			Console.WriteLine(cmd);
-			var proc = new Process();
-			proc.StartInfo.FileName = "cmd.exe";
-			proc.StartInfo.Arguments = cmd;
-			proc.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-			proc.Start();
-			proc.WaitForExit();
-			Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0]);
+						Console.WriteLine(cmd);
+						var proc = new Process();
+						proc.StartInfo.FileName = "cmd.exe";
+						proc.StartInfo.Arguments = cmd;
+						proc.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
+						proc.Start();
+						proc.WaitForExit();
+						Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0]);
+			*/
 		}
 
 		[Test]
-		public void TestBug13() {
+		public void TestBug13()
+		{
 			TestCopySchema(ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL");
 		}
 
 		[Test]
-		public void TestCollate() {
-			string pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
+		public void TestCollate()
+		{
+			var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
 			TestHelper.DropDb("TEST_SOURCE");
 
 			//create the db from sql script
@@ -77,8 +85,10 @@ namespace test {
 		}
 
 		[Test]
-		public void TestCopy() {
-			foreach (string script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
+		public void TestCopy()
+		{
+			foreach (var script in Directory.GetFiles(ConfigHelper.TestSchemaDir))
+			{
 				Console.WriteLine("Testing {0}", script);
 				TestCopySchema(script);
 			}
@@ -86,12 +96,13 @@ namespace test {
 
 		[Test]
 		[Ignore("test won't work without license key for sqldbdiff")]
-		public void TestDiffScript() {
+		public void TestDiffScript()
+		{
 			TestHelper.DropDb("TEST_SOURCE");
 			TestHelper.DropDb("TEST_COPY");
 
 			//create the dbs from sql script
-			string script = File.ReadAllText(ConfigHelper.TestSchemaDir + "\\BOP_QUOTE.sql");
+			var script = File.ReadAllText(ConfigHelper.TestSchemaDir + "\\BOP_QUOTE.sql");
 			TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
 			TestHelper.ExecBatchSql(script, "TEST_SOURCE");
 
@@ -108,11 +119,11 @@ namespace test {
 			copy.Load();
 
 			//execute migration script to make SOURCE the same as COPY
-			DatabaseDiff diff = copy.Compare(source);
+			var diff = copy.Compare(source);
 			TestHelper.ExecBatchSql(diff.Script(), "TEST_SOURCE");
 
 			//compare the dbs to make sure they are the same
-			string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
+			var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
 				"localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y",
 				"SqlDbDiff.XML CompareResult.txt null");
 			var proc = new Process();
@@ -126,7 +137,8 @@ namespace test {
 		}
 
 		[Test]
-		public void TestFindTableRegEx() {
+		public void TestFindTableRegEx()
+		{
 			var db = new Database();
 			db.Tables.Add(new Table("dbo", "cmicDeductible"));
 			db.Tables.Add(new Table("dbo", "cmicZipCode"));
@@ -140,7 +152,8 @@ namespace test {
 		}
 
 		[Test]
-		public void TestScript() {
+		public void TestScript()
+		{
 			var db = new Database("TEST_TEMP");
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("col1", "int", false, null));
@@ -171,17 +184,19 @@ namespace test {
 
 			TestHelper.DropDb("TEST_TEMP");
 
-			foreach (Table t in db.Tables) {
+			foreach (var t in db.Tables)
+			{
 				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
 				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
 			}
 		}
 
 		[Test]
-		public void TestScriptDeletedProc() {
+		public void TestScriptDeletedProc()
+		{
 			var source = new Database();
 			source.Routines.Add(new Routine("dbo", "test"));
-			source.FindRoutine("test", "dbo").Type = "PROCEDURE";
+			source.FindRoutine("test", "dbo").RoutineType = Routine.RoutineKind.Procedure;
 			source.FindRoutine("test", "dbo").Text = @"
 create procedure [dbo].[test]
 as 
@@ -189,14 +204,15 @@ select * from Table1
 ";
 
 			var target = new Database();
-			string scriptUp = target.Compare(source).Script();
-			string scriptDown = source.Compare(target).Script();
+			var scriptUp = target.Compare(source).Script();
+			var scriptDown = source.Compare(target).Script();
 			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
 			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
 		}
 
 		[Test]
-		public void TestScriptToDir() {
+		public void TestScriptToDir()
+		{
 			var policy = new Table("dbo", "Policy");
 			policy.Columns.Add(new Column("id", "int", false, null));
 			policy.Columns.Add(new Column("form", "tinyint", false, null));
@@ -285,13 +301,16 @@ select * from Table1
 			Assert.IsTrue(Directory.Exists(db.Name + "\\tables"));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
 
-			foreach (Table t in db.DataTables) {
+			foreach (var t in db.DataTables)
+			{
 				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name));
 			}
-			foreach (Table t in db.Tables) {
+			foreach (var t in db.Tables)
+			{
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
 			}
-			foreach (ForeignKey fk in db.ForeignKeys) {
+			foreach (var fk in db.ForeignKeys)
+			{
 				var expected = db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql";
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}

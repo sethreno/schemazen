@@ -12,7 +12,7 @@ namespace test {
 
 		[SetUp]
 		public void SetUp() {
-			string conn = GetConnString("TESTDB");
+			var conn = GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
 			DBHelper.CreateDb(conn);
 			SqlConnection.ClearAllPools();
@@ -25,7 +25,7 @@ namespace test {
 					cn.ConnectionString = GetConnString(dbName);
 				}
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = sql;
 					cm.ExecuteNonQuery();
 				}
@@ -37,7 +37,7 @@ namespace test {
 		}
 
 		public static string GetConnString(string dbName) {
-			string connString = "";
+			var connString = "";
 			using (var cn = new SqlConnection(ConfigHelper.TestDB)) {
 				connString = cn.ConnectionString;
 				if (!string.IsNullOrEmpty(dbName)) {
@@ -56,10 +56,10 @@ namespace test {
 		}
 
 		public static bool DbExists(string dbName) {
-			bool exists = false;
+			var exists = false;
 			using (var cn = new SqlConnection(ConfigHelper.TestDB)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = "select db_id('" + dbName + "')";
 					exists = (!ReferenceEquals(cm.ExecuteScalar(), DBNull.Value));
 				}

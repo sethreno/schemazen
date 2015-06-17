@@ -16,21 +16,21 @@ namespace console {
 			HasRequiredOption(
 				"s|source=",
 				"Connection string to a database to compare.",
-				o => _source = o);
+				o => this._source = o);
 			HasRequiredOption(
 				"t|target=",
 				"Connection string to a database to compare.",
-				o => _target = o);
+				o => this._target = o);
 		}
 
 		public override int Run(string[] remainingArguments) {
 			var sourceDb = new Database();
 			var targetDb = new Database();
-			sourceDb.Connection = _source;
-			targetDb.Connection = _target;
+			sourceDb.Connection = this._source;
+			targetDb.Connection = this._target;
 			sourceDb.Load();
 			targetDb.Load();
-			DatabaseDiff diff = sourceDb.Compare(targetDb);
+			var diff = sourceDb.Compare(targetDb);
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");
 				return 1;

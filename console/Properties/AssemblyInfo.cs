@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
 
-[assembly: AssemblyTitle("schemazen")]
+[assembly: AssemblyTitle("SchemaZen")]
 [assembly: AssemblyDescription("Script SQL Server schema and data quickly.")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Seth Reno")]
-[assembly: AssemblyProduct("schemazen")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("SchemaZen")]
 [assembly: AssemblyCopyright("Copyright ©  2009 Seth Reno")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

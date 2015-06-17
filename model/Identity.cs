@@ -4,17 +4,17 @@
 		public string Seed;
 
 		public Identity(string seed, string increment) {
-			Seed = seed;
-			Increment = increment;
+			this.Seed = seed;
+			this.Increment = increment;
 		}
 
 		public Identity(int seed, int increment) {
-			Seed = seed.ToString();
-			Increment = increment.ToString();
+			this.Seed = seed.ToString();
+			this.Increment = increment.ToString();
 		}
 
 		public string Script() {
-			return string.Format("IDENTITY ({0},{1})", Seed, Increment);
+			return string.Format("IDENTITY ({0},{1})", this.Seed, this.Increment);
 		}
 	}
 }
