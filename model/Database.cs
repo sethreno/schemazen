@@ -96,7 +96,7 @@ namespace model
 
 		#endregion
 
-		private static readonly string[] dirs = { "tables", "foreign_keys", "functions", "procedures", "triggers", "views", "xmlschemacollections" };
+		private static readonly string[] dirs = { "tables", "foreign_keys", "functions", "procedures", "triggers", "views", "xmlschemacollections", "data" };
 
 		private void SetPropOnOff(string propName, object dbVal)
 		{
