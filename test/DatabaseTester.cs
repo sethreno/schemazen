@@ -296,7 +296,7 @@ select * from Table1
 
 			db.DataTables.Add(formType);
 			db.Dir = db.Name;
-			db.ScriptToDir(true);
+			db.ScriptToDir();
 			Assert.IsTrue(Directory.Exists(db.Name));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\data"));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\tables"));

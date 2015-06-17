@@ -677,12 +677,12 @@ where s.name != 'sys'";
 			return text.ToString();
 		}
 
-		public void ScriptToDir(bool overwrite)
+		public void ScriptToDir()
 		{
 			if (Directory.Exists(this.Dir))
 			{
 				// delete the existing script files
-				foreach (var f in dirs.TakeWhile(dir => Directory.Exists(this.Dir + "/" + dir)).SelectMany(dir => Directory.GetFiles(this.Dir + "/" + dir)))
+				foreach (var f in dirs.Where(dir => Directory.Exists(this.Dir + "/" + dir)).SelectMany(dir => Directory.GetFiles(this.Dir + "/" + dir)))
 				{
 					File.Delete(f);
 				}
@@ -884,13 +884,29 @@ where s.name != 'sys'";
 					}
 				}
 			}
-			Console.WriteLine(errors.Any() ? "These files had unresolved errors... (details later)" : "All errors resolved, were probably dependency issues...");
-			Console.WriteLine(string.Join("\r\n", errors.Select(e => e.FileName).ToArray()));
+			if (!errors.Any())
+				Console.WriteLine("All errors resolved, were probably dependency issues...");
 			Console.WriteLine();
 
 			this.Load(); // load the schema first so we can import data
 			Console.WriteLine("Importing data...");
 			this.ImportData(); // load data
+
+			Console.WriteLine("Data imported successfully.");
+			if (Directory.Exists(this.Dir + "/after_data"))
+			{
+				foreach (var f in Directory.GetFiles(this.Dir + "/after_data", "*.sql"))
+				{
+					try
+					{
+						DBHelper.ExecBatchSql(this.Connection, File.ReadAllText(f));
+					}
+					catch (SqlBatchException ex)
+					{
+						errors.Add(new SqlFileException(f, ex));
+					}
+				}
+			}
 
 			Console.WriteLine("Adding foreign key constraints...");
 			// foreign keys
@@ -904,7 +920,8 @@ where s.name != 'sys'";
 					}
 					catch (SqlBatchException ex)
 					{
-						throw new SqlFileException(f, ex);
+						//throw new SqlFileException(f, ex);
+						errors.Add(new SqlFileException(f, ex));
 					}
 				}
 			}

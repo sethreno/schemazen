@@ -69,6 +69,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Compare.cs" />
+    <Compile Include="ConsoleQuestion.cs" />
     <Compile Include="Create.cs" />
     <Compile Include="DbCommand.cs" />
     <Compile Include="Program.cs" />

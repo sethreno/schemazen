@@ -46,16 +46,14 @@ namespace console
 
 			if (!this.Overwrite && Directory.Exists(db.Dir))
 			{
-				Console.Write("{0} already exists do you want to replace it? (Y/N)", db.Dir);
-				var key = Console.ReadKey();
-				if (key.Key != ConsoleKey.Y)
-				{
+
+				if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", db.Dir)))
 					return 1;
-				}
+
 				Console.WriteLine();
 			}
 
-			db.ScriptToDir(this.Overwrite);
+			db.ScriptToDir();
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
 			return 0;

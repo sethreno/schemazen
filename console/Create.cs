@@ -23,13 +23,7 @@ namespace console
 
 			if (DBHelper.DbExists(db.Connection) && !this.Overwrite)
 			{
-				Console.Write("{0} {1} already exists do you want to drop it (Y/N)? ", this.Server, this.DbName);
-				char answer = ' ';
-				while (answer != 'Y' && answer != 'N')
-				{
-					answer = char.ToUpper(Convert.ToChar(Console.Read()));
-				}
-				if (answer == 'N')
+				if (!ConsoleQuestion.AskYN(string.Format("{0} {1} already exists - do you want to drop it", this.Server, this.DbName)))
 				{
 					Console.WriteLine("Create command cancelled.");
 					return 1;
@@ -40,10 +34,12 @@ namespace console
 			try
 			{
 				db.CreateFromDir(this.Overwrite);
+				Console.WriteLine();
 				Console.WriteLine("Database created successfully.");
 			}
 			catch (BatchSqlFileException ex)
 			{
+				Console.WriteLine();
 				Console.WriteLine(@"Create completed with the following errors:");
 				foreach (var e in ex.Exceptions)
 				{
@@ -53,7 +49,7 @@ namespace console
 			}
 			catch (SqlFileException ex)
 			{
-				Console.Write(@"A SQL error occurred while executing scripts.
+				Console.Write(@"An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
 {0} (Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
 				return -1;
 			}
