@@ -2,6 +2,7 @@
 using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using model;
 using NUnit.Framework;
 
@@ -309,9 +310,8 @@ select * from Table1
 			{
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
 			}
-			foreach (var fk in db.ForeignKeys)
+			foreach (var expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql"))
 			{
-				var expected = db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql";
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
 

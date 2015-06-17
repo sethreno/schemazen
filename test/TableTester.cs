@@ -48,7 +48,7 @@ namespace test {
 			//test delete
 			diff = t2.Compare(t1);
 			Assert.IsTrue(diff.IsDiff);
-			Assert.AreEqual(1, diff.ColumnsDroped.Count);
+			Assert.AreEqual(1, diff.ColumnsDropped.Count);
 
 			//test diff
 			t1.Columns.Items[0].Length = 20;

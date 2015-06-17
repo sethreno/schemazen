@@ -3,27 +3,31 @@ using ManyConsole;
 using model;
 using NDesk.Options;
 
-namespace console {
-	internal class Compare : ConsoleCommand {
+namespace console
+{
+	internal class Compare : ConsoleCommand
+	{
 
 		private string _source;
 		private string _target;
 
-		public Compare() {
-			IsCommand("Compare", "Compare two databases.");
-			Options = new OptionSet();
-			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption(
+		public Compare()
+		{
+			this.IsCommand("Compare", "Compare two databases.");
+			this.Options = new OptionSet();
+			this.SkipsCommandSummaryBeforeRunning();
+			this.HasRequiredOption(
 				"s|source=",
 				"Connection string to a database to compare.",
 				o => this._source = o);
-			HasRequiredOption(
+			this.HasRequiredOption(
 				"t|target=",
 				"Connection string to a database to compare.",
 				o => this._target = o);
 		}
 
-		public override int Run(string[] remainingArguments) {
+		public override int Run(string[] remainingArguments)
+		{
 			var sourceDb = new Database();
 			var targetDb = new Database();
 			sourceDb.Connection = this._source;
@@ -31,7 +35,8 @@ namespace console {
 			sourceDb.Load();
 			targetDb.Load();
 			var diff = sourceDb.Compare(targetDb);
-			if (diff.IsDiff) {
+			if (diff.IsDiff)
+			{
 				Console.WriteLine("Databases are different.");
 				return 1;
 			}

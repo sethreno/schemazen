@@ -72,12 +72,9 @@ namespace model
 			}
 
 			//get deletions
-			foreach (var c in t.Columns.Items)
+			foreach (var c in t.Columns.Items.Where(c => this.Columns.Find(c.Name) == null))
 			{
-				if (this.Columns.Find(c.Name) == null)
-				{
-					diff.ColumnsDroped.Add(c);
-				}
+				diff.ColumnsDropped.Add(c);
 			}
 
 			//get added and compare mutual constraints
@@ -97,12 +94,9 @@ namespace model
 				}
 			}
 			//get deleted constraints
-			foreach (var c in t.Constraints)
+			foreach (var c in t.Constraints.Where(c => this.FindConstraint(c.Name) == null))
 			{
-				if (this.FindConstraint(c.Name) == null)
-				{
-					diff.ConstraintsDeleted.Add(c);
-				}
+				diff.ConstraintsDeleted.Add(c);
 			}
 
 			return diff;
@@ -114,16 +108,14 @@ namespace model
 			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", this.Owner, this.Name);
 			text.Append(this.Columns.Script());
 			if (this.Constraints.Count > 0) text.AppendLine();
-			foreach (var c in this.Constraints)
+			foreach (var c in this.Constraints.Where(c => c.Type != "INDEX"))
 			{
-				if (c.Type == "INDEX") continue;
 				text.AppendLine("   ," + c.Script());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
-			foreach (var c in this.Constraints)
+			foreach (var c in this.Constraints.Where(c => c.Type == "INDEX"))
 			{
-				if (c.Type != "INDEX") continue;
 				text.AppendLine(c.Script());
 			}
 			return text.ToString();
@@ -143,7 +135,7 @@ namespace model
 
 		public string ExportData(string conn)
 		{
-			var data = new StringBuilder();
+			var data = new StringBuilder(); // TODO: better to use a StringWriter... saves having to store the whole thing in memory first before writing to a file
 			var sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (var c in this.Columns.Items)
@@ -208,7 +200,7 @@ namespace model
 					}
 					catch (FormatException ex)
 					{
-						throw new DataException(String.Format("{0} at column {1}", ex.Message, j + 1), i);
+						throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), i);
 					}
 				}
 				dt.Rows.Add(row);
@@ -271,7 +263,7 @@ namespace model
 	{
 		public List<Column> ColumnsAdded = new List<Column>();
 		public List<ColumnDiff> ColumnsDiff = new List<ColumnDiff>();
-		public List<Column> ColumnsDroped = new List<Column>();
+		public List<Column> ColumnsDropped = new List<Column>();
 
 		public List<Constraint> ConstraintsAdded = new List<Constraint>();
 		public List<Constraint> ConstraintsChanged = new List<Constraint>();
@@ -283,7 +275,7 @@ namespace model
 		{
 			get
 			{
-				return this.ColumnsAdded.Count + this.ColumnsDroped.Count + this.ColumnsDiff.Count + this.ConstraintsAdded.Count + this.ConstraintsChanged.Count + this.ConstraintsDeleted.Count > 0;
+				return this.ColumnsAdded.Count + this.ColumnsDropped.Count + this.ColumnsDiff.Count + this.ConstraintsAdded.Count + this.ConstraintsChanged.Count + this.ConstraintsDeleted.Count > 0;
 			}
 		}
 
@@ -296,7 +288,7 @@ namespace model
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", this.Owner, this.Name, c.Script());
 			}
 
-			foreach (var c in this.ColumnsDroped)
+			foreach (var c in this.ColumnsDropped)
 			{
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", this.Owner, this.Name, c.Name);
 			}

@@ -1,7 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace model {
-	public class Constraint {
+namespace model
+{
+	public class Constraint
+	{
 		public bool Clustered;
 		public List<string> Columns = new List<string>();
 		public List<string> IncludedColumns = new List<string>();
@@ -10,33 +12,40 @@ namespace model {
 		public string Type;
 		public bool Unique;
 
-		public Constraint(string name, string type, string columns) {
+		public Constraint(string name, string type, string columns)
+		{
 			this.Name = name;
 			this.Type = type;
-			if (!string.IsNullOrEmpty(columns)) {
+			if (!string.IsNullOrEmpty(columns))
+			{
 				this.Columns = new List<string>(columns.Split(','));
 			}
 		}
 
-		public string ClusteredText {
-			get {
-				if (!this.Clustered) return "NONCLUSTERED";
-				return "CLUSTERED";
+		public string ClusteredText
+		{
+			get
+			{
+				return !this.Clustered ? "NONCLUSTERED" : "CLUSTERED";
 			}
 		}
 
-		public string UniqueText {
-			get {
-				if (!this.Unique) return "";
-				return "UNIQUE";
+		public string UniqueText
+		{
+			get
+			{
+				return !this.Unique ? "" : "UNIQUE";
 			}
 		}
 
-		public string Script() {
-			if (this.Type == "INDEX") {
+		public string Script()
+		{
+			if (this.Type == "INDEX")
+			{
 				var sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])", this.UniqueText, this.ClusteredText, this.Name, this.Table.Owner, this.Table.Name,
 					string.Join("], [", this.Columns.ToArray()));
-				if (this.IncludedColumns.Count > 0) {
+				if (this.IncludedColumns.Count > 0)
+				{
 					sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", this.IncludedColumns.ToArray()));
 				}
 				return sql;

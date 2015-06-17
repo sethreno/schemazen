@@ -47,7 +47,7 @@ namespace console
 				Console.WriteLine(@"Create completed with the following errors:");
 				foreach (var e in ex.Exceptions)
 				{
-					Console.WriteLine(@"{0}(Line {1}): {2}", e.FileName.Replace("/", "\\"), e.LineNumber, e.Message);
+					Console.WriteLine(@"{0} (Line {1}): {2}", e.FileName.Replace("/", "\\"), e.LineNumber, e.Message);
 				}
 				return -1;
 			}

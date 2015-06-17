@@ -57,7 +57,7 @@ namespace model
 		{
 			var text = this.RoutineType.ToString();
 			return string.Join(string.Empty, text.AsEnumerable().Select(
-				(c, i) => ((Char.IsUpper(c) || i == 0) ? " " + Char.ToUpper(c).ToString() : c.ToString())
+				(c, i) => ((char.IsUpper(c) || i == 0) ? " " + char.ToUpper(c).ToString() : c.ToString())
 			).ToArray()).Trim();
 		}
 

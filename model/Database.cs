@@ -66,7 +66,7 @@ namespace model
 
 		public DbProp FindProp(string name)
 		{
-			return this.Props.FirstOrDefault(p => String.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
+			return this.Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
 		public Table FindTable(string name, string owner)
@@ -342,6 +342,7 @@ select s.name as schemaName, p.name as principalName
 					select 
 						s.name as schemaName,
 						t.name as tableName, 
+						t.baseType,
 						i.name as indexName, 
 						c.name as columnName,
 						i.is_primary_key, 
@@ -349,7 +350,13 @@ select s.name as schemaName, p.name as principalName
 						i.is_unique, 
 						i.type_desc,
 						isnull(ic.is_included_column, 0) as is_included_column
-					from sys.tables t 
+					from (
+						select object_id, name, schema_id, 'T' as baseType
+						from   sys.tables
+						union
+						select object_id, name, schema_id, 'V' as baseType
+						from   sys.views
+						) t
 						inner join sys.indexes i on i.object_id = t.object_id
 						inner join sys.index_columns ic on ic.object_id = t.object_id
 							and ic.index_id = i.index_id
@@ -361,6 +368,11 @@ select s.name as schemaName, p.name as principalName
 					{
 						while (dr.Read())
 						{
+							if ((string)dr["baseType"] == "V")
+							{
+								Console.WriteLine("Index {0} on view {1} has not been scripted as it is currently unsupported by {2}", dr["indexName"], dr["tableName"], System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
+								continue;
+							}
 							var t = this.FindTable((string)dr["tableName"], (string)dr["schemaName"]);
 							var c = t.FindConstraint((string)dr["indexName"]);
 							if (c == null)
@@ -535,13 +547,12 @@ where s.name != 'sys'";
 			diff.Db = db;
 
 			//compare database properties           
-			foreach (var p in this.Props)
+			foreach (var p in from p in this.Props
+							  let p2 = db.FindProp(p.Name)
+							  where p.Script() != p2.Script()
+							  select p)
 			{
-				var p2 = db.FindProp(p.Name);
-				if (p.Script() != p2.Script())
-				{
-					diff.PropsChanged.Add(p);
-				}
+				diff.PropsChanged.Add(p);
 			}
 
 			//get tables added and changed
@@ -563,12 +574,9 @@ where s.name != 'sys'";
 				}
 			}
 			//get deleted tables
-			foreach (var t in db.Tables)
+			foreach (var t in db.Tables.Where(t => this.FindTable(t.Name, t.Owner) == null))
 			{
-				if (this.FindTable(t.Name, t.Owner) == null)
-				{
-					diff.TablesDeleted.Add(t);
-				}
+				diff.TablesDeleted.Add(t);
 			}
 
 			//get procs added and changed
@@ -589,12 +597,9 @@ where s.name != 'sys'";
 				}
 			}
 			//get procs deleted
-			foreach (var r in db.Routines)
+			foreach (var r in db.Routines.Where(r => this.FindRoutine(r.Name, r.Schema) == null))
 			{
-				if (this.FindRoutine(r.Name, r.Schema) == null)
-				{
-					diff.RoutinesDeleted.Add(r);
-				}
+				diff.RoutinesDeleted.Add(r);
 			}
 
 			//get added and compare mutual foreign keys
@@ -614,12 +619,9 @@ where s.name != 'sys'";
 				}
 			}
 			//get deleted foreign keys
-			foreach (var fk in db.ForeignKeys)
+			foreach (var fk in db.ForeignKeys.Where(fk => this.FindForeignKey(fk.Name) == null))
 			{
-				if (this.FindForeignKey(fk.Name) == null)
-				{
-					diff.ForeignKeysDeleted.Add(fk);
-				}
+				diff.ForeignKeysDeleted.Add(fk);
 			}
 
 			return diff;
@@ -680,22 +682,15 @@ where s.name != 'sys'";
 			if (Directory.Exists(this.Dir))
 			{
 				// delete the existing script files
-				foreach (var dir in dirs)
+				foreach (var f in dirs.TakeWhile(dir => Directory.Exists(this.Dir + "/" + dir)).SelectMany(dir => Directory.GetFiles(this.Dir + "/" + dir)))
 				{
-					if (!Directory.Exists(this.Dir + "/" + dir)) break;
-					foreach (var f in Directory.GetFiles(this.Dir + "/" + dir))
-					{
-						File.Delete(f);
-					}
+					File.Delete(f);
 				}
 			}
 			// create dir tree
-			foreach (var dir in dirs)
+			foreach (var dir in dirs.Where(dir => !Directory.Exists(this.Dir + "/" + dir)))
 			{
-				if (!Directory.Exists(this.Dir + "/" + dir))
-				{
-					Directory.CreateDirectory(this.Dir + "/" + dir);
-				}
+				Directory.CreateDirectory(this.Dir + "/" + dir);
 			}
 
 			var text = new StringBuilder();
@@ -719,7 +714,7 @@ where s.name != 'sys'";
 			foreach (var t in this.Tables)
 			{
 				File.WriteAllText(
-					String.Format("{0}/tables/{1}.sql", this.Dir, MakeFileName(t)),
+					string.Format("{0}/tables/{1}.sql", this.Dir, MakeFileName(t)),
 					t.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -727,7 +722,7 @@ where s.name != 'sys'";
 			foreach (var fk in this.ForeignKeys)
 			{
 				File.AppendAllText(
-					String.Format("{0}/foreign_keys/{1}.sql", this.Dir, MakeFileName(fk.Table)),
+					string.Format("{0}/foreign_keys/{1}.sql", this.Dir, MakeFileName(fk.Table)),
 					fk.ScriptCreate() + "\r\nGO\r\n"
 					);
 			}
@@ -735,7 +730,7 @@ where s.name != 'sys'";
 			foreach (var r in this.Routines)
 			{
 				File.WriteAllText(
-					String.Format("{0}/{1}/{2}.sql", this.Dir, r.RoutineType.ToString().ToLower() + "s", MakeFileName(r)),
+					string.Format("{0}/{1}/{2}.sql", this.Dir, r.RoutineType.ToString().ToLower() + "s", MakeFileName(r)),
 					r.ScriptCreate(this) + "\r\nGO\r\n"
 					);
 			}
@@ -757,9 +752,8 @@ where s.name != 'sys'";
 		{
 			// Dont' include schema name for objects in the dbo schema.
 			// This maintains backward compatability for those who use
-			// schemazen to keep their schemas under version control.
-			if (schema.ToLower() == "dbo") return name;
-			return String.Format("{0}.{1}", schema, name);
+			// SchemaZen to keep their schemas under version control.
+			return schema.ToLower() == "dbo" ? name : string.Format("{0}.{1}", schema, name);
 		}
 
 		public void ExportData()
@@ -771,7 +765,7 @@ where s.name != 'sys'";
 			}
 			foreach (var t in this.DataTables)
 			{
-				File.WriteAllText(dataDir + "/" + MakeFileName(t), t.ExportData(this.Connection));
+				File.WriteAllText(dataDir + "/" + MakeFileName(t) + ".tsv", t.ExportData(this.Connection));
 			}
 		}
 
@@ -788,8 +782,8 @@ where s.name != 'sys'";
 			{
 				var fi = new FileInfo(f);
 				var schema = "dbo";
-				var table = fi.Name;
-				if (fi.Name.Contains("."))
+				var table = Path.GetFileNameWithoutExtension(fi.Name);
+				if (table.Contains("."))
 				{
 					schema = fi.Name.Split('.')[0];
 					table = fi.Name.Split('.')[1];
@@ -801,7 +795,7 @@ where s.name != 'sys'";
 				}
 				try
 				{
-					t.ImportData(this.Connection, File.ReadAllText(dataDir + "/" + MakeFileName(t)));
+					t.ImportData(this.Connection, File.ReadAllText(fi.FullName));
 				}
 				catch (DataException ex)
 				{
@@ -866,7 +860,7 @@ where s.name != 'sys'";
 			// if the number of failures stops decreasing then give up
 			var scripts = this.GetScripts();
 			var errors = new List<SqlFileException>();
-			var prevCount = Int32.MaxValue;
+			var prevCount = int.MaxValue;
 			while (scripts.Count > 0 && errors.Count < prevCount)
 			{
 				if (errors.Count > 0)
@@ -925,17 +919,8 @@ where s.name != 'sys'";
 		private List<string> GetScripts()
 		{
 			var scripts = new List<string>();
-			foreach (var dir in dirs)
+			foreach (var dirPath in dirs.Where(dir => "foreign_keys" != dir).Select(dir => this.Dir + "/" + dir).Where(Directory.Exists))
 			{
-				if ("foreign_keys" == dir)
-				{
-					continue;
-				}
-				var dirPath = this.Dir + "/" + dir;
-				if (!Directory.Exists(dirPath))
-				{
-					continue;
-				}
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;
@@ -954,7 +939,7 @@ where s.name != 'sys'";
 				}
 				else
 				{
-					throw new ApplicationException(String.Format("Database {0} {1} already exists.",
+					throw new ApplicationException(string.Format("Database {0} {1} already exists.",
 						conStr.DataSource, dbName));
 				}
 			}
@@ -967,12 +952,9 @@ where s.name != 'sys'";
 
 			text.AppendLine("DECLARE @DB VARCHAR(255)");
 			text.AppendLine("SET @DB = DB_NAME()");
-			foreach (var p in props)
+			foreach (var p in props.Select(p => p.Script()).Where(p => !string.IsNullOrEmpty(p)))
 			{
-				if (!string.IsNullOrEmpty(p.Script()))
-				{
-					text.AppendLine(p.Script());
-				}
+				text.AppendLine(p);
 			}
 			return text.ToString();
 		}

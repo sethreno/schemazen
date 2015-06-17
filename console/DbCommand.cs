@@ -4,8 +4,10 @@ using ManyConsole;
 using model;
 using NDesk.Options;
 
-namespace console {
-	public abstract class DbCommand : ConsoleCommand {
+namespace console
+{
+	public abstract class DbCommand : ConsoleCommand
+	{
 
 		protected string Server { get; set; }
 		protected string DbName { get; set; }
@@ -14,39 +16,44 @@ namespace console {
 		protected string ScriptDir { get; set; }
 		protected bool Overwrite { get; set; }
 
-		protected DbCommand(string command, string oneLineDescription) {
-			IsCommand(command, oneLineDescription);
-			Options = new OptionSet();
-			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption("s|server=", "server", o => this.Server = o);
-			HasRequiredOption("b|database=", "database", o => this.DbName = o);
-			HasOption("u|user=", "user", o => this.User = o);
-			HasOption("p|pass=", "pass", o => this.Pass = o);
-			HasRequiredOption(
+		protected DbCommand(string command, string oneLineDescription)
+		{
+			this.IsCommand(command, oneLineDescription);
+			this.Options = new OptionSet();
+			this.SkipsCommandSummaryBeforeRunning();
+			this.HasRequiredOption("s|server=", "server", o => this.Server = o);
+			this.HasRequiredOption("b|database=", "database", o => this.DbName = o);
+			this.HasOption("u|user=", "user", o => this.User = o);
+			this.HasOption("p|pass=", "pass", o => this.Pass = o);
+			this.HasRequiredOption(
 				"d|scriptDir=",
 				"Path to database script directory.",
 				o => this.ScriptDir = o);
-			HasOption(
+			this.HasOption(
 				"o|overwrite=",
 				"Overwrite existing target without prompt.",
 				o => this.Overwrite = o != null);
 		}
 
-		protected Database CreateDatabase() {
-			var builder = new SqlConnectionStringBuilder() {
+		protected Database CreateDatabase()
+		{
+			var builder = new SqlConnectionStringBuilder()
+			{
 				DataSource = this.Server,
 				InitialCatalog = this.DbName,
-				IntegratedSecurity = String.IsNullOrEmpty(this.User)
+				IntegratedSecurity = string.IsNullOrEmpty(this.User)
 			};
-			if (!builder.IntegratedSecurity){
+			if (!builder.IntegratedSecurity)
+			{
 				builder.UserID = this.User;
 				builder.Password = this.Pass;
 			}
-			return new Database() {
+			return new Database()
+			{
 				Connection = builder.ToString(),
 				Dir = this.ScriptDir
 			};
-			
+
 		}
 
 	}
