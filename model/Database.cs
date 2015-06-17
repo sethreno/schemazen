@@ -523,7 +523,7 @@ order by fk.name
 					// get xml schemas
 					cm.CommandText = @"select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
 from sys.xml_schema_collections x
-join sys.schemas s on s.schema_id = x.schema_id
+inner join sys.schemas s on s.schema_id = x.schema_id
 where s.name != 'sys'";
 					using (var dr = cm.ExecuteReader())
 					{
@@ -535,6 +535,19 @@ where s.name != 'sys'";
 										RoutineType = Routine.RoutineKind.XmlSchemaCollection
 									};
 							this.Routines.Add(r);
+						}
+					}
+
+					// get CLR assemblies
+					cm.CommandText = @"select *
+from sys.assemblies a
+inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
+where a.is_user_defined = 1";
+					using (var dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+
 						}
 					}
 				}
