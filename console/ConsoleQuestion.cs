@@ -14,6 +14,7 @@ namespace console
 			{
 				key = Console.ReadKey();
 			} while (key.Key != ConsoleKey.Y && key.Key != ConsoleKey.N);
+			Console.WriteLine();
 			return key.Key == ConsoleKey.Y;
 		}
 	}

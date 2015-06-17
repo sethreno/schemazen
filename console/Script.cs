@@ -50,7 +50,6 @@ namespace console
 				if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", db.Dir)))
 					return 1;
 
-				Console.WriteLine();
 			}
 
 			db.ScriptToDir();
