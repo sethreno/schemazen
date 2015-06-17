@@ -10,8 +10,9 @@ Schema Zen has two main commands:
 This will generate sql scripts for all objects in the database in the
 following directory structure:
 ```
-    c:\somedir\
-    	foreign_keys
+c:\somedir\
+
+	foreign_keys
 	functions
 	procedures
 	tables
