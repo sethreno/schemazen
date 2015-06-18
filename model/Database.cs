@@ -63,6 +63,7 @@ namespace model
 		public List<Routine> Routines = new List<Routine>();
 		public List<Table> Tables = new List<Table>();
 		public List<Schema> Schemas = new List<Schema>();
+		public List<SqlAssembly> Assemblies = new List<SqlAssembly>();
 
 		public DbProp FindProp(string name)
 		{
@@ -96,7 +97,7 @@ namespace model
 
 		#endregion
 
-		private static readonly string[] dirs = { "tables", "foreign_keys", "functions", "procedures", "triggers", "views", "xmlschemacollections", "data" };
+		private static readonly string[] dirs = { "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers", "views", "xmlschemacollections", "data" };
 
 		private void SetPropOnOff(string propName, object dbVal)
 		{
@@ -539,15 +540,21 @@ where s.name != 'sys'";
 					}
 
 					// get CLR assemblies
-					cm.CommandText = @"select *
+					cm.CommandText = @"select a.name as AssemblyName, a.permission_set_desc, af.name as FileName, af.content
 from sys.assemblies a
 inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
-where a.is_user_defined = 1";
+where a.is_user_defined = 1
+order by a.name, af.file_id";
+					SqlAssembly a = null;
 					using (var dr = cm.ExecuteReader())
 					{
 						while (dr.Read())
 						{
-
+							if (a == null || a.Name != (string)dr["AssemblyName"])
+								a = new SqlAssembly((string)dr["permission_set_desc"], (string)dr["AssemblyName"]);
+							a.Files.Add(new KeyValuePair<string, byte[]>((string)dr["FileName"], (byte[])dr["content"]));
+							if (!this.Assemblies.Contains(a))
+								this.Assemblies.Add(a);
 						}
 					}
 				}
@@ -637,6 +644,8 @@ where a.is_user_defined = 1";
 				diff.ForeignKeysDeleted.Add(fk);
 			}
 
+			// TODO: compare assemblies
+
 			return diff;
 		}
 
@@ -687,9 +696,17 @@ where a.is_user_defined = 1";
 				text.AppendLine("GO");
 			}
 
+			foreach (var a in this.Assemblies)
+			{
+				text.AppendLine(a.ScriptCreate(this));
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
 			return text.ToString();
 		}
 
+		#region Script
 		public void ScriptToDir()
 		{
 			if (Directory.Exists(this.Dir))
@@ -748,6 +765,15 @@ where a.is_user_defined = 1";
 					);
 			}
 
+			foreach (var a in this.Assemblies)
+			{
+				File.WriteAllText(
+					string.Format("{0}/{1}/{2}.sql", this.Dir, "assemblies", MakeFileName(a)),
+					a.ScriptCreate(this) + "\r\nGO\r\n"
+					);
+			}
+
+
 			this.ExportData();
 		}
 
@@ -759,6 +785,11 @@ where a.is_user_defined = 1";
 		private static string MakeFileName(Table t)
 		{
 			return MakeFileName(t.Owner, t.Name);
+		}
+
+		private static string MakeFileName(SqlAssembly a)
+		{
+			return MakeFileName("dbo", a.Name);
 		}
 
 		private static string MakeFileName(string schema, string name)
@@ -785,6 +816,38 @@ where a.is_user_defined = 1";
 			}
 		}
 
+		public static string ScriptPropList(IList<DbProp> props)
+		{
+			var text = new StringBuilder();
+
+			text.AppendLine("DECLARE @DB VARCHAR(255)");
+			text.AppendLine("SET @DB = DB_NAME()");
+			foreach (var p in props.Select(p => p.Script()).Where(p => !string.IsNullOrEmpty(p)))
+			{
+				text.AppendLine(p);
+			}
+			return text.ToString();
+		}
+
+		public static string ScriptSchemas(IList<Schema> schemas)
+		{
+			var text = new StringBuilder();
+			foreach (var s in schemas)
+			{
+				var schemaName = s.Name.Replace("'", "''");
+				var owner = s.Owner.Replace("'", "''");
+				text.AppendFormat(@"
+if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
+	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
+	exec sp_executesql N'create schema [{0}] authorization [{1}]'
+end
+", schemaName, owner);
+			}
+			return text.ToString();
+		}
+		#endregion
+
+		#region Create
 		public void ImportData()
 		{
 			var dataDir = this.Dir + "\\data";
@@ -872,6 +935,7 @@ where a.is_user_defined = 1";
 
 			Console.WriteLine("Creating database objects...");
 			// create db objects
+
 			// resolve dependencies by trying over and over
 			// if the number of failures stops decreasing then give up
 			var scripts = this.GetScripts();
@@ -900,7 +964,7 @@ where a.is_user_defined = 1";
 					}
 				}
 			}
-			if (!errors.Any())
+			if (!errors.Any() && prevCount > 0)
 				Console.WriteLine("All errors resolved, were probably dependency issues...");
 			Console.WriteLine();
 
@@ -952,7 +1016,7 @@ where a.is_user_defined = 1";
 		private List<string> GetScripts()
 		{
 			var scripts = new List<string>();
-			foreach (var dirPath in dirs.Where(dir => "foreign_keys" != dir).Select(dir => this.Dir + "/" + dir).Where(Directory.Exists))
+			foreach (var dirPath in dirs.Where(dir => dir != "foreign_keys").Select(dir => this.Dir + "/" + dir).Where(Directory.Exists))
 			{
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
@@ -978,36 +1042,7 @@ where a.is_user_defined = 1";
 			}
 			DBHelper.ExecBatchSql(conStr.ToString(), this.ScriptCreate());
 		}
-
-		public static string ScriptPropList(IList<DbProp> props)
-		{
-			var text = new StringBuilder();
-
-			text.AppendLine("DECLARE @DB VARCHAR(255)");
-			text.AppendLine("SET @DB = DB_NAME()");
-			foreach (var p in props.Select(p => p.Script()).Where(p => !string.IsNullOrEmpty(p)))
-			{
-				text.AppendLine(p);
-			}
-			return text.ToString();
-		}
-
-		public static string ScriptSchemas(IList<Schema> schemas)
-		{
-			var text = new StringBuilder();
-			foreach (var s in schemas)
-			{
-				var schemaName = s.Name.Replace("'", "''");
-				var owner = s.Owner.Replace("'", "''");
-				text.AppendFormat(@"
-if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
-	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
-	exec sp_executesql N'create schema [{0}] authorization [{1}]'
-end
-", schemaName, owner);
-			}
-			return text.ToString();
-		}
+		#endregion
 	}
 
 	public class DatabaseDiff
