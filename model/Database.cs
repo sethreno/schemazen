@@ -64,6 +64,7 @@ namespace model
 		public List<Table> Tables = new List<Table>();
 		public List<Schema> Schemas = new List<Schema>();
 		public List<SqlAssembly> Assemblies = new List<SqlAssembly>();
+		public List<SqlUser> Users = new List<SqlUser>();
 
 		public DbProp FindProp(string name)
 		{
@@ -97,7 +98,7 @@ namespace model
 
 		#endregion
 
-		private static readonly string[] dirs = { "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers", "views", "xmlschemacollections", "data" };
+		private static readonly string[] dirs = { "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers", "views", "xmlschemacollections", "data", "users" };
 
 		private void SetPropOnOff(string propName, object dbVal)
 		{
@@ -557,6 +558,46 @@ order by a.name, af.file_id";
 								this.Assemblies.Add(a);
 						}
 					}
+
+
+					// get users that have access to the database
+					cm.CommandText = @"select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
+from sys.database_principals dp
+left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
+where dp.type_desc = 'SQL_USER'
+and dp.sid not in (0x00, 0x01) --ignore guest and dbo
+and dp.is_fixed_role = 0
+order by dp.name";
+					SqlUser u = null;
+					using (var dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							if (u == null || u.Name != (string)dr["UserName"])
+								u = new SqlUser((string)dr["UserName"], (string)dr["default_schema_name"]);
+							if (!(dr["AssociatedDBRole"] is DBNull))
+								u.DatabaseRoles.Add((string)dr["AssociatedDBRole"]);
+							if (!this.Users.Contains(u))
+								this.Users.Add(u);
+						}
+					}
+
+					// get sql logins
+					cm.CommandText = @"select sp.name,  sl.password_hash
+from sys.server_principals sp
+inner join sys.sql_logins sl on sp.principal_id = sl.principal_id and sp.type_desc = 'SQL_LOGIN'
+where sp.name not like '##%##'
+and sp.name != 'SA'
+order by sp.name";
+					using (var dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							u = this.Users.SingleOrDefault(user => user.Name == (string)dr["name"]);
+							if (u != null)
+								u.PasswordHash = (byte[])dr["password_hash"];
+						}
+					}
 				}
 			}
 		}
@@ -644,7 +685,7 @@ order by a.name, af.file_id";
 				diff.ForeignKeysDeleted.Add(fk);
 			}
 
-			// TODO: compare assemblies
+			// TODO: compare assemblies and users/logins
 
 			return diff;
 		}
@@ -768,8 +809,16 @@ order by a.name, af.file_id";
 			foreach (var a in this.Assemblies)
 			{
 				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", this.Dir, "assemblies", MakeFileName(a)),
+					string.Format("{0}/{1}/{2}.sql", this.Dir, "assemblies", MakeFileName(a.Name)),
 					a.ScriptCreate(this) + "\r\nGO\r\n"
+					);
+			}
+
+			foreach (var u in this.Users)
+			{
+				File.WriteAllText(
+					string.Format("{0}/{1}/{2}.sql", this.Dir, "users", MakeFileName(u.Name)),
+					u.ScriptCreate(this) + "\r\nGO\r\n"
 					);
 			}
 
@@ -787,9 +836,9 @@ order by a.name, af.file_id";
 			return MakeFileName(t.Owner, t.Name);
 		}
 
-		private static string MakeFileName(SqlAssembly a)
+		private static string MakeFileName(string value)
 		{
-			return MakeFileName("dbo", a.Name);
+			return MakeFileName("dbo", value);
 		}
 
 		private static string MakeFileName(string schema, string name)
@@ -940,8 +989,8 @@ end
 			// if the number of failures stops decreasing then give up
 			var scripts = this.GetScripts();
 			var errors = new List<SqlFileException>();
-			var prevCount = int.MaxValue;
-			while (scripts.Count > 0 && errors.Count < prevCount)
+			var prevCount = -1;
+			while (scripts.Count > 0 && (prevCount == -1 || errors.Count < prevCount))
 			{
 				if (errors.Count > 0)
 				{
