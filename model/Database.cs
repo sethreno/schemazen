@@ -65,6 +65,7 @@ namespace model
 		public List<Schema> Schemas = new List<Schema>();
 		public List<SqlAssembly> Assemblies = new List<SqlAssembly>();
 		public List<SqlUser> Users = new List<SqlUser>();
+		public List<Constraint> ViewIndexes = new List<Constraint>();
 
 		public DbProp FindProp(string name)
 		{
@@ -370,18 +371,16 @@ select s.name as schemaName, p.name as principalName
 					{
 						while (dr.Read())
 						{
-							if ((string)dr["baseType"] == "V")
-							{
-								Console.WriteLine("Index {0} on view {1} has not been scripted as it is currently unsupported by {2}", dr["indexName"], dr["tableName"], System.Reflection.Assembly.GetExecutingAssembly().GetName().Name);
-								continue;
-							}
-							var t = this.FindTable((string)dr["tableName"], (string)dr["schemaName"]);
+							var t = (string)dr["baseType"] == "V" ? new Table((string)dr["schemaName"], (string)dr["tableName"]) : this.FindTable((string)dr["tableName"], (string)dr["schemaName"]);
 							var c = t.FindConstraint((string)dr["indexName"]);
 							if (c == null)
 							{
 								c = new Constraint((string)dr["indexName"], "", "");
 								t.Constraints.Add(c);
 								c.Table = t;
+
+								if ((string)dr["baseType"] == "V")
+									this.ViewIndexes.Add(c);
 							}
 							c.Clustered = (string)dr["type_desc"] == "CLUSTERED";
 							c.Unique = (bool)dr["is_unique"];
@@ -803,6 +802,14 @@ order by sp.name";
 				File.WriteAllText(
 					string.Format("{0}/{1}/{2}.sql", this.Dir, r.RoutineType.ToString().ToLower() + "s", MakeFileName(r)),
 					r.ScriptCreate(this) + "\r\nGO\r\n"
+					);
+			}
+
+			foreach (var c in this.ViewIndexes)
+			{
+				File.WriteAllText(
+					string.Format("{0}/{1}/{2}.sql", this.Dir, "views", MakeFileName(c.Name)),
+					c.Script() + "\r\nGO\r\n"
 					);
 			}
 
