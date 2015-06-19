@@ -92,6 +92,21 @@ namespace model
 			return this.Routines.FirstOrDefault(r => r.Name == name && r.Schema == schema);
 		}
 
+		public SqlAssembly FindAssembly(string name)
+		{
+			return this.Assemblies.FirstOrDefault(a => a.Name == name);
+		}
+
+		public SqlUser FindUser(string name)
+		{
+			return this.Users.FirstOrDefault(u => u.Name == name);
+		}
+
+		public Constraint FindViewIndex(string name)
+		{
+			return this.ViewIndexes.FirstOrDefault(c => c.Name == name);
+		}
+
 		public List<Table> FindTablesRegEx(string pattern)
 		{
 			return this.Tables.Where(t => Regex.Match(t.Name, pattern).Success).ToList();
@@ -684,7 +699,73 @@ order by sp.name";
 				diff.ForeignKeysDeleted.Add(fk);
 			}
 
-			// TODO: compare assemblies and users/logins
+
+			//get added and compare mutual assemblies
+			foreach (var a in this.Assemblies)
+			{
+				var a2 = db.FindAssembly(a.Name);
+				if (a2 == null)
+				{
+					diff.AssembliesAdded.Add(a);
+				}
+				else
+				{
+					if (a.ScriptCreate(this) != a2.ScriptCreate(db))
+					{
+						diff.AssembliesDiff.Add(a);
+					}
+				}
+			}
+			//get deleted assemblies
+			foreach (var a in db.Assemblies.Where(a => this.FindAssembly(a.Name) == null))
+			{
+				diff.AssembliesDeleted.Add(a);
+			}
+
+
+			//get added and compare mutual users
+			foreach (var u in this.Users)
+			{
+				var u2 = db.FindUser(u.Name);
+				if (u2 == null)
+				{
+					diff.UsersAdded.Add(u);
+				}
+				else
+				{
+					if (u.ScriptCreate(this) != u2.ScriptCreate(db))
+					{
+						diff.UsersDiff.Add(u);
+					}
+				}
+			}
+			//get deleted users
+			foreach (var u in db.Users.Where(u => this.FindUser(u.Name) == null))
+			{
+				diff.UsersDeleted.Add(u);
+			}
+
+			//get added and compare view indexes
+			foreach (var c in this.ViewIndexes)
+			{
+				var c2 = db.FindViewIndex(c.Name);
+				if (c2 == null)
+				{
+					diff.ViewIndexesAdded.Add(c);
+				}
+				else
+				{
+					if (c.Script() != c2.Script())
+					{
+						diff.ViewIndexesDiff.Add(c);
+					}
+				}
+			}
+			//get deleted view indexes
+			foreach (var c in db.ViewIndexes.Where(c => this.FindViewIndex(c.Name) == null))
+			{
+				diff.ViewIndexesDeleted.Add(c);
+			}
 
 			return diff;
 		}
@@ -739,6 +820,20 @@ order by sp.name";
 			foreach (var a in this.Assemblies)
 			{
 				text.AppendLine(a.ScriptCreate(this));
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var u in this.Users)
+			{
+				text.AppendLine(u.ScriptCreate(this));
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var c in this.ViewIndexes)
+			{
+				text.AppendLine(c.Script());
 				text.AppendLine();
 				text.AppendLine("GO");
 			}
@@ -1115,6 +1210,15 @@ end
 		public List<Table> TablesAdded = new List<Table>();
 		public List<Table> TablesDeleted = new List<Table>();
 		public List<TableDiff> TablesDiff = new List<TableDiff>();
+		public List<SqlAssembly> AssembliesAdded = new List<SqlAssembly>();
+		public List<SqlAssembly> AssembliesDeleted = new List<SqlAssembly>();
+		public List<SqlAssembly> AssembliesDiff = new List<SqlAssembly>();
+		public List<SqlUser> UsersAdded = new List<SqlUser>();
+		public List<SqlUser> UsersDeleted = new List<SqlUser>();
+		public List<SqlUser> UsersDiff = new List<SqlUser>();
+		public List<Constraint> ViewIndexesAdded = new List<Constraint>();
+		public List<Constraint> ViewIndexesDeleted = new List<Constraint>();
+		public List<Constraint> ViewIndexesDiff = new List<Constraint>();
 
 		public bool IsDiff
 		{
@@ -1129,7 +1233,16 @@ end
 					   || this.RoutinesDeleted.Count > 0
 					   || this.ForeignKeysAdded.Count > 0
 					   || this.ForeignKeysDiff.Count > 0
-					   || this.ForeignKeysDeleted.Count > 0;
+					   || this.ForeignKeysDeleted.Count > 0
+					   || this.AssembliesAdded.Count > 0
+					   || this.AssembliesDiff.Count > 0
+					   || this.AssembliesDeleted.Count > 0
+					   || this.UsersAdded.Count > 0
+					   || this.UsersDiff.Count > 0
+					   || this.UsersDeleted.Count > 0
+					   || this.ViewIndexesAdded.Count > 0
+					   || this.ViewIndexesDiff.Count > 0
+					   || this.ViewIndexesDeleted.Count > 0;
 			}
 		}
 
