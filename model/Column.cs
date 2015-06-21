@@ -12,44 +12,43 @@ namespace model {
 		public int Scale;
 		public string Type;
 
-		public Column() {
-		}
+		public Column() { }
 
 		public Column(string name, string type, bool @null, Default @default) {
-			this.Name = name;
-			this.Type = type;
-			this.Default = @default;
+			Name = name;
+			Type = type;
+			Default = @default;
 		}
 
 		public Column(string name, string type, int length, bool @null, Default @default)
 			: this(name, type, @null, @default) {
-			this.Length = length;
+			Length = length;
 		}
 
 		public Column(string name, string type, byte precision, int scale, bool @null, Default @default)
 			: this(name, type, @null, @default) {
-			this.Precision = precision;
-			this.Scale = scale;
+			Precision = precision;
+			Scale = scale;
 		}
 
 		private string IsNullableText {
 			get {
-				if (this.IsNullable) return "NULL";
+				if (IsNullable) return "NULL";
 				return "NOT NULL";
 			}
 		}
 
 		public string DefaultText {
 			get {
-				if (this.Default == null) return "";
-				return "\r\n      " + this.Default.Script();
+				if (Default == null) return "";
+				return "\r\n      " + Default.Script();
 			}
 		}
 
 		public string IdentityText {
 			get {
-				if (this.Identity == null) return "";
-				return "\r\n      " + this.Identity.Script();
+				if (Identity == null) return "";
+				return "\r\n      " + Identity.Script();
 			}
 		}
 
@@ -58,7 +57,7 @@ namespace model {
 		}
 
 		public string Script() {
-			switch (this.Type) {
+			switch (Type) {
 				case "bigint":
 				case "bit":
 				case "date":
@@ -82,23 +81,23 @@ namespace model {
 				case "uniqueidentifier":
 				case "xml":
 
-					return string.Format("[{0}] [{1}] {2} {3} {4}", this.Name, this.Type, this.IsNullableText, this.DefaultText, this.IdentityText);
+					return string.Format("[{0}] [{1}] {2} {3} {4}", Name, Type, IsNullableText, DefaultText, IdentityText);
 				case "binary":
 				case "char":
 				case "nchar":
 				case "nvarchar":
 				case "varbinary":
 				case "varchar":
-					var lengthString = this.Length.ToString();
+					string lengthString = Length.ToString();
 					if (lengthString == "-1") lengthString = "max";
 
-					return string.Format("[{0}] [{1}]({2}) {3} {4}", this.Name, this.Type, lengthString, this.IsNullableText, this.DefaultText);
+					return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, DefaultText);
 				case "decimal":
 				case "numeric":
 
-					return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", this.Name, this.Type, this.Precision, this.Scale, this.IsNullableText, this.DefaultText);
+					return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, DefaultText);
 				default:
-					throw new NotSupportedException("SQL data type " + this.Type + " is not supported.");
+					throw new NotSupportedException("SQL data type " + Type + " is not supported.");
 			}
 		}
 	}
@@ -108,18 +107,20 @@ namespace model {
 		public Column Target;
 
 		public ColumnDiff(Column target, Column source) {
-			this.Source = source;
-			this.Target = target;
+			Source = source;
+			Target = target;
 		}
 
 		public bool IsDiff {
 			get {
-				return this.Source.DefaultText != this.Target.DefaultText || this.Source.IsNullable != this.Target.IsNullable || this.Source.Length != this.Target.Length || this.Source.Position != this.Target.Position || this.Source.Type != this.Target.Type || this.Source.Precision != this.Target.Precision || this.Source.Scale != this.Target.Scale;
+				return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable ||
+				       Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
+				       Source.Precision != Target.Precision || Source.Scale != Target.Scale;
 			}
 		}
 
 		public string Script() {
-			return this.Target.Script();
+			return Target.Script();
 		}
 	}
 }

@@ -3,40 +3,34 @@ using ManyConsole;
 using model;
 using NDesk.Options;
 
-namespace console
-{
-	internal class Compare : ConsoleCommand
-	{
-
+namespace console {
+	internal class Compare : ConsoleCommand {
 		private string _source;
 		private string _target;
 
-		public Compare()
-		{
-			this.IsCommand("Compare", "Compare two databases.");
-			this.Options = new OptionSet();
-			this.SkipsCommandSummaryBeforeRunning();
-			this.HasRequiredOption(
+		public Compare() {
+			IsCommand("Compare", "Compare two databases.");
+			Options = new OptionSet();
+			SkipsCommandSummaryBeforeRunning();
+			HasRequiredOption(
 				"s|source=",
 				"Connection string to a database to compare.",
-				o => this._source = o);
-			this.HasRequiredOption(
+				o => _source = o);
+			HasRequiredOption(
 				"t|target=",
 				"Connection string to a database to compare.",
-				o => this._target = o);
+				o => _target = o);
 		}
 
-		public override int Run(string[] remainingArguments)
-		{
+		public override int Run(string[] remainingArguments) {
 			var sourceDb = new Database();
 			var targetDb = new Database();
-			sourceDb.Connection = this._source;
-			targetDb.Connection = this._target;
+			sourceDb.Connection = _source;
+			targetDb.Connection = _target;
 			sourceDb.Load();
 			targetDb.Load();
-			var diff = sourceDb.Compare(targetDb);
-			if (diff.IsDiff)
-			{
+			DatabaseDiff diff = sourceDb.Compare(targetDb);
+			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");
 				return 1;
 			}

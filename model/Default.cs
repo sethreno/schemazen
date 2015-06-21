@@ -4,12 +4,12 @@
 		public string Value;
 
 		public Default(string name, string value) {
-			this.Name = name;
-			this.Value = value;
+			Name = name;
+			Value = value;
 		}
 
 		public string Script() {
-			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", this.Name, this.Value);
+			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", Name, Value);
 		}
 	}
 }
