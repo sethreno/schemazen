@@ -28,3 +28,4 @@ c:\somedir\
 
 This will create a database named db from the sql scripts in c:\somedir.
 
+The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
