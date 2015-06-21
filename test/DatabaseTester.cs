@@ -244,7 +244,7 @@ select * from Table1
 			db.Tables.Add(loc);
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
-			db.FindProp("COMPATIBILITY_LEVEL").Value = "90";
+			db.FindProp("COMPATIBILITY_LEVEL").Value = "120";
 			db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
 			db.FindProp("AUTO_CLOSE").Value = "OFF";
 			db.FindProp("AUTO_SHRINK").Value = "ON";
@@ -288,7 +288,7 @@ select * from Table1
 			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
 
 			foreach (Table t in db.DataTables) {
-				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name));
+				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
 			}
 			foreach (Table t in db.Tables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
