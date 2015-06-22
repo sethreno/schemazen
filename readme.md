@@ -1,6 +1,8 @@
 Schema Zen - Script and create SQL Server objects quickly
 --------------------------------------------------------
 
+[![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Schema Zen has two main commands:
 
 **script**
