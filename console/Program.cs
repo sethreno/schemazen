@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ManyConsole;
 
 namespace console {
@@ -11,6 +12,10 @@ namespace console {
 			} catch (Exception ex) {
 				Console.WriteLine(ex.Message);
 				Console.WriteLine(ex.StackTrace);
+#if DEBUG
+				if (Debugger.IsAttached)
+					ConsoleQuestion.WaitForKeyPress();
+#endif
 				return -1;
 			}
 		}

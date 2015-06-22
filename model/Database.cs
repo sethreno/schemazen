@@ -745,7 +745,7 @@ order by sp.name";
 
 		#region Script
 
-		public void ScriptToDir() {
+		public void ScriptToDir(string tableHint = null) {
 			if (Directory.Exists(Dir)) {
 				// delete the existing script files
 				foreach (
@@ -818,7 +818,7 @@ order by sp.name";
 			}
 
 
-			ExportData();
+			ExportData(tableHint);
 		}
 
 		private static string MakeFileName(Routine r) {
@@ -840,14 +840,14 @@ order by sp.name";
 			return schema.ToLower() == "dbo" ? name : string.Format("{0}.{1}", schema, name);
 		}
 
-		public void ExportData() {
+		public void ExportData(string tableHint = null) {
 			string dataDir = Dir + "/data";
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
 			}
 			foreach (Table t in DataTables) {
 				StreamWriter sw = File.CreateText(dataDir + "/" + MakeFileName(t) + ".tsv");
-				t.ExportData(Connection, sw);
+				t.ExportData(Connection, sw, tableHint);
 				sw.Flush();
 				sw.Close();
 			}
