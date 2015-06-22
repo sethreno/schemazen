@@ -5,19 +5,14 @@ using System.IO;
 using model;
 using NUnit.Framework;
 
-namespace test
-{
+namespace test {
 	[TestFixture]
-	public class TableTester
-	{
-		private List<List<string>> TabDataToList(string data)
-		{
+	public class TableTester {
+		private List<List<string>> TabDataToList(string data) {
 			var lines = new List<List<string>>();
-			foreach (var line in data.Split('\t'))
-			{
+			foreach (string line in data.Split('\t')) {
 				lines.Add(new List<string>());
-				foreach (var field in line.Split('\t'))
-				{
+				foreach (string field in line.Split('\t')) {
 					lines[lines.Count - 1].Add(field);
 				}
 			}
@@ -30,11 +25,10 @@ namespace test
 		}
 
 		[Test]
-		public void TestCompare()
-		{
+		public void TestCompare() {
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
-			var diff = default(TableDiff);
+			TableDiff diff = default(TableDiff);
 
 			//test equal
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
@@ -74,8 +68,7 @@ namespace test
 		}
 
 		[Test]
-		public void TestExportData()
-		{
+		public void TestExportData() {
 			var t = new Table("dbo", "Status");
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
@@ -83,13 +76,13 @@ namespace test
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-			var conn = TestHelper.GetConnString("TESTDB");
+			string conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
 			DBHelper.CreateDb(conn);
 			SqlConnection.ClearAllPools();
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
-			var dataIn =
+			string dataIn =
 				@"1	R	Ready
 2	P	Processing
 3	F	Frozen
@@ -102,8 +95,7 @@ namespace test
 		}
 
 		[Test]
-		public void TestScript()
-		{
+		public void TestScript() {
 			//create a table with all known types, script it, and execute the script
 			var t = new Table("dbo", "AllTypesTest");
 			t.Columns.Add(new Column("a", "bigint", false, null));
@@ -142,9 +134,8 @@ namespace test
 		}
 
 		[Test]
-		[ExpectedException(typeof(NotSupportedException))]
-		public void TestScriptNonSupportedColumn()
-		{
+		[ExpectedException(typeof (NotSupportedException))]
+		public void TestScriptNonSupportedColumn() {
 			var t = new Table("dbo", "bla");
 			t.Columns.Add(new Column("a", "madeuptype", true, null));
 			t.ScriptCreate();

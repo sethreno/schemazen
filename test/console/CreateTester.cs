@@ -1,11 +1,8 @@
 ﻿using NUnit.Framework;
 
-namespace test.console
-{
+namespace test.console {
 	[TestFixture]
-	internal class CreateTester
-	{
-
+	internal class CreateTester {
 		/*
 		[Test]
 		public void TestRun() {

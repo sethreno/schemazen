@@ -4,11 +4,10 @@ using ManyConsole;
 
 namespace console {
 	internal class Program {
-
 		private static int Main(string[] args) {
 			try {
 				return ConsoleCommandDispatcher.DispatchCommand(
-				  GetCommands(), args, Console.Out);
+					GetCommands(), args, Console.Out);
 			} catch (Exception ex) {
 				Console.WriteLine(ex.Message);
 				Console.WriteLine(ex.StackTrace);
@@ -16,9 +15,11 @@ namespace console {
 			}
 		}
 
-		static IEnumerable<ConsoleCommand> GetCommands() {
-			return new List<ConsoleCommand>() {
-				new Script(), new Create(), new Compare()
+		private static IEnumerable<ConsoleCommand> GetCommands() {
+			return new List<ConsoleCommand> {
+				new Script(),
+				new Create(),
+				new Compare()
 			};
 		}
 	}
