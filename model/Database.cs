@@ -469,6 +469,9 @@ order by fk.name, fkc.constraint_column_id
 							if (dr["definition"] is DBNull) {
 								Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
 							} else {
+								if (!((string)dr["definition"]).Contains((string)dr["routineName"]))
+									Console.WriteLine("Warning: {0} {1}.{2} has been renamed since it's definition.", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
+								
 								var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
 								r.Text = (string)dr["definition"];
 								r.AnsiNull = (bool)dr["uses_ansi_nulls"];
