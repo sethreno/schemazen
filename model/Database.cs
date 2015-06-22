@@ -466,26 +466,30 @@ order by fk.name, fkc.constraint_column_id
 						left join sys.tables t on tr.parent_id = t.object_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]);
-							r.Text = (string) dr["definition"];
-							r.AnsiNull = (bool) dr["uses_ansi_nulls"];
-							r.QuotedId = (bool) dr["uses_quoted_identifier"];
-							Routines.Add(r);
+							if (dr["definition"] is DBNull) {
+								Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
+							} else {
+								var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
+								r.Text = (string)dr["definition"];
+								r.AnsiNull = (bool)dr["uses_ansi_nulls"];
+								r.QuotedId = (bool)dr["uses_quoted_identifier"];
+								Routines.Add(r);
 
-							switch ((string) dr["type_desc"]) {
-								case "SQL_STORED_PROCEDURE":
-									r.RoutineType = Routine.RoutineKind.Procedure;
-									break;
-								case "SQL_TRIGGER":
-									r.RoutineType = Routine.RoutineKind.Trigger;
-									break;
-								case "SQL_SCALAR_FUNCTION":
-								case "SQL_INLINE_TABLE_VALUED_FUNCTION":
-									r.RoutineType = Routine.RoutineKind.Function;
-									break;
-								case "VIEW":
-									r.RoutineType = Routine.RoutineKind.View;
-									break;
+								switch ((string)dr["type_desc"]) {
+									case "SQL_STORED_PROCEDURE":
+										r.RoutineType = Routine.RoutineKind.Procedure;
+										break;
+									case "SQL_TRIGGER":
+										r.RoutineType = Routine.RoutineKind.Trigger;
+										break;
+									case "SQL_SCALAR_FUNCTION":
+									case "SQL_INLINE_TABLE_VALUED_FUNCTION":
+										r.RoutineType = Routine.RoutineKind.Function;
+										break;
+									case "VIEW":
+										r.RoutineType = Routine.RoutineKind.View;
+										break;
+								}
 							}
 						}
 					}
