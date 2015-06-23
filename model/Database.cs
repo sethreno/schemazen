@@ -467,15 +467,11 @@ order by fk.name, fkc.constraint_column_id
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							if (dr["definition"] is DBNull) {
-								Console.ForegroundColor = ConsoleColor.Magenta;
 								Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
-								Console.ForegroundColor = ConsoleColor.Black;
 							} else {
-								if (!((string)dr["definition"]).Contains((string)dr["routineName"])) {
-									Console.ForegroundColor = ConsoleColor.Magenta;
+								if (!((string)dr["definition"]).Contains((string)dr["routineName"]))
 									Console.WriteLine("Warning: {0} {1}.{2} has been renamed since it's definition.", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
-									Console.ForegroundColor = ConsoleColor.Black;
-								}
+								
 								var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
 								r.Text = (string)dr["definition"];
 								r.AnsiNull = (bool)dr["uses_ansi_nulls"];
