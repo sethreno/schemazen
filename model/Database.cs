@@ -564,7 +564,7 @@ order by sp.name";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							u = Users.SingleOrDefault(user => user.Name == (string) dr["name"]);
-							if (u != null)
+							if (u != null && !(dr["password_hash"] is DBNull))
 								u.PasswordHash = (byte[]) dr["password_hash"];
 						}
 					}
