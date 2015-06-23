@@ -13,5 +13,10 @@ namespace console {
 			Console.WriteLine();
 			return key.Key == ConsoleKey.Y;
 		}
+
+		public static void WaitForKeyPress() {
+			Console.WriteLine("Press any key to continue...");
+			Console.ReadKey(true);
+		}
 	}
 }

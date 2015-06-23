@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -433,7 +433,7 @@ inner join sys.columns c1
 inner join sys.columns c2
 	on fkc.referenced_column_id = c2.column_id
 	and fkc.referenced_object_id = c2.object_id
-order by fk.name
+order by fk.name, fkc.constraint_column_id
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -466,26 +466,37 @@ order by fk.name
 						left join sys.tables t on tr.parent_id = t.object_id";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							var r = new Routine((string) dr["schemaName"], (string) dr["routineName"]);
-							r.Text = (string) dr["definition"];
-							r.AnsiNull = (bool) dr["uses_ansi_nulls"];
-							r.QuotedId = (bool) dr["uses_quoted_identifier"];
-							Routines.Add(r);
+							if (dr["definition"] is DBNull) {
+								Console.ForegroundColor = ConsoleColor.Magenta;
+								Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
+								Console.ForegroundColor = ConsoleColor.White;
+							} else {
+								if (!((string)dr["definition"]).Contains((string)dr["routineName"])) {
+									Console.ForegroundColor = ConsoleColor.Magenta;
+									Console.WriteLine("Warning: {0} {1}.{2} has been renamed since it's definition.", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
+									Console.ForegroundColor = ConsoleColor.White;
+								}
+								var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
+								r.Text = (string)dr["definition"];
+								r.AnsiNull = (bool)dr["uses_ansi_nulls"];
+								r.QuotedId = (bool)dr["uses_quoted_identifier"];
+								Routines.Add(r);
 
-							switch ((string) dr["type_desc"]) {
-								case "SQL_STORED_PROCEDURE":
-									r.RoutineType = Routine.RoutineKind.Procedure;
-									break;
-								case "SQL_TRIGGER":
-									r.RoutineType = Routine.RoutineKind.Trigger;
-									break;
-								case "SQL_SCALAR_FUNCTION":
-								case "SQL_INLINE_TABLE_VALUED_FUNCTION":
-									r.RoutineType = Routine.RoutineKind.Function;
-									break;
-								case "VIEW":
-									r.RoutineType = Routine.RoutineKind.View;
-									break;
+								switch ((string)dr["type_desc"]) {
+									case "SQL_STORED_PROCEDURE":
+										r.RoutineType = Routine.RoutineKind.Procedure;
+										break;
+									case "SQL_TRIGGER":
+										r.RoutineType = Routine.RoutineKind.Trigger;
+										break;
+									case "SQL_SCALAR_FUNCTION":
+									case "SQL_INLINE_TABLE_VALUED_FUNCTION":
+										r.RoutineType = Routine.RoutineKind.Function;
+										break;
+									case "VIEW":
+										r.RoutineType = Routine.RoutineKind.View;
+										break;
+								}
 							}
 						}
 					}
@@ -557,7 +568,7 @@ order by sp.name";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							u = Users.SingleOrDefault(user => user.Name == (string) dr["name"]);
-							if (u != null)
+							if (u != null && !(dr["password_hash"] is DBNull))
 								u.PasswordHash = (byte[]) dr["password_hash"];
 						}
 					}
@@ -745,7 +756,7 @@ order by sp.name";
 
 		#region Script
 
-		public void ScriptToDir() {
+		public void ScriptToDir(string tableHint = null) {
 			if (Directory.Exists(Dir)) {
 				// delete the existing script files
 				foreach (
@@ -818,7 +829,7 @@ order by sp.name";
 			}
 
 
-			ExportData();
+			ExportData(tableHint);
 		}
 
 		private static string MakeFileName(Routine r) {
@@ -840,14 +851,14 @@ order by sp.name";
 			return schema.ToLower() == "dbo" ? name : string.Format("{0}.{1}", schema, name);
 		}
 
-		public void ExportData() {
+		public void ExportData(string tableHint = null) {
 			string dataDir = Dir + "/data";
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
 			}
 			foreach (Table t in DataTables) {
 				StreamWriter sw = File.CreateText(dataDir + "/" + MakeFileName(t) + ".tsv");
-				t.ExportData(Connection, sw);
+				t.ExportData(Connection, sw, tableHint);
 				sw.Flush();
 				sw.Close();
 			}

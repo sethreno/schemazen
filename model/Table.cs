@@ -106,7 +106,7 @@ namespace model {
 		}
 
 
-		public void ExportData(string conn, TextWriter data) {
+		public void ExportData(string conn, TextWriter data, string tableHint = null) {
 			var sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (Column c in Columns.Items) {
@@ -114,6 +114,8 @@ namespace model {
 			}
 			sql.Remove(sql.Length - 1, 1);
 			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
+			if (!string.IsNullOrEmpty(tableHint))
+				sql.AppendFormat(" WITH ({0})", tableHint);
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {

@@ -4,7 +4,8 @@ using System.IO;
 using System.Linq;
 using model;
 
-namespace console {
+namespace console
+{
 	public class Script : DbCommand {
 		public Script()
 			: base(
@@ -17,10 +18,15 @@ namespace console {
 				"dataTablesPattern=",
 				"A regular expression pattern that matches tables to export data from.",
 				o => DataTablesPattern = o);
+			HasOption(
+				"tableHint=",
+				"Table hint to use when exporting data.",
+				o => TableHint = o);
 		}
 
 		protected string DataTables { get; set; }
 		protected string DataTablesPattern { get; set; }
+		protected string TableHint { get; set; }
 
 		public override int Run(string[] args) {
 			Database db = CreateDatabase();
@@ -41,7 +47,7 @@ namespace console {
 					return 1;
 			}
 
-			db.ScriptToDir();
+			db.ScriptToDir(TableHint);
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
 			return 0;
