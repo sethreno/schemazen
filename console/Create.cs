@@ -11,7 +11,9 @@ namespace console {
 		public override int Run(string[] remainingArguments) {
 			Database db = CreateDatabase();
 			if (!Directory.Exists(db.Dir)) {
+				Console.ForegroundColor = ConsoleColor.Red;
 				Console.WriteLine("Snapshot dir {0} does not exist.", db.Dir);
+				Console.ForegroundColor = ConsoleColor.Black;
 				return 1;
 			}
 
@@ -30,13 +32,17 @@ namespace console {
 			} catch (BatchSqlFileException ex) {
 				Console.WriteLine();
 				Console.WriteLine(@"Create completed with the following errors:");
+				Console.ForegroundColor = ConsoleColor.Red;
 				foreach (SqlFileException e in ex.Exceptions) {
 					Console.WriteLine(@"{0} (Line {1}): {2}", e.FileName.Replace("/", "\\"), e.LineNumber, e.Message);
 				}
+				Console.ForegroundColor = ConsoleColor.Black;
 				return -1;
 			} catch (SqlFileException ex) {
+				Console.ForegroundColor = ConsoleColor.Red;
 				Console.Write(@"An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
 {0} (Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
+				Console.ForegroundColor = ConsoleColor.Black;
 				return -1;
 			}
 
