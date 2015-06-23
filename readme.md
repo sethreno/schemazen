@@ -12,15 +12,18 @@ following directory structure:
 ```
 c:\somedir\
 
+	assemblies
+	data
 	foreign_keys
 	functions
 	procedures
 	tables
 	triggers
+	users
 	views
 	xmlschemacollections
-	data
 	props.sql
+	schemas.sql
 ```
 See ```SchemaZen.exe help script``` for more information, including how to specify which tables to export data from (none by default).
 ## create
