@@ -1096,6 +1096,18 @@ end
 				       || ViewIndexesDeleted.Count > 0;
 			}
 		}
+		
+		private string Summarize(bool includeNames, List<string> changes, string caption) {
+			if (changes.Count == 0) return string.Empty;
+			return changes.Count.ToString() + "x " + caption + (includeNames ? ("\r\n\t" + string.Join("\t\r\n", changes.ToArray())) : string.Empty) + "\r\n";
+		}
+		
+		public string SummarizeChanges(bool includeNames) {
+			var sb = new StringBuilder();
+			sb.Append(Summarize(includeNames, AssembliesAdded, "assemblies added"));
+			// TODO: add all diff lists
+			return sb.ToString();
+		}
 
 		public string Script() {
 			var text = new StringBuilder();
