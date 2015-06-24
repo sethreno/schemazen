@@ -616,7 +616,7 @@ order by sp.name";
 					diff.RoutinesAdded.Add(r);
 				} else {
 					//compare mutual procs
-					if (r.Text != r2.Text) {
+					if (r.Text.Trim() != r2.Text.Trim()) {
 						diff.RoutinesDiff.Add(r);
 					}
 				}
