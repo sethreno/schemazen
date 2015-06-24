@@ -125,6 +125,9 @@ namespace model {
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
+			ViewIndexes.Clear();
+			Assemblies.Clear();
+			Users.Clear();
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
