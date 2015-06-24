@@ -1,6 +1,8 @@
 Schema Zen - Script and create SQL Server objects quickly
 --------------------------------------------------------
 
+[![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 Schema Zen has three main commands:
 
 ## script
@@ -40,7 +42,6 @@ This will create a database named db from the sql scripts in c:\somedir.
 This will compare the databases named Database1 and Database2 on localhost and create a sql script called c:\somedir\diff.sql that can be run on Database2 to make it's schema identical to Database1.
 
 ---
-## download SchemaZen
+## download
 The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
-[![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
