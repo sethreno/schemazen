@@ -1099,12 +1099,12 @@ end
 		
 		private string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
-			return changes.Count.ToString() + "x " + caption + (includeNames ? ("\r\n\t" + string.Join("\t\r\n", changes.ToArray())) : string.Empty) + "\r\n";
+			return changes.Count.ToString() + "x " + caption + (includeNames ? ("\r\n\t" + string.Join("\r\n\t", changes.ToArray())) : string.Empty) + "\r\n";
 		}
 		
 		public string SummarizeChanges(bool includeNames) {
 			var sb = new StringBuilder();
-			sb.Append(Summarize(includeNames, AssembliesAdded, "assemblies added"));
+			sb.Append(Summarize(includeNames, AssembliesAdded.Select(o => o.Name).ToList(), "assemblies added"));
 			// TODO: add all diff lists
 			return sb.ToString();
 		}
