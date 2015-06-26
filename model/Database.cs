@@ -1114,9 +1114,9 @@ end
 			sb.Append(Summarize(includeNames, RoutinesAdded.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines added"));
 			sb.Append(Summarize(includeNames, RoutinesDeleted.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines deleted"));
 			sb.Append(Summarize(includeNames, RoutinesDiff.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines altered"));
-			sb.Append(Summarize(includeNames, TablesAdded.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "tables added"));
-			sb.Append(Summarize(includeNames, TablesDeleted.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "tables deleted"));
-			sb.Append(Summarize(includeNames, TablesDiff.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "tables altered"));
+			sb.Append(Summarize(includeNames, TablesAdded.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables added"));
+			sb.Append(Summarize(includeNames, TablesDeleted.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables deleted"));
+			sb.Append(Summarize(includeNames, TablesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables altered"));
 			sb.Append(Summarize(includeNames, UsersAdded.Select(o => o.Name).ToList(), "users added"));
 			sb.Append(Summarize(includeNames, UsersDeleted.Select(o => o.Name).ToList(), "users deleted"));
 			sb.Append(Summarize(includeNames, UsersDiff.Select(o => o.Name).ToList(), "users altered"));
