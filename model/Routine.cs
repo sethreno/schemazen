@@ -30,7 +30,7 @@ namespace model {
 				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
 			if (defaultQuotedId != QuotedId) {
-				script = string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
+				script += string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
 					(QuotedId ? "ON" : "OFF"), Environment.NewLine);
 			}
 			bool defaultAnsiNulls = !AnsiNull;
@@ -38,7 +38,7 @@ namespace model {
 				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
 			}
 			if (defaultAnsiNulls != AnsiNull) {
-				script = string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",
+				script += string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",
 					(AnsiNull ? "ON" : "OFF"), Environment.NewLine);
 			}
 			return script + Text;
