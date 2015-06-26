@@ -1104,24 +1104,24 @@ end
 		
 		public string SummarizeChanges(bool includeNames) {
 			var sb = new StringBuilder();
-			sb.Append(Summarize(includeNames, AssembliesAdded.Select(o => o.Name).ToList(), "assemblies added"));
-			sb.Append(Summarize(includeNames, AssembliesDeleted.Select(o => o.Name).ToList(), "assemblies deleted"));
+			sb.Append(Summarize(includeNames, AssembliesAdded.Select(o => o.Name).ToList(), "assemblies in source but not in target"));
+			sb.Append(Summarize(includeNames, AssembliesDeleted.Select(o => o.Name).ToList(), "assemblies not in source but in target"));
 			sb.Append(Summarize(includeNames, AssembliesDiff.Select(o => o.Name).ToList(), "assemblies altered"));
-			sb.Append(Summarize(includeNames, ForeignKeysAdded.Select(o => o.Name).ToList(), "foreign keys added"));
-			sb.Append(Summarize(includeNames, ForeignKeysDeleted.Select(o => o.Name).ToList(), "foreign keys deleted"));
+			sb.Append(Summarize(includeNames, ForeignKeysAdded.Select(o => o.Name).ToList(), "foreign keys in source but not in target"));
+			sb.Append(Summarize(includeNames, ForeignKeysDeleted.Select(o => o.Name).ToList(), "foreign keys not in source but in target"));
 			sb.Append(Summarize(includeNames, ForeignKeysDiff.Select(o => o.Name).ToList(), "foreign keys altered"));
 			sb.Append(Summarize(includeNames, PropsChanged.Select(o => o.Name).ToList(), "properties changed"));
-			sb.Append(Summarize(includeNames, RoutinesAdded.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines added"));
-			sb.Append(Summarize(includeNames, RoutinesDeleted.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines deleted"));
+			sb.Append(Summarize(includeNames, RoutinesAdded.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines in source but not in target"));
+			sb.Append(Summarize(includeNames, RoutinesDeleted.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines not in source but in target"));
 			sb.Append(Summarize(includeNames, RoutinesDiff.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines altered"));
-			sb.Append(Summarize(includeNames, TablesAdded.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables added"));
-			sb.Append(Summarize(includeNames, TablesDeleted.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables deleted"));
+			sb.Append(Summarize(includeNames, TablesAdded.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables in source but not in target"));
+			sb.Append(Summarize(includeNames, TablesDeleted.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables not in source but in target"));
 			sb.Append(Summarize(includeNames, TablesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables altered"));
-			sb.Append(Summarize(includeNames, UsersAdded.Select(o => o.Name).ToList(), "users added"));
-			sb.Append(Summarize(includeNames, UsersDeleted.Select(o => o.Name).ToList(), "users deleted"));
+			sb.Append(Summarize(includeNames, UsersAdded.Select(o => o.Name).ToList(), "users in source but not in target"));
+			sb.Append(Summarize(includeNames, UsersDeleted.Select(o => o.Name).ToList(), "users not in source but in target"));
 			sb.Append(Summarize(includeNames, UsersDiff.Select(o => o.Name).ToList(), "users altered"));
-			sb.Append(Summarize(includeNames, ViewIndexesAdded.Select(o => o.Name).ToList(), "view indexes added"));
-			sb.Append(Summarize(includeNames, ViewIndexesDeleted.Select(o => o.Name).ToList(), "view indexes deleted"));
+			sb.Append(Summarize(includeNames, ViewIndexesAdded.Select(o => o.Name).ToList(), "view indexes in source but not in target"));
+			sb.Append(Summarize(includeNames, ViewIndexesDeleted.Select(o => o.Name).ToList(), "view indexes not in source but in target"));
 			sb.Append(Summarize(includeNames, ViewIndexesDiff.Select(o => o.Name).ToList(), "view indexes altered"));
 			
 			return sb.ToString();
