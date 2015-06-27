@@ -12,11 +12,12 @@ namespace console {
 			} catch (Exception ex) {
 				Console.WriteLine(ex.Message);
 				Console.WriteLine(ex.StackTrace);
+				return -1;
+			} finally {
 #if DEBUG
 				if (Debugger.IsAttached)
 					ConsoleQuestion.WaitForKeyPress();
 #endif
-				return -1;
 			}
 		}
 

@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -1192,10 +1193,15 @@ end
 				text.AppendLine("GO");
 			}
 			foreach (Routine r in RoutinesDiff) {
-				text.AppendLine(r.ScriptDrop());
-				text.AppendLine("GO");
-				text.AppendLine(r.ScriptCreate(Db));
-				text.AppendLine("GO");
+				try {
+					text.AppendLine(r.ScriptAlter(Db));
+					text.AppendLine("GO");
+				} catch {
+					text.AppendLine(r.ScriptDrop());
+					text.AppendLine("GO");
+					text.AppendLine(r.ScriptCreate(Db));
+					text.AppendLine("GO");
+				}
 			}
 			foreach (Routine r in RoutinesDeleted) {
 				text.AppendLine(r.ScriptDrop());
