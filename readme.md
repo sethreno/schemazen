@@ -19,6 +19,7 @@ c:\somedir\
 	foreign_keys
 	functions
 	procedures
+	synonyms
 	tables
 	triggers
 	users

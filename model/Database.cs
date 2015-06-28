@@ -60,6 +60,7 @@ namespace model {
 		public List<DbProp> Props = new List<DbProp>();
 		public List<Routine> Routines = new List<Routine>();
 		public List<Schema> Schemas = new List<Schema>();
+		public List<Synonym> Synonyms = new List<Synonym>();
 		public List<Table> Tables = new List<Table>();
 		public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
@@ -96,6 +97,11 @@ namespace model {
 			return ViewIndexes.FirstOrDefault(c => c.Name == name);
 		}
 
+		public Synonym FindSynonym(string name, string schema)
+		{
+			return Synonyms.FirstOrDefault(s => s.Name == name && s.Schema == schema);
+		}
+
 		public List<Table> FindTablesRegEx(string pattern) {
 			return Tables.Where(t => Regex.Match(t.Name, pattern).Success).ToList();
 		}
@@ -104,7 +110,7 @@ namespace model {
 
 		private static readonly string[] dirs = {
 			"tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "users"
+			"views", "xmlschemacollections", "data", "users", "synonyms"
 		};
 
 		private void SetPropOnOff(string propName, object dbVal) {
@@ -129,6 +135,7 @@ namespace model {
 			ViewIndexes.Clear();
 			Assemblies.Clear();
 			Users.Clear();
+			Synonyms.Clear();
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
 				using (SqlCommand cm = cn.CreateCommand()) {
@@ -207,12 +214,12 @@ where name = @dbname
 
 					//get schemas
 					cm.CommandText = @"
-select s.name as schemaName, p.name as principalName
-	from sys.schemas s
-	inner join sys.database_principals p on s.principal_id = p.principal_id
-	where s.schema_id < 16384
-	and s.name not in ('dbo','guest','sys','INFORMATION_SCHEMA')
-	order by schema_id
+					select s.name as schemaName, p.name as principalName
+					from sys.schemas s
+					inner join sys.database_principals p on s.principal_id = p.principal_id
+					where s.schema_id < 16384
+					and s.name not in ('dbo','guest','sys','INFORMATION_SCHEMA')
+					order by schema_id
 ";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -426,13 +433,13 @@ select s.name as schemaName, p.name as principalName
 
 					//get foreign key props
 					cm.CommandText = @"
-select 
-	CONSTRAINT_NAME, 
-	UPDATE_RULE, 
-	DELETE_RULE,
-	fk.is_disabled
-from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
-	inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
+					select 
+						CONSTRAINT_NAME, 
+						UPDATE_RULE, 
+						DELETE_RULE,
+						fk.is_disabled
+					from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
+						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							ForeignKey fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
@@ -530,11 +537,11 @@ order by fk.name, fkc.constraint_column_id
 					}
 
 					// get xml schemas
-					cm.CommandText =
-						@"select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
-from sys.xml_schema_collections x
-inner join sys.schemas s on s.schema_id = x.schema_id
-where s.name != 'sys'";
+					cm.CommandText = @"
+					select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
+					from sys.xml_schema_collections x
+					inner join sys.schemas s on s.schema_id = x.schema_id
+					where s.name != 'sys'";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							var r = new Routine((string) dr["DBSchemaName"], (string) dr["XMLSchemaCollectionName"]) {
@@ -549,10 +556,10 @@ where s.name != 'sys'";
 
 					// get CLR assemblies
 					cm.CommandText = @"select a.name as AssemblyName, a.permission_set_desc, af.name as FileName, af.content
-from sys.assemblies a
-inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
-where a.is_user_defined = 1
-order by a.name, af.file_id";
+					from sys.assemblies a
+					inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
+					where a.is_user_defined = 1
+					order by a.name, af.file_id";
 					SqlAssembly a = null;
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -566,14 +573,14 @@ order by a.name, af.file_id";
 
 
 					// get users that have access to the database
-					cm.CommandText =
-						@"select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
-from sys.database_principals dp
-left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
-where dp.type_desc = 'SQL_USER'
-and dp.sid not in (0x00, 0x01) --ignore guest and dbo
-and dp.is_fixed_role = 0
-order by dp.name";
+					cm.CommandText = @"
+					select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
+					from sys.database_principals dp
+					left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
+					where dp.type_desc = 'SQL_USER'
+					and dp.sid not in (0x00, 0x01) --ignore guest and dbo
+					and dp.is_fixed_role = 0
+					order by dp.name";
 					SqlUser u = null;
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
@@ -587,17 +594,32 @@ order by dp.name";
 					}
 
 					// get sql logins
-					cm.CommandText = @"select sp.name,  sl.password_hash
-from sys.server_principals sp
-inner join sys.sql_logins sl on sp.principal_id = sl.principal_id and sp.type_desc = 'SQL_LOGIN'
-where sp.name not like '##%##'
-and sp.name != 'SA'
-order by sp.name";
+					cm.CommandText = @"
+					select sp.name,  sl.password_hash
+					from sys.server_principals sp
+					inner join sys.sql_logins sl on sp.principal_id = sl.principal_id and sp.type_desc = 'SQL_LOGIN'
+					where sp.name not like '##%##'
+					and sp.name != 'SA'
+					order by sp.name";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							u = Users.SingleOrDefault(user => user.Name == (string) dr["name"]);
+							u = FindUser((string) dr["name"]);
 							if (u != null && !(dr["password_hash"] is DBNull))
 								u.PasswordHash = (byte[]) dr["password_hash"];
+						}
+					}
+
+					// get synonyms
+					cm.CommandText = @"
+					select object_schema_name(object_id) as schema_name, name as synonym_name, base_object_name
+					from sys.synonyms";
+					using (SqlDataReader dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							Synonym synonym = new Synonym((string)dr["synonym_name"], (string)dr["schema_name"]);
+							synonym.BaseObjectName = (string) dr["base_object_name"];
+							Synonyms.Add(synonym);
 						}
 					}
 				}
@@ -717,6 +739,28 @@ order by sp.name";
 				diff.ViewIndexesDeleted.Add(c);
 			}
 
+			//get added and compare synonyms
+			foreach (Synonym s in Synonyms)
+			{
+				Synonym s2 = db.FindSynonym(s.Name, s.Schema);
+				if (s2 == null)
+				{
+					diff.SynonymsAdded.Add(s);
+				}
+				else
+				{
+					if (s.BaseObjectName != s2.BaseObjectName)
+					{
+						diff.SynonymsDiff.Add(s);
+					}
+				}
+			}
+			//get deleted synonyms
+			foreach (Synonym s in db.Synonyms.Where(s => FindSynonym(s.Name, s.Schema) == null))
+			{
+				diff.SynonymsDeleted.Add(s);
+			}
+
 			return diff;
 		}
 
@@ -775,6 +819,13 @@ order by sp.name";
 
 			foreach (Constraint c in ViewIndexes) {
 				text.AppendLine(c.Script());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (Synonym s in Synonyms)
+			{
+				text.AppendLine(s.ScriptCreate());
 				text.AppendLine();
 				text.AppendLine("GO");
 			}
@@ -856,6 +907,14 @@ order by sp.name";
 					);
 			}
 
+			foreach (Synonym s in Synonyms)
+			{
+				File.WriteAllText(
+					string.Format("{0}/{1}/{2}.sql", Dir, "synonyms", MakeFileName(s)),
+					s.ScriptCreate() + "\r\nGO\r\n"
+					);
+			}
+
 
 			ExportData(tableHint);
 		}
@@ -866,6 +925,11 @@ order by sp.name";
 
 		private static string MakeFileName(Table t) {
 			return MakeFileName(t.Owner, t.Name);
+		}
+
+		private static string MakeFileName(Synonym s)
+		{
+			return MakeFileName(s.Schema, s.Name);
 		}
 
 		private static string MakeFileName(string value) {
@@ -1088,6 +1152,9 @@ end
 		public List<Routine> RoutinesAdded = new List<Routine>();
 		public List<Routine> RoutinesDeleted = new List<Routine>();
 		public List<Routine> RoutinesDiff = new List<Routine>();
+		public List<Synonym> SynonymsAdded = new List<Synonym>();
+		public List<Synonym> SynonymsDeleted = new List<Synonym>();
+		public List<Synonym> SynonymsDiff = new List<Synonym>();
 		public List<Table> TablesAdded = new List<Table>();
 		public List<Table> TablesDeleted = new List<Table>();
 		public List<TableDiff> TablesDiff = new List<TableDiff>();
@@ -1118,7 +1185,10 @@ end
 				       || UsersDeleted.Count > 0
 				       || ViewIndexesAdded.Count > 0
 				       || ViewIndexesDiff.Count > 0
-				       || ViewIndexesDeleted.Count > 0;
+				       || ViewIndexesDeleted.Count > 0
+					   || SynonymsAdded.Count > 0
+					   || SynonymsDiff.Count > 0
+					   || SynonymsDeleted.Count > 0;
 			}
 		}
 		
@@ -1148,7 +1218,9 @@ end
 			sb.Append(Summarize(includeNames, ViewIndexesAdded.Select(o => o.Name).ToList(), "view indexes in source but not in target"));
 			sb.Append(Summarize(includeNames, ViewIndexesDeleted.Select(o => o.Name).ToList(), "view indexes not in source but in target"));
 			sb.Append(Summarize(includeNames, ViewIndexesDiff.Select(o => o.Name).ToList(), "view indexes altered"));
-			
+			sb.Append(Summarize(includeNames, SynonymsAdded.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "synonyms in source but not in target"));
+			sb.Append(Summarize(includeNames, SynonymsDeleted.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "synonyms not in source but in target"));
+			sb.Append(Summarize(includeNames, SynonymsDiff.Select(o => string.Format("{0}.{1}", o.Schema, o.Name)).ToList(), "synonyms altered"));
 			return sb.ToString();
 		}
 
@@ -1230,6 +1302,25 @@ end
 			}
 			foreach (Routine r in RoutinesDeleted) {
 				text.AppendLine(r.ScriptDrop());
+				text.AppendLine("GO");
+			}
+
+			//add & delete synonyms
+			foreach (Synonym s in SynonymsAdded)
+			{
+				text.AppendLine(s.ScriptCreate());
+				text.AppendLine("GO");
+			}
+			foreach (Synonym s in SynonymsDiff)
+			{
+				text.AppendLine(s.ScriptDrop());
+				text.AppendLine("GO");
+				text.AppendLine(s.ScriptCreate());
+				text.AppendLine("GO");
+			}
+			foreach (Synonym s in SynonymsDeleted)
+			{
+				text.AppendLine(s.ScriptDrop());
 				text.AppendLine("GO");
 			}
 
