@@ -43,6 +43,7 @@ namespace model {
 				script += string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",
 					(AnsiNull ? "ON" : "OFF"), Environment.NewLine);
 			}
+			// TODO: script back to default afterwards for next query in batch
 			return script;
 		}
 
@@ -62,13 +63,13 @@ namespace model {
 		}
 
 		public string ScriptAlter(Database db) {
-			// TODO: ignore comments that appear before CREATE
-			var regex = new Regex(@"\alA\s*CREATE\s+");
-			if (regex.IsMatch(Text)) {
-				var script = regex.Replace(Text, "ALTER ", 1);
-				return ScriptBase(db) + script;
+			var regex = new Regex(@"\A(?:--.*?(?:\r|\n)|/\*.*?\*/|\s*?)+?(CREATE\s+?)", RegexOptions.IgnoreCase);
+			var match = regex.Match(Text);
+			var group = match.Groups[1];
+			if (group.Success) {
+				return ScriptBase(db) + Text.Substring(0, group.Index) + "ALTER " + Text.Substring(group.Index + group.Length);
 			} else {
-				throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as alter", RoutineType, Schema, Name));
+				throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Schema, Name));
 			}
 		}
 	}
