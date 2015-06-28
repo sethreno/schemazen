@@ -109,7 +109,7 @@ namespace model {
 		public void ExportData(string conn, TextWriter data, string tableHint = null) {
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -143,7 +143,7 @@ namespace model {
 
 		public void ImportData(string conn, string data) {
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items) {
+			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				dt.Columns.Add(new DataColumn(c.Name, SqlTypeToNativeType(c.Type)));
 			}
 			string[] lines = data.Split(new[] {rowSeparator}, StringSplitOptions.RemoveEmptyEntries);
@@ -152,7 +152,7 @@ namespace model {
 				i++;
 				DataRow row = dt.NewRow();
 				string[] fields = line.Split(new[] {fieldSeparator}, StringSplitOptions.None);
-				if (fields.Length != Columns.Items.Count) {
+				if (fields.Length != dt.Columns.Count) {
 					throw new DataException("Incorrect number of columns", i);
 				}
 				for (int j = 0; j < fields.Length; j++) {
