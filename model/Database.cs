@@ -48,6 +48,8 @@ namespace model {
 
 		#endregion
 
+		public const string sqlWordSeparator = @"(?:--.*?(?:\r|\n)|/\*.*?\*/|\s*?)";
+
 		#region " Properties "
 
 		public List<SqlAssembly> Assemblies = new List<SqlAssembly>();
