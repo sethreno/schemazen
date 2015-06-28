@@ -24,7 +24,7 @@ namespace model {
 			Name = name;
 		}
 
-		private string ScriptBase(Database db)
+		private string ScriptQuotedIdAndAnsiNulls(Database db, bool databaseDefaults)
 		{
 			string script = "";
 			bool defaultQuotedId = !QuotedId;
@@ -33,7 +33,7 @@ namespace model {
 			}
 			if (defaultQuotedId != QuotedId) {
 				script += string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
-					(QuotedId ? "ON" : "OFF"), Environment.NewLine);
+					((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF"), Environment.NewLine);
 			}
 			bool defaultAnsiNulls = !AnsiNull;
 			if (db != null && db.FindProp("ANSI_NULLS") != null) {
@@ -41,14 +41,22 @@ namespace model {
 			}
 			if (defaultAnsiNulls != AnsiNull) {
 				script += string.Format(@"SET ANSI_NULLS {0} {1}GO{1}",
-					(AnsiNull ? "ON" : "OFF"), Environment.NewLine);
+					((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF"), Environment.NewLine);
 			}
-			// TODO: script back to default afterwards for next query in batch
 			return script;
 		}
 
+		private string ScriptBase(Database db, string definition)
+		{
+			var before = ScriptQuotedIdAndAnsiNulls(db, false);
+			var after = ScriptQuotedIdAndAnsiNulls(db, true);
+			if (after != string.Empty)
+				after = Environment.NewLine + "GO" + Environment.NewLine + after;
+			return before + definition + after;
+		}
+
 		public string ScriptCreate(Database db) {
-			return ScriptBase(db) + Text;
+			return ScriptBase(db, Text);
 		}
 
 		public string GetSQLType() {
@@ -67,7 +75,7 @@ namespace model {
 			var match = regex.Match(Text);
 			var group = match.Groups[1];
 			if (group.Success) {
-				return ScriptBase(db) + Text.Substring(0, group.Index) + "ALTER " + Text.Substring(group.Index + group.Length);
+				return ScriptBase(db, Text.Substring(0, group.Index) + "ALTER " + Text.Substring(group.Index + group.Length));
 			} else {
 				throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Schema, Name));
 			}
