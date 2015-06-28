@@ -252,7 +252,9 @@ select s.name as schemaName, p.name as principalName
 									and t.TABLE_CATALOG = c.TABLE_CATALOG
 					where
 						t.TABLE_TYPE = 'BASE TABLE'
+					order by t.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
 ";
+					Table table = null;
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							var c = new Column();
@@ -276,7 +278,9 @@ select s.name as schemaName, p.name as principalName
 									break;
 							}
 
-							FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]).Columns.Add(c);
+							if (table == null || table.Name != (string)dr["TABLE_NAME"] || table.Owner != (string)dr["TABLE_SCHEMA"]) // only do a lookup if the table we have isn't already the relevant one
+								table = FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
+							table.Columns.Add(c);
 						}
 					}
 
@@ -325,6 +329,24 @@ select s.name as schemaName, p.name as principalName
 							Table t = FindTable((string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
 							t.Columns.Find((string) dr["COLUMN_NAME"]).Default = new Default((string) dr["DEFAULT_NAME"],
 								(string) dr["DEFAULT_VALUE"]);
+						}
+					}
+
+					//get computed column definitions
+					cm.CommandText = @"
+					select
+						object_schema_name(object_id) as TABLE_SCHEMA,
+						object_name(object_id) as TABLE_NAME,
+						name as COLUMN_NAME,
+						definition as DEFINITION
+					from sys.computed_columns cc
+					";
+					using (SqlDataReader dr = cm.ExecuteReader())
+					{
+						while (dr.Read())
+						{
+							Table t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
+							t.Columns.Find((string) dr["COLUMN_NAME"]).ComputedDefinition = (string) dr["DEFINITION"];
 						}
 					}
 
