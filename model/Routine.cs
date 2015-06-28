@@ -70,9 +70,13 @@ namespace model {
 			return string.Format("DROP {0} [{1}].[{2}]", GetSQLType(), Schema, Name);
 		}
 
+		private const string sqlCreate =
+			@"\A" + Database.sqlWhitespaceOrComment + @"+?(CREATE)" + Database.sqlWhitespaceOrComment;
+
+
 		public string ScriptAlter(Database db) {
 			if (RoutineType != RoutineKind.XmlSchemaCollection) {
-				var regex = new Regex(@"\A" + Database.sqlWordSeparator + @"+?(CREATE)\s+?", RegexOptions.IgnoreCase);
+				var regex = new Regex(sqlCreate, RegexOptions.IgnoreCase);
 				var match = regex.Match(Text);
 				var group = match.Groups[1];
 				if (group.Success) {

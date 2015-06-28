@@ -48,7 +48,7 @@ namespace model {
 
 		#endregion
 
-		public const string sqlWordSeparator = @"(?:--.*?(?:\r|\n)|/\*.*?\*/|\s*?)";
+		public const string sqlWhitespaceOrComment = @"(?:--.*?(?:\r|\n)|/\*.*?\*/|\s+?)";
 
 		#region " Properties "
 
