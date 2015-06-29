@@ -507,12 +507,6 @@ order by fk.name, fkc.constraint_column_id
 								Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
 								Console.ForegroundColor = ConsoleColor.White;
 							} else {
-								// TODO: in Routine class, automatically correct name in definition for when scripting or comparing 
-								if (!((string)dr["definition"]).Contains((string)dr["routineName"])) {
-									Console.ForegroundColor = ConsoleColor.Magenta;
-									Console.WriteLine("Warning: {0} {1}.{2} has been renamed since it's definition.", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
-									Console.ForegroundColor = ConsoleColor.White;
-								}
 								var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
 								r.Text = (string)dr["definition"];
 								r.AnsiNull = (bool)dr["uses_ansi_nulls"];

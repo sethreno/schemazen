@@ -19,6 +19,9 @@ namespace model {
 		public string Schema;
 		public string Text;
 
+		private const string sqlCreate = @"\A" + Database.sqlWhitespaceOrComment + @"+?(CREATE)" + Database.sqlWhitespaceOrComment;
+		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)" + Database.sqlWhitespaceOrComment;
+
 		public Routine(string schema, string name) {
 			Schema = schema;
 			Name = name;
@@ -52,6 +55,15 @@ namespace model {
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
 			if (after != string.Empty)
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
+			
+			// correct the name if it is incorrect
+			var regex = new Regex(string.Format(sqlName, GetSQLType()), RegexOptions.IgnoreCase);
+			var match = regex.Match(definition);
+			var group = match.Groups[2];
+			if (group.Success)
+			{
+				definition = Text.Substring(0, group.Index) + string.Format("[{0}].[{1}]", Schema, Name) + Text.Substring(group.Index + group.Length);
+			}
 			return before + definition + after;
 		}
 
@@ -69,9 +81,6 @@ namespace model {
 		public string ScriptDrop() {
 			return string.Format("DROP {0} [{1}].[{2}]", GetSQLType(), Schema, Name);
 		}
-
-		private const string sqlCreate =
-			@"\A" + Database.sqlWhitespaceOrComment + @"+?(CREATE)" + Database.sqlWhitespaceOrComment;
 
 
 		public string ScriptAlter(Database db) {
