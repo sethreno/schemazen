@@ -538,41 +538,48 @@ order by fk.name, fkc.constraint_column_id
 						}
 					}
 
-					// get xml schemas
-					cm.CommandText = @"
-					select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
-					from sys.xml_schema_collections x
-					inner join sys.schemas s on s.schema_id = x.schema_id
-					where s.name != 'sys'";
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							var r = new Routine((string) dr["DBSchemaName"], (string) dr["XMLSchemaCollectionName"]) {
-								Text =
-									string.Format("CREATE XML SCHEMA COLLECTION {0}.{1} AS N'{2}'", dr["DBSchemaName"],
-										dr["XMLSchemaCollectionName"], dr["definition"]),
-								RoutineType = Routine.RoutineKind.XmlSchemaCollection
-							};
-							Routines.Add(r);
+					try {
+						// get xml schemas
+						cm.CommandText = @"
+						select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
+						from sys.xml_schema_collections x
+						inner join sys.schemas s on s.schema_id = x.schema_id
+						where s.name != 'sys'";
+						using (SqlDataReader dr = cm.ExecuteReader()) {
+							while (dr.Read()) {
+								var r = new Routine((string)dr["DBSchemaName"], (string)dr["XMLSchemaCollectionName"]) {
+																														   Text = string.Format("CREATE XML SCHEMA COLLECTION {0}.{1} AS N'{2}'", dr["DBSchemaName"], dr["XMLSchemaCollectionName"], dr["definition"]),
+																														   RoutineType = Routine.RoutineKind.XmlSchemaCollection
+																													   };
+								Routines.Add(r);
+							}
 						}
+					} catch (SqlException) {
+						// SQL server version doesn't support XML schemas, nothing to do here
 					}
 
-					// get CLR assemblies
-					cm.CommandText = @"select a.name as AssemblyName, a.permission_set_desc, af.name as FileName, af.content
-					from sys.assemblies a
-					inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
-					where a.is_user_defined = 1
-					order by a.name, af.file_id";
-					SqlAssembly a = null;
-					using (SqlDataReader dr = cm.ExecuteReader()) {
-						while (dr.Read()) {
-							if (a == null || a.Name != (string) dr["AssemblyName"])
-								a = new SqlAssembly((string) dr["permission_set_desc"], (string) dr["AssemblyName"]);
-							a.Files.Add(new KeyValuePair<string, byte[]>((string) dr["FileName"], (byte[]) dr["content"]));
-							if (!Assemblies.Contains(a))
-								Assemblies.Add(a);
+					try { 
+						// get CLR assemblies
+						cm.CommandText = @"select a.name as AssemblyName, a.permission_set_desc, af.name as FileName, af.content
+						from sys.assemblies a
+						inner join sys.assembly_files af on a.assembly_id = af.assembly_id 
+						where a.is_user_defined = 1
+						order by a.name, af.file_id";
+						SqlAssembly a = null;
+						using (SqlDataReader dr = cm.ExecuteReader()) {
+							while (dr.Read()) {
+								if (a == null || a.Name != (string) dr["AssemblyName"])
+									a = new SqlAssembly((string) dr["permission_set_desc"], (string) dr["AssemblyName"]);
+								a.Files.Add(new KeyValuePair<string, byte[]>((string) dr["FileName"], (byte[]) dr["content"]));
+								if (!Assemblies.Contains(a))
+									Assemblies.Add(a);
+							}
 						}
 					}
-
+					catch (SqlException)
+					{
+						// SQL server version doesn't support CLR assemblies, nothing to do here
+					}
 
 					// get users that have access to the database
 					cm.CommandText = @"
@@ -611,18 +618,24 @@ order by fk.name, fkc.constraint_column_id
 						}
 					}
 
-					// get synonyms
-					cm.CommandText = @"
-					select object_schema_name(object_id) as schema_name, name as synonym_name, base_object_name
-					from sys.synonyms";
-					using (SqlDataReader dr = cm.ExecuteReader())
-					{
-						while (dr.Read())
+					try { 
+						// get synonyms
+						cm.CommandText = @"
+						select object_schema_name(object_id) as schema_name, name as synonym_name, base_object_name
+						from sys.synonyms";
+						using (SqlDataReader dr = cm.ExecuteReader())
 						{
-							Synonym synonym = new Synonym((string)dr["synonym_name"], (string)dr["schema_name"]);
-							synonym.BaseObjectName = (string) dr["base_object_name"];
-							Synonyms.Add(synonym);
+							while (dr.Read())
+							{
+								Synonym synonym = new Synonym((string)dr["synonym_name"], (string)dr["schema_name"]);
+								synonym.BaseObjectName = (string) dr["base_object_name"];
+								Synonyms.Add(synonym);
+							}
 						}
+					}
+					catch (SqlException)
+					{
+						// SQL server version doesn't support synonyms, nothing to do here
 					}
 				}
 			}
