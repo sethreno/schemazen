@@ -20,7 +20,7 @@ namespace model {
 		public string Text;
 
 		private const string sqlCreate = @"\A" + Database.sqlWhitespaceOrComment + @"+?(CREATE)" + Database.sqlWhitespaceOrComment;
-		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)" + Database.sqlWhitespaceOrComment;
+		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)(:?\(|" + Database.sqlWhitespaceOrComment + ")";
 
 		public Routine(string schema, string name) {
 			Schema = schema;

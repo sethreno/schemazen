@@ -22,7 +22,8 @@ namespace test {
 			copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
 			copy.Load();
 			SqlConnection.ClearAllPools();
-			TestHelper.ExecBatchSql(copy.ScriptCreate(), "master");
+			string scripted = copy.ScriptCreate();
+			TestHelper.ExecBatchSql(scripted, "master");
 
 			//compare the dbs to make sure they are the same
 			var source = new Database("TEST_SOURCE");
