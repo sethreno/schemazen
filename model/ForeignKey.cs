@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace model {
+namespace SchemaZen.model {
 	public class ForeignKey {
 		public bool Check;
 		public List<string> Columns = new List<string>();

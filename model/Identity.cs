@@ -1,4 +1,4 @@
-﻿namespace model {
+﻿namespace SchemaZen.model {
 	public class Identity {
 		public string Increment;
 		public string Seed;

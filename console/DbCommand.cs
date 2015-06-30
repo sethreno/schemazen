@@ -1,9 +1,9 @@
 ﻿using System.Data.SqlClient;
 using ManyConsole;
-using model;
 using NDesk.Options;
+using SchemaZen.model;
 
-namespace console {
+namespace SchemaZen.console {
 	public abstract class DbCommand : ConsoleCommand {
 		protected DbCommand(string command, string oneLineDescription) {
 			IsCommand(command, oneLineDescription);

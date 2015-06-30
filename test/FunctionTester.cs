@@ -1,8 +1,8 @@
 ﻿using System;
-using model;
 using NUnit.Framework;
+using SchemaZen.model;
 
-namespace test {
+namespace SchemaZen.test {
 	[TestFixture]
 	public class FunctionTester {
 		[Test]

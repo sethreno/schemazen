@@ -8,12 +8,12 @@
     <ProjectGuid>{95219FB8-6E54-4672-943B-3D2ECAED51A2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>console</RootNamespace>
+    <RootNamespace>SchemaZen.console</RootNamespace>
     <AssemblyName>console</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <StartupObject>console.Program</StartupObject>
+    <StartupObject>SchemaZen.console.Program</StartupObject>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>

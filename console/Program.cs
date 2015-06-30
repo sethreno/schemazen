@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using ManyConsole;
 
-namespace console {
+namespace SchemaZen.console {
 	internal class Program {
 		private static int Main(string[] args) {
 			try {

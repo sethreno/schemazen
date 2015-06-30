@@ -7,7 +7,7 @@ using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
-namespace model {
+namespace SchemaZen.model {
 	public class Schema {
 		public string Name;
 		public string Owner;

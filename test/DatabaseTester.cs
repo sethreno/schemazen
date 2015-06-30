@@ -3,10 +3,10 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using model;
 using NUnit.Framework;
+using SchemaZen.model;
 
-namespace test {
+namespace SchemaZen.test {
 	[TestFixture]
 	public class DatabaseTester {
 		public static void TestCopySchema(string pathToSchemaScript) {

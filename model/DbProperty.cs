@@ -1,4 +1,4 @@
-﻿namespace model {
+﻿namespace SchemaZen.model {
 	public class DbProp {
 		public Database _db;
 

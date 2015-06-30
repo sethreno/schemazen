@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace test {
+namespace SchemaZen.test {
 	public class ConfigHelper {
 		public static string TestDB {
 			get { return ConfigurationManager.AppSettings["testdb"]; }

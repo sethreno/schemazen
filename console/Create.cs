@@ -1,8 +1,8 @@
 using System;
 using System.IO;
-using model;
+using SchemaZen.model;
 
-namespace console {
+namespace SchemaZen.console {
 	public class Create : DbCommand {
 		public Create()
 			: base(

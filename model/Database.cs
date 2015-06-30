@@ -1,5 +1,4 @@
 using System;
-using System.CodeDom;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -8,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace model {
+namespace SchemaZen.model {
 	public class Database {
 		#region " Constructors "
 
@@ -1021,8 +1020,7 @@ end
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (Exception ex) {
-					Console.WriteLine("Error importing data for table " + fi.FullName);
-					throw;
+					throw new DataFileException(ex.Message, fi.FullName, -1);
 				}
 			}
 		}

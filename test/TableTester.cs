@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
-using model;
 using NUnit.Framework;
+using SchemaZen.model;
 
-namespace test {
+namespace SchemaZen.test {
 	[TestFixture]
 	public class TableTester {
 		private List<List<string>> TabDataToList(string data) {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace model {
+namespace SchemaZen.model {
 	public class Constraint {
 		public bool Clustered;
 		public List<string> Columns = new List<string>();

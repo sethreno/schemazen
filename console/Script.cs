@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using model;
+using SchemaZen.model;
 
-namespace console
+namespace SchemaZen.console
 {
 	public class Script : DbCommand {
 		public Script()

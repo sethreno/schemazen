@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace model {
+namespace SchemaZen.model {
 	internal enum State {
 		Searching,
 		InOneLineComment,

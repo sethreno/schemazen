@@ -1,10 +1,10 @@
 ﻿using System;
 using System.IO;
 using ManyConsole;
-using model;
 using NDesk.Options;
+using SchemaZen.model;
 
-namespace console {
+namespace SchemaZen.console {
 	internal class Compare : ConsoleCommand {
 		private string _source;
 		private string _target;

@@ -8,7 +8,7 @@
     <ProjectGuid>{73E24852-B1C6-476B-B5D9-ADB06D5870D2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>test</RootNamespace>
+    <RootNamespace>SchemaZen.test</RootNamespace>
     <AssemblyName>test</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>

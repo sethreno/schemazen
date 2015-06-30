@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 
-namespace model {
+namespace SchemaZen.model {
 	public class DBHelper {
 		public static bool EchoSql = false;
 

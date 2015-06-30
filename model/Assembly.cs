@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
-namespace model {
+namespace SchemaZen.model {
 	public class SqlAssembly {
 		public List<KeyValuePair<string, byte[]>> Files = new List<KeyValuePair<string, byte[]>>();
 		public string Name;

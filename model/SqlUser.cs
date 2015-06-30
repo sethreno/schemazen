@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
-namespace model {
+namespace SchemaZen.model {
 	public class SqlUser {
 		public List<string> DatabaseRoles = new List<string>();
 		public string DefaultSchema;

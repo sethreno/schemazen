@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Data.SqlClient;
-using model;
 using NUnit.Framework;
+using SchemaZen.model;
 
-namespace test {
+namespace SchemaZen.test {
 	[SetUpFixture]
 	public class TestHelper {
 		public static bool EchoSql {
