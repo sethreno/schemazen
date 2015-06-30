@@ -996,7 +996,6 @@ end
 
 		public void ImportData() {
 			string dataDir = Dir + "\\data";
-			var tables = new List<Table>();
 			if (!Directory.Exists(dataDir)) {
 				return;
 			}
@@ -1026,7 +1025,6 @@ end
 		}
 
 		public void CreateFromDir(bool overwrite) {
-			var cnBuilder = new SqlConnectionStringBuilder(Connection);
 			if (DBHelper.DbExists(Connection)) {
 				DBHelper.DropDb(Connection);
 			}

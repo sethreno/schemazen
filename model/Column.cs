@@ -15,19 +15,22 @@ namespace SchemaZen.model {
 
 		public Column() { }
 
-		public Column(string name, string type, bool @null, Default @default) {
+		public Column(string name, string type, bool nullable, Default defaultValue) {
 			Name = name;
 			Type = type;
-			Default = @default;
+			Default = defaultValue;
+			IsNullable = nullable;
 		}
 
-		public Column(string name, string type, int length, bool @null, Default @default)
-			: this(name, type, @null, @default) {
+		public Column(string name, string type, int length, bool nullable, Default defaultValue)
+			: this(name, type, nullable, defaultValue)
+		{
 			Length = length;
 		}
 
-		public Column(string name, string type, byte precision, int scale, bool @null, Default @default)
-			: this(name, type, @null, @default) {
+		public Column(string name, string type, byte precision, int scale, bool nullable, Default defaultValue)
+			: this(name, type, nullable, defaultValue)
+		{
 			Precision = precision;
 			Scale = scale;
 		}
