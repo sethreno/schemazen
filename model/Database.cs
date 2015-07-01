@@ -249,6 +249,7 @@ where name = @dbname
 						c.TABLE_NAME,
 						c.COLUMN_NAME,
 						c.DATA_TYPE,
+						c.ORDINAL_POSITION,
 						c.IS_NULLABLE,
 						c.CHARACTER_MAXIMUM_LENGTH,
 						c.NUMERIC_PRECISION,
@@ -265,10 +266,12 @@ where name = @dbname
 					Table table = null;
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							var c = new Column();
-							c.Name = (string) dr["COLUMN_NAME"];
-							c.Type = (string) dr["DATA_TYPE"];
-							c.IsNullable = (string) dr["IS_NULLABLE"] == "YES";
+							var c = new Column {
+								Name = (string)dr["COLUMN_NAME"],
+								Type = (string)dr["DATA_TYPE"],
+								IsNullable = (string)dr["IS_NULLABLE"] == "YES",
+								Position = (int)dr["ORDINAL_POSITION"]
+							};
 
 							switch (c.Type) {
 								case "binary":
