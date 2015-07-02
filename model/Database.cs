@@ -253,7 +253,8 @@ where name = @dbname
 						c.IS_NULLABLE,
 						c.CHARACTER_MAXIMUM_LENGTH,
 						c.NUMERIC_PRECISION,
-						c.NUMERIC_SCALE 
+						c.NUMERIC_SCALE,
+						COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') AS IS_ROW_GUID_COL
 					from INFORMATION_SCHEMA.COLUMNS c
 						inner join INFORMATION_SCHEMA.TABLES t
 								on t.TABLE_NAME = c.TABLE_NAME
@@ -270,7 +271,8 @@ where name = @dbname
 								Name = (string)dr["COLUMN_NAME"],
 								Type = (string)dr["DATA_TYPE"],
 								IsNullable = (string)dr["IS_NULLABLE"] == "YES",
-								Position = (int)dr["ORDINAL_POSITION"]
+								Position = (int)dr["ORDINAL_POSITION"],
+								IsRowGuidCol = (int)dr["IS_ROW_GUID_COL"] == 1
 							};
 
 							switch (c.Type) {

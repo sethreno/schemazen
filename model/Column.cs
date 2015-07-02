@@ -12,6 +12,7 @@ namespace SchemaZen.model {
 		public int Scale;
 		public string Type;
 		public string ComputedDefinition;
+		public bool IsRowGuidCol;
 
 		public Column() { }
 
@@ -56,6 +57,14 @@ namespace SchemaZen.model {
 			}
 		}
 
+		public string RowGuidColText
+		{
+			get
+			{
+				return IsRowGuidCol ? "ROWGUIDCOL" : string.Empty;
+			}
+		}
+
 		public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
 		}
@@ -86,7 +95,7 @@ namespace SchemaZen.model {
 					case "uniqueidentifier":
 					case "xml":
 
-						return string.Format("[{0}] [{1}] {2} {3} {4}", Name, Type, IsNullableText, DefaultText, IdentityText);
+						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText, DefaultText, IdentityText, RowGuidColText);
 					case "binary":
 					case "char":
 					case "nchar":
