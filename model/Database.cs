@@ -500,7 +500,9 @@ order by fk.name, fkc.constraint_column_id
 						inner join sys.objects o on m.object_id = o.object_id
 						inner join sys.schemas s on s.schema_id = o.schema_id
 						left join sys.triggers tr on m.object_id = tr.object_id
-						left join sys.tables t on tr.parent_id = t.object_id";
+						left join sys.tables t on tr.parent_id = t.object_id
+					where objectproperty(o.object_id, 'IsMSShipped') = 0
+					";
 					using (SqlDataReader dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
 							// TODO: consider refactoring - it is bad practice to write to the console from a class library...
@@ -1200,7 +1202,7 @@ end
 			}
 		}
 		
-		private string Summarize(bool includeNames, List<string> changes, string caption) {
+		private static string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
 			return changes.Count.ToString() + "x " + caption + (includeNames ? ("\r\n\t" + string.Join("\r\n\t", changes.ToArray())) : string.Empty) + "\r\n";
 		}
