@@ -17,9 +17,9 @@ BAR";
 		[Test]
 		public void CanParseCommentWithQuoteChar() {
 			const string script = @"/* Add the Url column to the subtext_Log table if it doesn't exist */
-        ADD [Url] VARCHAR(255) NULL
+		ADD [Url] VARCHAR(255) NULL
 GO
-                AND             COLUMN_NAME = 'BlogGroup') IS NULL";
+				AND             COLUMN_NAME = 'BlogGroup') IS NULL";
 			string[] scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
@@ -68,7 +68,7 @@ delete from users
 		[Test]
 		public void CanParseQuotedCorrectly() {
 			const string script = @"INSERT INTO #Indexes
-        EXEC sp_helpindex 'dbo.subtext_URLs'";
+		EXEC sp_helpindex 'dbo.subtext_URLs'";
 
 			string[] scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(script, scripts[0], "Script text should not be modified");
@@ -101,10 +101,10 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotBeSplitByGoKeyword() {
 			string script = "PRINT '" + Environment.NewLine
-			                + "GO" + Environment.NewLine
-			                + "SELECT * FROM BLAH" + Environment.NewLine
-			                + "GO" + Environment.NewLine
-			                + "'";
+							+ "GO" + Environment.NewLine
+							+ "SELECT * FROM BLAH" + Environment.NewLine
+							+ "GO" + Environment.NewLine
+							+ "'";
 
 			string[] scripts = BatchSqlParser.SplitBatch(script);
 
@@ -115,11 +115,11 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotIgnoreDoubleQuote() {
 			string script = "PRINT '" + Environment.NewLine
-			                + "''" + Environment.NewLine
-			                + "GO" + Environment.NewLine
-			                + "/*" + Environment.NewLine
-			                + "GO"
-			                + "'";
+							+ "''" + Environment.NewLine
+							+ "GO" + Environment.NewLine
+							+ "/*" + Environment.NewLine
+							+ "GO"
+							+ "'";
 
 			string[] scripts = BatchSqlParser.SplitBatch(script);
 
@@ -135,7 +135,7 @@ GO";
 			const string script = @"SET QUOTED_IDENTIFIER OFF
 -- Comment
 Go
-               
+			   
 SET ANSI_NULLS ON
 
 
@@ -148,10 +148,10 @@ SET ANSI_NULLS ON
 
 
 CREATE TABLE [<username,varchar,dbo>].[blog_Gost] (
-        [HostUserName] [nvarchar] (64) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
-        [Password] [nvarchar] (64) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
-        [Salt] [nvarchar] (32) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
-        [DateCreated] [datetime] NOT NULL
+		[HostUserName] [nvarchar] (64) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
+		[Password] [nvarchar] (64) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
+		[Salt] [nvarchar] (32) COLLATE SQL_Latin1_General_CP1_CI_AS NOT NULL ,
+		[DateCreated] [datetime] NOT NULL
 ) ON [PRIMARY]
 gO
 

@@ -19,8 +19,8 @@ namespace SchemaZen.model {
 		public string Schema;
 		public string Text;
 
-		private const string sqlCreate = @"\A" + Database.sqlWhitespaceOrComment + @"+?(CREATE)" + Database.sqlWhitespaceOrComment;
-		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)(:?\(|" + Database.sqlWhitespaceOrComment + ")";
+		private const string sqlCreate = @"\A" + Database.sqlWhitespaceOrComment + @"*?(CREATE)" + Database.sqlWhitespaceOrComment;
+		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)(?:\(|" + Database.sqlWhitespaceOrComment + ")";
 
 		public Routine(string schema, string name) {
 			Schema = schema;
@@ -57,7 +57,7 @@ namespace SchemaZen.model {
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 			
 			// correct the name if it is incorrect
-			var regex = new Regex(string.Format(sqlName, GetSQLType()), RegexOptions.IgnoreCase);
+			var regex = new Regex(string.Format(sqlName, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase);
 			var match = regex.Match(definition);
 			var group = match.Groups[2];
 			if (group.Success)
@@ -69,6 +69,14 @@ namespace SchemaZen.model {
 
 		public string ScriptCreate(Database db) {
 			return ScriptBase(db, Text);
+		}
+
+		public string GetSQLTypeForRegEx() {
+			var text = GetSQLType();
+			if (RoutineType == RoutineKind.Procedure) // support shorthand - PROC
+				return "(?:" + text + "|" + text.Substring(0, 4) + ")";
+			else
+				return text;
 		}
 
 		public string GetSQLType() {

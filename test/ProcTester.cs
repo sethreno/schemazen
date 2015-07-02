@@ -17,9 +17,9 @@ namespace SchemaZen.test {
 			var getAddress = new Routine("dbo", "GetAddress");
 			getAddress.Text = @"
 CREATE PROCEDURE [dbo].[GetAddress]
-    @id int
+	@id int
 AS
-    select * from Address where id = @id
+	select * from Address where id = @id
 ";
 
 			TestHelper.ExecSql(t.ScriptCreate(), "");
