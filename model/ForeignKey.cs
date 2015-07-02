@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace SchemaZen.model {
@@ -12,6 +13,8 @@ namespace SchemaZen.model {
 		public List<string> RefColumns = new List<string>();
 		public Table RefTable;
 		public Table Table;
+
+		private const string defaultRules = "NO ACTION|RESTRICT";
 
 		public ForeignKey(string name) {
 			Name = name;
@@ -53,10 +56,10 @@ namespace SchemaZen.model {
 				Name);
 			text.AppendFormat("   FOREIGN KEY([{0}]) REFERENCES [{1}].[{2}] ([{3}])\r\n", string.Join("], [", Columns.ToArray()),
 				RefTable.Owner, RefTable.Name, string.Join("], [", RefColumns.ToArray()));
-			if (!string.IsNullOrEmpty(OnUpdate)) {
+			if (!string.IsNullOrEmpty(OnUpdate) && !defaultRules.Split('|').Contains(OnUpdate)) {
 				text.AppendFormat("   ON UPDATE {0}\r\n", OnUpdate);
 			}
-			if (!string.IsNullOrEmpty(OnDelete)) {
+			if (!string.IsNullOrEmpty(OnDelete) && !defaultRules.Split('|').Contains(OnDelete)) {
 				text.AppendFormat("   ON DELETE {0}\r\n", OnDelete);
 			}
 			if (!Check) {
