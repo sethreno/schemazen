@@ -16,6 +16,7 @@ namespace SchemaZen.test {
 			DBHelper.DropDb(conn);
 			DBHelper.CreateDb(conn);
 			SqlConnection.ClearAllPools();
+			// TODO: verify that database called "model" is empty, otherwise tests will fail
 		}
 
 		public static void ExecSql(string sql, string dbName) {
