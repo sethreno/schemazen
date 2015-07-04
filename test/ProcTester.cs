@@ -27,5 +27,36 @@ AS
 			TestHelper.ExecSql("drop table [dbo].[Address]", "");
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
 		}
+
+		[Test]
+		public void TestScriptWrongName()
+		{
+			var t = new Table("dbo", "Address");
+			t.Columns.Add(new Column("id", "int", false, null));
+			t.Columns.Add(new Column("street", "varchar", 50, false, null));
+			t.Columns.Add(new Column("city", "varchar", 50, false, null));
+			t.Columns.Add(new Column("state", "char", 2, false, null));
+			t.Columns.Add(new Column("zip", "char", 5, false, null));
+			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
+
+			var getAddress = new Routine("dbo", "GetAddress");
+			getAddress.Text = @"--example of routine that has been renamed since creation
+CREATE PROCEDURE [dbo].[NamedDifferently]
+	@id int
+AS
+	select * from Address where id = @id
+";
+
+			TestHelper.ExecSql(t.ScriptCreate(), "");
+			var script = getAddress.ScriptCreate(null);
+			TestHelper.ExecBatchSql(script + "\nGO", "");
+
+			// TODO: Load DB and check contains routine called dbo.GetAddress
+
+			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
+			TestHelper.ExecSql("drop table [dbo].[Address]", "");
+
+
+		}
 	}
 }
