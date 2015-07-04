@@ -47,7 +47,8 @@ namespace SchemaZen.model {
 
 		#endregion
 
-		public const string sqlWhitespaceOrComment = @"(?:--.*?(?:\r|\n)|/\*.*?\*/|\s+?)";
+		public const string SqlWhitespaceOrCommentRegex = @"(?:--.*?(?:\r|\n)|/\*.*?\*/|\s+?)";
+		public const string SqlEnclosedIdentifierRegex = @"\[.+?\]";
 
 		#region " Properties "
 

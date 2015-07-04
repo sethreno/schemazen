@@ -19,8 +19,8 @@ namespace SchemaZen.model {
 		public string Schema;
 		public string Text;
 
-		private const string sqlCreate = @"\A" + Database.sqlWhitespaceOrComment + @"*?(CREATE)" + Database.sqlWhitespaceOrComment;
-		private const string sqlName = sqlCreate + @"+?{0}" + Database.sqlWhitespaceOrComment + @"+?(\[.+?\].\[.+?\]|\[.+?\]|\S+?)(?:\(|" + Database.sqlWhitespaceOrComment + ")";
+		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
+		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+?{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(" + Database.SqlEnclosedIdentifierRegex + @"." + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlEnclosedIdentifierRegex + @"|\S+?)(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
 		public Routine(string schema, string name) {
 			Schema = schema;
@@ -57,7 +57,7 @@ namespace SchemaZen.model {
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 			
 			// correct the name if it is incorrect
-			var regex = new Regex(string.Format(sqlName, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase);
+			var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase);
 			var match = regex.Match(definition);
 			var group = match.Groups[2];
 			if (group.Success)
@@ -93,7 +93,7 @@ namespace SchemaZen.model {
 
 		public string ScriptAlter(Database db) {
 			if (RoutineType != RoutineKind.XmlSchemaCollection) {
-				var regex = new Regex(sqlCreate, RegexOptions.IgnoreCase);
+				var regex = new Regex(SqlCreateRegex, RegexOptions.IgnoreCase);
 				var match = regex.Match(Text);
 				var group = match.Groups[1];
 				if (group.Success) {
