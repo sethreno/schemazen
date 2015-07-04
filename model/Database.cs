@@ -72,14 +72,9 @@ namespace SchemaZen.model {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
-		public Table FindTable(string name, string owner)
+		public Table FindTable(string name, string owner, bool isTableType = false)
 		{
-			return FindTableBase(Tables, name, owner);
-		}
-
-		public Table FindTableType(string name, string owner)
-		{
-			return FindTableBase(TableTypes, name, owner);
+			return FindTableBase(isTableType ? TableTypes : Tables, name, owner);
 		}
 
 		private static Table FindTableBase(IEnumerable<Table> tables, string name, string owner)
@@ -595,7 +590,7 @@ order by fk.name, fkc.constraint_column_id
 					c.CHARACTER_MAXIMUM_LENGTH,
 					c.NUMERIC_PRECISION,
 					c.NUMERIC_SCALE,
-					COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') AS IS_ROW_GUID_COL
+					CASE WHEN COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') = 1 THEN 'YES' ELSE 'NO' END AS IS_ROW_GUID_COL
 				from INFORMATION_SCHEMA.COLUMNS c
 					inner join INFORMATION_SCHEMA.TABLES t
 							on t.TABLE_NAME = c.TABLE_NAME
@@ -617,11 +612,11 @@ order by fk.name, fkc.constraint_column_id
 					c.name as COLUMN_NAME,
 					t.name as DATA_TYPE,
 					c.column_id as ORDINAL_POSITION,
-					c.is_nullable as IS_NULLABLE,
-					c.max_length as CHARACTER_MAXIMUM_LENGTH,
+					CASE WHEN c.is_nullable = 1 THEN 'YES' ELSE 'NO' END as IS_NULLABLE,
+					CAST(c.max_length as int) as CHARACTER_MAXIMUM_LENGTH,
 					c.precision as NUMERIC_PRECISION,
 					c.scale as NUMERIC_SCALE,
-					c.is_rowguidcol as IS_ROW_GUID_COL
+					CASE WHEN c.is_rowguidcol = 1 THEN 'YES' ELSE 'NO' END as IS_ROW_GUID_COL
 				from sys.columns c
 					inner join sys.table_types tt
 						on tt.type_table_object_id = c.object_id
@@ -652,7 +647,7 @@ order by fk.name, fkc.constraint_column_id
 					Type = (string) dr["DATA_TYPE"],
 					IsNullable = (string) dr["IS_NULLABLE"] == "YES",
 					Position = (int) dr["ORDINAL_POSITION"],
-					IsRowGuidCol = (int) dr["IS_ROW_GUID_COL"] == 1
+					IsRowGuidCol = (string) dr["IS_ROW_GUID_COL"] == "YES"
 				};
 
 				switch (c.Type) {
@@ -701,7 +696,7 @@ order by fk.name, fkc.constraint_column_id
 				from sys.table_types tt
 				inner join sys.schemas s on tt.schema_id = s.schema_id
 				where tt.is_user_defined = 1
-				order by schema_name, table_type_name";
+				order by s.name, tt.name";
 				using (SqlDataReader dr = cm.ExecuteReader()) {
 					LoadTablesBase(dr, true, TableTypes);
 				}
@@ -710,7 +705,7 @@ order by fk.name, fkc.constraint_column_id
 			}
 		}
 
-		private void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables)
+		private static void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables)
 		{
 			while (dr.Read()) {
 				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes});
@@ -828,20 +823,27 @@ where name = @dbname
 			}
 
 			//get tables added and changed
-			foreach (Table t in Tables) {
-				Table t2 = db.FindTable(t.Name, t.Owner);
-				if (t2 == null) {
-					diff.TablesAdded.Add(t);
-				} else {
-					//compare mutual tables
-					TableDiff tDiff = t.Compare(t2);
-					if (tDiff.IsDiff) {
-						diff.TablesDiff.Add(tDiff);
+			foreach (List<Table> tables in new[] {Tables, TableTypes}) {
+				foreach (Table t in tables) {
+					Table t2 = db.FindTable(t.Name, t.Owner, t.IsType);
+					if (t2 == null) {
+						diff.TablesAdded.Add(t);
+					} else {
+						//compare mutual tables
+						TableDiff tDiff = t.Compare(t2);
+						if (tDiff.IsDiff) {
+							if (t.IsType) { // types cannot be altered...
+								diff.TableTypesDiff.Add(t);
+							} else {
+								diff.TablesDiff.Add(tDiff);
+							}
+						}
 					}
 				}
 			}
 			//get deleted tables
-			foreach (Table t in db.Tables.Where(t => FindTable(t.Name, t.Owner) == null)) {
+			foreach (Table t in db.Tables.Concat(db.TableTypes).Where(t => FindTable(t.Name, t.Owner, t.IsType) == null))
+			{
 				diff.TablesDeleted.Add(t);
 			}
 
@@ -976,7 +978,7 @@ where name = @dbname
 				text.AppendLine();
 			}
 
-			foreach (Table t in Tables) {
+			foreach (Table t in Tables.Concat(TableTypes)) {
 				text.AppendLine(t.ScriptCreate());
 			}
 			text.AppendLine();
@@ -1344,6 +1346,7 @@ end
 		public List<Table> TablesAdded = new List<Table>();
 		public List<Table> TablesDeleted = new List<Table>();
 		public List<TableDiff> TablesDiff = new List<TableDiff>();
+		public List<Table> TableTypesDiff = new List<Table>();
 		public List<SqlUser> UsersAdded = new List<SqlUser>();
 		public List<SqlUser> UsersDeleted = new List<SqlUser>();
 		public List<SqlUser> UsersDiff = new List<SqlUser>();
@@ -1356,6 +1359,7 @@ end
 				return PropsChanged.Count > 0
 				       || TablesAdded.Count > 0
 				       || TablesDiff.Count > 0
+					   || TableTypesDiff.Count > 0
 				       || TablesDeleted.Count > 0
 				       || RoutinesAdded.Count > 0
 				       || RoutinesDiff.Count > 0
@@ -1395,9 +1399,12 @@ end
 			sb.Append(Summarize(includeNames, RoutinesAdded.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines in source but not in target"));
 			sb.Append(Summarize(includeNames, RoutinesDeleted.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines not in source but in target"));
 			sb.Append(Summarize(includeNames, RoutinesDiff.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Schema, o.Name)).ToList(), "routines altered"));
-			sb.Append(Summarize(includeNames, TablesAdded.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables in source but not in target"));
-			sb.Append(Summarize(includeNames, TablesDeleted.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables not in source but in target"));
+			sb.Append(Summarize(includeNames, TablesAdded.Where(o => !o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables in source but not in target"));
+			sb.Append(Summarize(includeNames, TablesDeleted.Where(o => !o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables not in source but in target"));
 			sb.Append(Summarize(includeNames, TablesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "tables altered"));
+			sb.Append(Summarize(includeNames, TablesAdded.Where(o => o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "table types in source but not in target"));
+			sb.Append(Summarize(includeNames, TablesDeleted.Where(o => o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "table types not in source but in target"));
+			sb.Append(Summarize(includeNames, TableTypesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(), "table types altered"));
 			sb.Append(Summarize(includeNames, UsersAdded.Select(o => o.Name).ToList(), "users in source but not in target"));
 			sb.Append(Summarize(includeNames, UsersDeleted.Select(o => o.Name).ToList(), "users not in source but in target"));
 			sb.Append(Summarize(includeNames, UsersDiff.Select(o => o.Name).ToList(), "users altered"));
@@ -1448,6 +1455,7 @@ end
 				}
 				text.AppendLine("GO");
 			}
+			// TODO: table types... need to drop and recreate... but will fail if anything references them...
 
 			//delete tables
 			if (TablesDeleted.Count > 0) {
