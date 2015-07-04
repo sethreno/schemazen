@@ -63,6 +63,7 @@ namespace SchemaZen.model {
 		public List<Routine> Routines = new List<Routine>();
 		public List<Schema> Schemas = new List<Schema>();
 		public List<Synonym> Synonyms = new List<Synonym>();
+		public List<Table> TableTypes = new List<Table>();
 		public List<Table> Tables = new List<Table>();
 		public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
@@ -71,8 +72,19 @@ namespace SchemaZen.model {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
-		public Table FindTable(string name, string owner) {
-			return Tables.FirstOrDefault(t => t.Name == name && t.Owner == owner);
+		public Table FindTable(string name, string owner)
+		{
+			return FindTableBase(Tables, name, owner);
+		}
+
+		public Table FindTableType(string name, string owner)
+		{
+			return FindTableBase(TableTypes, name, owner);
+		}
+
+		private static Table FindTableBase(IEnumerable<Table> tables, string name, string owner)
+		{
+			return tables.FirstOrDefault(t => t.Name == name && t.Owner == owner);
 		}
 
 		public Constraint FindConstraint(string name) {
@@ -127,6 +139,7 @@ namespace SchemaZen.model {
 			}
 		}
 
+		#region Load
 		public void Load() {
 			Tables.Clear();
 			Routines.Clear();
@@ -572,61 +585,96 @@ order by fk.name, fkc.constraint_column_id
 		{
 			//get columns
 			cm.CommandText = @"
-					select 
-						t.TABLE_SCHEMA,
-						c.TABLE_NAME,
-						c.COLUMN_NAME,
-						c.DATA_TYPE,
-						c.ORDINAL_POSITION,
-						c.IS_NULLABLE,
-						c.CHARACTER_MAXIMUM_LENGTH,
-						c.NUMERIC_PRECISION,
-						c.NUMERIC_SCALE,
-						COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') AS IS_ROW_GUID_COL
-					from INFORMATION_SCHEMA.COLUMNS c
-						inner join INFORMATION_SCHEMA.TABLES t
-								on t.TABLE_NAME = c.TABLE_NAME
-									and t.TABLE_SCHEMA = c.TABLE_SCHEMA
-									and t.TABLE_CATALOG = c.TABLE_CATALOG
-					where
-						t.TABLE_TYPE = 'BASE TABLE'
-					order by t.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
+				select 
+					t.TABLE_SCHEMA,
+					c.TABLE_NAME,
+					c.COLUMN_NAME,
+					c.DATA_TYPE,
+					c.ORDINAL_POSITION,
+					c.IS_NULLABLE,
+					c.CHARACTER_MAXIMUM_LENGTH,
+					c.NUMERIC_PRECISION,
+					c.NUMERIC_SCALE,
+					COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') AS IS_ROW_GUID_COL
+				from INFORMATION_SCHEMA.COLUMNS c
+					inner join INFORMATION_SCHEMA.TABLES t
+							on t.TABLE_NAME = c.TABLE_NAME
+								and t.TABLE_SCHEMA = c.TABLE_SCHEMA
+								and t.TABLE_CATALOG = c.TABLE_CATALOG
+				where
+					t.TABLE_TYPE = 'BASE TABLE'
+				order by t.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
 ";
-			Table table = null;
-			using (SqlDataReader dr = cm.ExecuteReader())
-			{
-				while (dr.Read())
-				{
-					var c = new Column
-					{
-						Name = (string)dr["COLUMN_NAME"],
-						Type = (string)dr["DATA_TYPE"],
-						IsNullable = (string)dr["IS_NULLABLE"] == "YES",
-						Position = (int)dr["ORDINAL_POSITION"],
-						IsRowGuidCol = (int)dr["IS_ROW_GUID_COL"] == 1
-					};
+			using (SqlDataReader dr = cm.ExecuteReader()) {
+				LoadColumnsBase(dr, Tables);
+			}
 
-					switch (c.Type)
-					{
-						case "binary":
-						case "char":
-						case "nchar":
-						case "nvarchar":
-						case "varbinary":
-						case "varchar":
-							c.Length = (int)dr["CHARACTER_MAXIMUM_LENGTH"];
-							break;
-						case "decimal":
-						case "numeric":
-							c.Precision = (byte)dr["NUMERIC_PRECISION"];
-							c.Scale = (int)dr["NUMERIC_SCALE"];
-							break;
-					}
-
-					if (table == null || table.Name != (string)dr["TABLE_NAME"] || table.Owner != (string)dr["TABLE_SCHEMA"]) // only do a lookup if the table we have isn't already the relevant one
-						table = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					table.Columns.Add(c);
+			try {
+				cm.CommandText = @"
+				select 
+					s.name as TABLE_SCHEMA,
+					tt.name as TABLE_NAME, 
+					c.name as COLUMN_NAME,
+					t.name as DATA_TYPE,
+					c.column_id as ORDINAL_POSITION,
+					c.is_nullable as IS_NULLABLE,
+					c.max_length as CHARACTER_MAXIMUM_LENGTH,
+					c.precision as NUMERIC_PRECISION,
+					c.scale as NUMERIC_SCALE,
+					c.is_rowguidcol as IS_ROW_GUID_COL
+				from sys.columns c
+					inner join sys.table_types tt
+						on tt.type_table_object_id = c.object_id
+					inner join sys.schemas s
+						on tt.schema_id = s.schema_id 
+					inner join sys.types t
+						on t.system_type_id = c.system_type_id
+							and t.user_type_id = c.user_type_id
+				where
+					tt.is_user_defined = 1
+				order by s.name, tt.name, c.column_id
+";
+				using (SqlDataReader dr = cm.ExecuteReader()) {
+					LoadColumnsBase(dr, TableTypes);
 				}
+			} catch (SqlException) {
+				// SQL server version doesn't support table types, nothing to do
+			}
+
+		}
+
+		private static void LoadColumnsBase(IDataReader dr, List<Table> tables) {
+			Table table = null;
+
+			while (dr.Read()) {
+				var c = new Column {
+					Name = (string) dr["COLUMN_NAME"],
+					Type = (string) dr["DATA_TYPE"],
+					IsNullable = (string) dr["IS_NULLABLE"] == "YES",
+					Position = (int) dr["ORDINAL_POSITION"],
+					IsRowGuidCol = (int) dr["IS_ROW_GUID_COL"] == 1
+				};
+
+				switch (c.Type) {
+					case "binary":
+					case "char":
+					case "nchar":
+					case "nvarchar":
+					case "varbinary":
+					case "varchar":
+						c.Length = (int) dr["CHARACTER_MAXIMUM_LENGTH"];
+						break;
+					case "decimal":
+					case "numeric":
+						c.Precision = (byte) dr["NUMERIC_PRECISION"];
+						c.Scale = (int) dr["NUMERIC_SCALE"];
+						break;
+				}
+
+				if (table == null || table.Name != (string) dr["TABLE_NAME"] || table.Owner != (string) dr["TABLE_SCHEMA"])
+					// only do a lookup if the table we have isn't already the relevant one
+					table = FindTableBase(tables, (string) dr["TABLE_NAME"], (string) dr["TABLE_SCHEMA"]);
+				table.Columns.Add(c);
 			}
 		}
 
@@ -634,17 +682,38 @@ order by fk.name, fkc.constraint_column_id
 		{
 			//get tables
 			cm.CommandText = @"
-					select 
-						TABLE_SCHEMA, 
-						TABLE_NAME 
-					from INFORMATION_SCHEMA.TABLES
-					where TABLE_TYPE = 'BASE TABLE'";
+				select 
+					TABLE_SCHEMA, 
+					TABLE_NAME 
+				from INFORMATION_SCHEMA.TABLES
+				where TABLE_TYPE = 'BASE TABLE'";
 			using (SqlDataReader dr = cm.ExecuteReader())
 			{
-				while (dr.Read())
-				{
-					Tables.Add(new Table((string)dr["TABLE_SCHEMA"], (string)dr["TABLE_NAME"]));
+				LoadTablesBase(dr, false, Tables);
+			}
+
+			//get table types
+			try {
+				cm.CommandText = @"
+				select 
+					s.name as TABLE_SCHEMA,
+					tt.name as TABLE_NAME
+				from sys.table_types tt
+				inner join sys.schemas s on tt.schema_id = s.schema_id
+				where tt.is_user_defined = 1
+				order by schema_name, table_type_name";
+				using (SqlDataReader dr = cm.ExecuteReader()) {
+					LoadTablesBase(dr, true, TableTypes);
 				}
+			} catch (SqlException) {
+				// SQL server version doesn't support table types, nothing to do here
+			}
+		}
+
+		private void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables)
+		{
+			while (dr.Read()) {
+				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes});
 			}
 		}
 
@@ -744,6 +813,7 @@ where name = @dbname
 				}
 			}
 		}
+#endregion
 
 		public DatabaseDiff Compare(Database db) {
 			var diff = new DatabaseDiff();
@@ -984,7 +1054,7 @@ where name = @dbname
 					text.ToString());
 			}
 
-			foreach (Table t in Tables) {
+			foreach (Table t in Tables.Concat(TableTypes)) {
 				File.WriteAllText(
 					string.Format("{0}/tables/{1}.sql", Dir, MakeFileName(t)),
 					t.ScriptCreate() + "\r\nGO\r\n"
@@ -1043,7 +1113,7 @@ where name = @dbname
 		}
 
 		private static string MakeFileName(Table t) {
-			return MakeFileName(t.Owner, t.Name);
+			return (t.IsType ? "TYPE_" : string.Empty) + MakeFileName(t.Owner, t.Name);
 		}
 
 		private static string MakeFileName(Synonym s)

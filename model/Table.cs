@@ -28,6 +28,7 @@ namespace SchemaZen.model {
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
 		public string Owner;
+		public bool IsType;
 
 		public Table(string owner, string name) {
 			Owner = owner;
@@ -87,7 +88,7 @@ namespace SchemaZen.model {
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.AppendFormat("CREATE TABLE [{0}].[{1}](\r\n", Owner, Name);
+			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE", IsType ? "AS TABLE " : string.Empty);
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
 			foreach (Constraint c in Constraints.Where(c => c.Type != "INDEX")) {
@@ -102,11 +103,14 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptDrop() {
-			return string.Format("DROP TABLE [{0}].[{1}]", Owner, Name);
+			return string.Format("DROP {2} [{0}].[{1}]", Owner, Name, IsType ? "TYPE" : "TABLE");
 		}
 
 
 		public void ExportData(string conn, TextWriter data, string tableHint = null) {
+			if (IsType)
+				throw new InvalidOperationException();
+
 			var sql = new StringBuilder();
 			sql.Append("select ");
 			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
@@ -142,6 +146,9 @@ namespace SchemaZen.model {
 		}
 
 		public void ImportData(string conn, string data) {
+			if (IsType)
+				throw new InvalidOperationException();
+
 			var dt = new DataTable();
 			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				dt.Columns.Add(new DataColumn(c.Name, SqlTypeToNativeType(c.Type)));
