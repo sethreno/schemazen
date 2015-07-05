@@ -1441,13 +1441,15 @@ end
 				text.AppendLine("GO");
 			}
 
-			//add tables
-			if (TablesAdded.Count > 0) {
-				foreach (Table t in TablesAdded) {
-					text.Append(t.ScriptCreate());
+			//delete tables
+			if (TablesDeleted.Count + TableTypesDiff.Count > 0) {
+				foreach (Table t in TablesDeleted.Concat(TableTypesDiff)) {
+					text.AppendLine(t.ScriptDrop());
 				}
 				text.AppendLine("GO");
 			}
+			// TODO: table types drop will fail if anything references them... try to find a workaround?
+
 
 			//modify tables
 			if (TablesDiff.Count > 0) {
@@ -1456,12 +1458,11 @@ end
 				}
 				text.AppendLine("GO");
 			}
-			// TODO: table types... need to drop and recreate... but will fail if anything references them...
-
-			//delete tables
-			if (TablesDeleted.Count > 0) {
-				foreach (Table t in TablesDeleted) {
-					text.AppendLine(t.ScriptDrop());
+			
+			//add tables
+			if (TablesAdded.Count + TableTypesDiff.Count > 0) {
+				foreach (Table t in TablesAdded.Concat(TableTypesDiff)) {
+					text.Append(t.ScriptCreate());
 				}
 				text.AppendLine("GO");
 			}
