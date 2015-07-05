@@ -39,19 +39,19 @@ AS
 			t.Columns.Add(new Column("zip", "char", 5, false, null));
 			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-			var getAddress = new Routine("dbo", "GetAddress");
-			getAddress.Text = @"--example of routine that has been renamed since creation
-CREATE PROCEDURE [dbo].[NamedDifferently]
+			var baseText = @"--example of routine that has been renamed since creation
+CREATE PROCEDURE {0}
 	@id int
 AS
 	select * from Address where id = @id
 ";
+			var getAddress = new Routine("dbo", "GetAddress");
+			getAddress.Text = string.Format(baseText, "[dbo].[NamedDifferently]");
 
 			TestHelper.ExecSql(t.ScriptCreate(), "");
 			var script = getAddress.ScriptCreate(null);
+			Assert.IsTrue(script.Contains(string.Format(baseText, "[dbo].[GetAddress]")));
 			TestHelper.ExecBatchSql(script + "\nGO", "");
-
-			// TODO: Load DB and check contains routine called dbo.GetAddress
 
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
 			TestHelper.ExecSql("drop table [dbo].[Address]", "");
