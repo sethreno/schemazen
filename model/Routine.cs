@@ -57,7 +57,7 @@ namespace SchemaZen.model {
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 			
 			// correct the name if it is incorrect
-			var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase);
+			var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
 			var match = regex.Match(definition);
 			var group = match.Groups[2];
 			if (group.Success)

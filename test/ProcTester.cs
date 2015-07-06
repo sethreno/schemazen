@@ -58,6 +58,7 @@ AS
 
 			
 			getAddress = new Routine("dbo", "GetAddress");
+			baseText = baseText.Replace("--", "/*").Replace("CREATE", "*/CREATE");
 			getAddress.Text = string.Format(baseText, "dbo.NamedDifferently");
 
 			script = getAddress.ScriptCreate(null);
