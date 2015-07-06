@@ -39,6 +39,8 @@ AS
 			t.Columns.Add(new Column("zip", "char", 5, false, null));
 			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
+			TestHelper.ExecSql(t.ScriptCreate(), "");
+
 			var baseText = @"--example of routine that has been renamed since creation
 CREATE PROCEDURE {0}
 	@id int
@@ -48,15 +50,24 @@ AS
 			var getAddress = new Routine("dbo", "GetAddress");
 			getAddress.Text = string.Format(baseText, "[dbo].[NamedDifferently]");
 
-			TestHelper.ExecSql(t.ScriptCreate(), "");
 			var script = getAddress.ScriptCreate(null);
 			Assert.IsTrue(script.Contains(string.Format(baseText, "[dbo].[GetAddress]")));
 			TestHelper.ExecBatchSql(script + "\nGO", "");
 
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
+
+			
+			getAddress = new Routine("dbo", "GetAddress");
+			getAddress.Text = string.Format(baseText, "dbo.NamedDifferently");
+
+			script = getAddress.ScriptCreate(null);
+			Assert.IsTrue(script.Contains(string.Format(baseText, "[dbo].[GetAddress]")));
+			TestHelper.ExecBatchSql(script + "\nGO", "");
+
 			TestHelper.ExecSql("drop table [dbo].[Address]", "");
-
-
+			
 		}
+
+		
 	}
 }
