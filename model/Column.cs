@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.model {
 	public class Column {
@@ -116,6 +117,30 @@ namespace SchemaZen.model {
 			} else {
 				return string.Format("[{0}] AS {1}", Name, ComputedDefinition);
 			}
+		}
+
+		internal static Type SqlTypeToNativeType(string sqlType)
+		{
+			switch (sqlType.ToLower())
+			{
+				case "bit":
+					return typeof(bool);
+				case "datetime":
+				case "smalldatetime":
+					return typeof(DateTime);
+				case "int":
+					return typeof(int);
+				case "uniqueidentifier":
+					return typeof(Guid);
+				case "varbinary":
+					return typeof(byte[]);
+				default:
+					return typeof(string);
+			}
+		}
+
+		public Type SqlTypeToNativeType () {
+			return SqlTypeToNativeType(Type);
 		}
 	}
 

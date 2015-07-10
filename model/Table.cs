@@ -151,7 +151,7 @@ namespace SchemaZen.model {
 
 			var dt = new DataTable();
 			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
-				dt.Columns.Add(new DataColumn(c.Name, SqlTypeToNativeType(c.Type)));
+				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 			string[] lines = data.Split(new[] {rowSeparator}, StringSplitOptions.RemoveEmptyEntries);
 			int i = 0;
@@ -179,25 +179,7 @@ namespace SchemaZen.model {
 			bulk.WriteToServer(dt);
 		}
 
-		private static Type SqlTypeToNativeType(string sqlType) {
-			switch (sqlType.ToLower()) {
-				case "bit":
-					return typeof (bool);
-				case "datetime":
-				case "smalldatetime":
-					return typeof (DateTime);
-				case "int":
-					return typeof (int);
-				case "uniqueidentifier":
-					return typeof (Guid);
-				case "varbinary":
-					return typeof (byte[]);
-				default:
-					return typeof (string);
-			}
-		}
-
-		public object ConvertType(string sqlType, string val) {
+		public static object ConvertType(string sqlType, string val) {
 			if (val == nullValue)
 				return DBNull.Value;
 
