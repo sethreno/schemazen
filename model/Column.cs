@@ -47,7 +47,7 @@ namespace SchemaZen.model {
 		public string DefaultText {
 			get {
 				if (Default == null || !string.IsNullOrEmpty(ComputedDefinition)) return "";
-				return "\r\n      " + Default.Script();
+				return "\r\n      " + Default.ScriptAsPartOfColumnDefinition();
 			}
 		}
 
@@ -70,9 +70,12 @@ namespace SchemaZen.model {
 			return new ColumnDiff(this, c);
 		}
 
-		public string Script() {
-			if (string.IsNullOrEmpty(ComputedDefinition)) {
-				switch (Type) {
+		private string ScriptBase(bool includeDefaultConstraint)
+		{
+			if (string.IsNullOrEmpty(ComputedDefinition))
+			{
+				switch (Type)
+				{
 					case "bigint":
 					case "bit":
 					case "date":
@@ -96,7 +99,7 @@ namespace SchemaZen.model {
 					case "uniqueidentifier":
 					case "xml":
 
-						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText, DefaultText, IdentityText, RowGuidColText);
+						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText);
 					case "binary":
 					case "char":
 					case "nchar":
@@ -106,17 +109,27 @@ namespace SchemaZen.model {
 						string lengthString = Length.ToString();
 						if (lengthString == "-1") lengthString = "max";
 
-						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, DefaultText);
+						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty);
 					case "decimal":
 					case "numeric":
 
-						return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, DefaultText);
+						return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty);
 					default:
 						throw new NotSupportedException("SQL data type " + Type + " is not supported.");
 				}
-			} else {
+			}
+			else
+			{
 				return string.Format("[{0}] AS {1}", Name, ComputedDefinition);
 			}
+		}
+
+		public string ScriptCreate() {
+			return ScriptBase(true);
+		}
+
+		public string ScriptAlter() {
+			return ScriptBase(false);
 		}
 
 		internal static Type SqlTypeToNativeType(string sqlType)
@@ -154,15 +167,38 @@ namespace SchemaZen.model {
 		}
 
 		public bool IsDiff {
-			get {
-				return Source.DefaultText != Target.DefaultText || Source.IsNullable != Target.IsNullable ||
-				       Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type ||
-				       Source.Precision != Target.Precision || Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition;
+			get
+			{
+				return IsDiffBase || DefaultIsDiff;
 			}
 		}
 
-		public string Script() {
-			return Target.Script();
+		private bool IsDiffBase
+		{
+			get
+			{
+				return Source.IsNullable != Target.IsNullable || Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision || Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition;
+			}
 		}
+
+		public bool DefaultIsDiff
+		{
+			get
+			{
+				return Source.DefaultText != Target.DefaultText;
+			}
+		}
+
+		public bool OnlyDefaultIsDiff
+		{
+			get
+			{
+				return DefaultIsDiff && !IsDiffBase;
+			}
+		}
+
+		/*public string Script() {
+			return Target.Script();
+		}*/
 	}
 }

@@ -226,7 +226,7 @@ namespace SchemaZen.model {
 			var text = new StringBuilder();
 
 			foreach (Column c in ColumnsAdded) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.Script());
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.ScriptCreate());
 			}
 
 			foreach (Column c in ColumnsDropped) {
@@ -234,7 +234,17 @@ namespace SchemaZen.model {
 			}
 
 			foreach (ColumnDiff c in ColumnsDiff) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Script());
+				if (c.DefaultIsDiff) {
+					if (c.Source.Default != null) {
+						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Source.Default.ScriptDrop());
+					}
+					if (c.Target.Default != null) {
+						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Target.Default.ScriptCreate(c.Target));
+					}
+				}
+				if (!c.OnlyDefaultIsDiff) {
+					text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Target.ScriptAlter());
+				}
 			}
 			return text.ToString();
 		}

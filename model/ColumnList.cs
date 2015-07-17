@@ -26,7 +26,7 @@ namespace SchemaZen.model {
 		public string Script() {
 			var text = new StringBuilder();
 			foreach (Column c in mItems) {
-				text.Append("   " + c.Script());
+				text.Append("   " + c.ScriptCreate());
 				if (mItems.IndexOf(c) < mItems.Count - 1) {
 					text.AppendLine(",");
 				} else {
