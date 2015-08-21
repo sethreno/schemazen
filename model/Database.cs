@@ -1132,7 +1132,10 @@ where name = @dbname
 			// Dont' include schema name for objects in the dbo schema.
 			// This maintains backward compatability for those who use
 			// SchemaZen to keep their schemas under version control.
-			return schema.ToLower() == "dbo" ? name : string.Format("{0}.{1}", schema, name);
+			var fileName = schema.ToLower() == "dbo" ? name : string.Format("{0}.{1}", schema, name);
+			foreach (var invalidChar in Path.GetInvalidFileNameChars())
+				fileName = fileName.Replace(invalidChar, '-');
+			return fileName;
 		}
 
 		public void ExportData(string tableHint = null) {
