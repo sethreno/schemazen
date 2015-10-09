@@ -459,6 +459,7 @@ order by fk.name, fkc.constraint_column_id
 						inner join sys.columns c on c.object_id = t.object_id
 							and c.column_id = ic.column_id
 						inner join sys.schemas s on s.schema_id = t.schema_id
+					where i.type_desc != 'HEAP'
 					order by s.name, t.name, i.name, ic.key_ordinal, ic.index_column_id";
 			using (SqlDataReader dr = cm.ExecuteReader())
 			{
