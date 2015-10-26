@@ -243,6 +243,7 @@ namespace SchemaZen.model {
 				case "uniqueidentifier":
 					return new Guid(val);
 				case "varbinary":
+				case "image":
 					return SoapHexBinary.Parse(val).Value;
 				default:
 					return val;
