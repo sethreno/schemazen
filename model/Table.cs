@@ -24,6 +24,8 @@ namespace SchemaZen.model {
 		private const string rowSeparator = "\r\n";
 		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string nullValue = "--SchemaZenNull--";
+		private const int rowsInBatch = 15000;
+
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
 		public string Name;
@@ -145,7 +147,7 @@ namespace SchemaZen.model {
 			}
 		}
 
-		public void ImportData(string conn, string data) {
+		public void ImportData(string conn, string filename) {
 			if (IsType)
 				throw new InvalidOperationException();
 
@@ -153,30 +155,54 @@ namespace SchemaZen.model {
 			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
-			string[] lines = data.Split(new[] {rowSeparator}, StringSplitOptions.RemoveEmptyEntries);
-			int i = 0;
-			foreach (string line in lines) {
-				i++;
-				DataRow row = dt.NewRow();
-				string[] fields = line.Split(new[] {fieldSeparator}, StringSplitOptions.None);
-				if (fields.Length != dt.Columns.Count) {
-					throw new DataException("Incorrect number of columns", i);
-				}
-				for (int j = 0; j < fields.Length; j++) {
-					try {
-						row[j] = ConvertType(Columns.Items[j].Type,
-							fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
-					} catch (FormatException ex) {
-						throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), i);
+
+			string line;
+			int linenumber = 0;
+			int batch_rows = 0;
+			SqlBulkCopy bulk;
+
+			using (StreamReader file = new StreamReader(filename)) {
+				while ((line = file.ReadLine()) != null) {
+					linenumber++;
+
+					// Skip empty lines
+					if (line.Length == 0)
+						continue;
+
+					batch_rows ++;
+
+					DataRow row = dt.NewRow();
+					string[] fields = line.Split(new[] {fieldSeparator}, StringSplitOptions.None);
+					if (fields.Length != dt.Columns.Count) {
+						throw new DataException("Incorrect number of columns", linenumber);
+					}
+					for (int j = 0; j < fields.Length; j++) {
+						try {
+							row[j] = ConvertType(Columns.Items[j].Type,
+									fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
+						} catch (FormatException ex) {
+							throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), linenumber);
+						}
+					}
+					dt.Rows.Add(row);
+
+					if (batch_rows == rowsInBatch) {
+						batch_rows = 0;
+						bulk = new SqlBulkCopy(conn,
+								SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
+						bulk.DestinationTableName = Name;
+						bulk.WriteToServer(dt);
+						bulk.Close();
+						dt.Clear();
 					}
 				}
-				dt.Rows.Add(row);
 			}
 
-			var bulk = new SqlBulkCopy(conn,
-				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
+			bulk = new SqlBulkCopy(conn,
+					SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
 			bulk.DestinationTableName = Name;
 			bulk.WriteToServer(dt);
+			bulk.Close();
 		}
 
 		public static object ConvertType(string sqlType, string val) {

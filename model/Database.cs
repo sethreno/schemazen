@@ -1201,7 +1201,7 @@ end
 					continue;
 				}
 				try {
-					t.ImportData(Connection, File.ReadAllText(fi.FullName));
+					t.ImportData(Connection, fi.FullName);
 				} catch (DataException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (SqlBatchException ex) {

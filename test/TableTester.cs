@@ -87,11 +87,19 @@ namespace SchemaZen.test {
 2	P	Processing
 3	F	Frozen
 ";
+			string filename =  Path.GetTempFileName();
 
-			t.ImportData(conn, dataIn);
+			StreamWriter writer = File.AppendText(filename);
+			writer.Write(dataIn);
+			writer.Flush();
+			writer.Close();
+
+			t.ImportData(conn, filename);
 			var sw = new StringWriter();
 			t.ExportData(conn, sw);
 			Assert.AreEqual(dataIn, sw.ToString());
+
+			File.Delete(filename);
 		}
 
 		[Test]
