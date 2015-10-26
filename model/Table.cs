@@ -190,7 +190,7 @@ namespace SchemaZen.model {
 						batch_rows = 0;
 						bulk = new SqlBulkCopy(conn,
 								SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-						bulk.DestinationTableName = Name;
+						bulk.DestinationTableName = string.Format("[{0}]", Name);
 						bulk.WriteToServer(dt);
 						bulk.Close();
 						dt.Clear();
@@ -200,7 +200,7 @@ namespace SchemaZen.model {
 
 			bulk = new SqlBulkCopy(conn,
 					SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-			bulk.DestinationTableName = Name;
+			bulk.DestinationTableName = string.Format("[{0}]", Name);
 			bulk.WriteToServer(dt);
 			bulk.Close();
 		}
