@@ -156,23 +156,43 @@ namespace SchemaZen.model {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 
-			string line;
 			int linenumber = 0;
 			int batch_rows = 0;
 			SqlBulkCopy bulk;
 
 			using (StreamReader file = new StreamReader(filename)) {
-				while ((line = file.ReadLine()) != null) {
+				List<char> line = new List<char>();
+				while (file.Peek() >= 0) {
+
+					int rowsep_cnt = 0;
+					line.Clear();
+
+					while (file.Peek() >= 0) {
+						char ch = (char)file.Read();
+						line.Add(ch);
+
+						if (ch == rowSeparator[rowsep_cnt])
+							rowsep_cnt++;
+						else
+							rowsep_cnt = 0;
+
+						if (rowsep_cnt == rowSeparator.Length) {
+							// Remove rowseparator from line
+							line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
+							break;
+						}
+
+					}
 					linenumber++;
 
 					// Skip empty lines
-					if (line.Length == 0)
+					if (line.Count == 0)
 						continue;
 
 					batch_rows ++;
 
 					DataRow row = dt.NewRow();
-					string[] fields = line.Split(new[] {fieldSeparator}, StringSplitOptions.None);
+					string[] fields = (new String(line.ToArray())).Split(new[] {fieldSeparator}, StringSplitOptions.None);
 					if (fields.Length != dt.Columns.Count) {
 						throw new DataException("Incorrect number of columns", linenumber);
 					}
