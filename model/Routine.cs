@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -20,7 +22,7 @@ namespace SchemaZen.model {
 		public string Text;
 
 		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
-		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(" + Database.SqlEnclosedIdentifierRegex + @"\." + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlEnclosedIdentifierRegex + @"|\S+)(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
+		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
 		public Routine(string schema, string name) {
 			Schema = schema;
@@ -94,5 +96,24 @@ namespace SchemaZen.model {
 			}
 			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Schema, Name));
 		}
+
+		public IEnumerable<string> Warnings () {
+			// check if the name is correct
+			var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
+			var match = regex.Match(Text);
+
+			// the schema is captured in group index 2, and the name in 3
+
+			var nameGroup = match.Groups[3];
+			if (nameGroup.Success) {
+				var name = nameGroup.Value;
+				if (name.StartsWith("[") && name.EndsWith("]"))
+					name = name.Substring(1, name.Length - 2);
+
+				if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
+					yield return string.Format("Name from script definition '{0}' does not match expected name '{1}'", name, Name);
+				}
+			}
+		} 
 	}
 }

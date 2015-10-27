@@ -50,6 +50,7 @@ namespace SchemaZen.model {
 		public const string SqlWhitespaceOrCommentRegex = @"(?>(?:\s+|--.*?(?:\r|\n)|/\*.*?\*/))";
 		public const string SqlEnclosedIdentifierRegex = @"\[.+?\]";
 		public const string SqlQuotedIdentifierRegex = "\".+?\"";
+		public const string SqlRegularIdentifierRegex = @"(?!\d)[\w@$#]+"; // see rules for regular identifiers here https://msdn.microsoft.com/en-us/library/ms175874.aspx
 
 		#region " Properties "
 

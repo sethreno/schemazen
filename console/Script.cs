@@ -50,6 +50,16 @@ namespace SchemaZen.console
 			db.ScriptToDir(TableHint);
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
+			var routinesWithWarnings = db.Routines.Select(r => new {
+																	   Routine = r,
+																	   Warnings = r.Warnings().ToList()
+																   }).Where(r => r.Warnings.Any()).ToList();
+			if (routinesWithWarnings.Any()) {
+				Console.WriteLine("With the following warnings:");
+				foreach (var warning in routinesWithWarnings.SelectMany(r => r.Warnings.Select(w => "- " + r.Routine.RoutineType.ToString() + " " + r.Routine.Name + ": " + w))) {
+					Console.WriteLine(warning);
+				}
+			}
 			return 0;
 		}
 
