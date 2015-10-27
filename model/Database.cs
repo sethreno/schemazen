@@ -1031,83 +1031,91 @@ where name = @dbname
 		public void ScriptToDir(string tableHint = null) {
 			if (Directory.Exists(Dir)) {
 				// delete the existing script files
-				foreach (
-					string f in
-						dirs.Where(dir => Directory.Exists(Dir + "/" + dir)).SelectMany(dir => Directory.GetFiles(Dir + "/" + dir))) {
+				foreach (string f in
+					dirs.Select(dir => Path.Combine(Dir, dir)).Where(Directory.Exists).SelectMany(Directory.GetFiles))
+				{
 					File.Delete(f);
 				}
 			}
-			// create dir tree
-			foreach (string dir in dirs.Where(dir => !Directory.Exists(Dir + "/" + dir))) {
-				Directory.CreateDirectory(Dir + "/" + dir);
-			}
 
-			var text = new StringBuilder();
-			text.Append(ScriptPropList(Props));
-			text.AppendLine("GO");
-			text.AppendLine();
-			File.WriteAllText(string.Format("{0}/props.sql", Dir),
-				text.ToString());
-
+			IEnumerable<string> files = new string[] { };
+			files = files.Concat(new string[] {
+												  ScriptPropList(Props),
+												  string.Empty,
+												  "props",
+											  });
+			
 			if (Schemas.Count > 0) {
-				text = new StringBuilder();
-				text.Append(ScriptSchemas(Schemas));
-				text.AppendLine("GO");
-				text.AppendLine();
-				File.WriteAllText(string.Format("{0}/schemas.sql", Dir),
-					text.ToString());
+				files = files.Concat(new string[] {
+													  ScriptSchemas(Schemas),
+													  string.Empty,
+													  "schemas",
+												  });
 			}
 
-			foreach (Table t in Tables.Concat(TableTypes)) {
-				File.WriteAllText(
-					string.Format("{0}/tables/{1}.sql", Dir, MakeFileName(t)),
-					t.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Tables.Concat(TableTypes).SelectMany(t => new string[] {
+																							t.ScriptCreate(),
+																							"tables",
+																							MakeFileName(t)
+																						}));
 
-			foreach (ForeignKey fk in ForeignKeys) {
-				File.AppendAllText(
-					string.Format("{0}/foreign_keys/{1}.sql", Dir, MakeFileName(fk.Table)),
-					fk.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(ForeignKeys.SelectMany(fk => new string[] {
+																			   fk.ScriptCreate(),
+																			   "foreign_keys",
+																			   MakeFileName(fk.Table)
+																		   }));
 
-			foreach (Routine r in Routines) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, r.RoutineType.ToString().ToLower() + "s", MakeFileName(r)),
-					r.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Routines.SelectMany(r => new string[] {
+																		   r.ScriptCreate(this),
+																		   r.RoutineType.ToString().ToLower() + "s",
+																		   MakeFileName(r)
+																	   }));
 
-			foreach (Constraint c in ViewIndexes) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "views", MakeFileName(c.Name)),
-					c.Script() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(ViewIndexes.SelectMany(c => new string[] {
+																			  c.Script(),
+																			  "views",
+																			  MakeFileName(c.Name)
+																		  }));
 
-			foreach (SqlAssembly a in Assemblies) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "assemblies", MakeFileName(a.Name)),
-					a.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Assemblies.SelectMany(a => new string[] {
+																			 a.ScriptCreate(this),
+																			 "assemblies",
+																			 MakeFileName(a.Name)
+																		 }));
 
-			foreach (SqlUser u in Users) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "users", MakeFileName(u.Name)),
-					u.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Users.SelectMany(u => new string[] {
+																		u.ScriptCreate(this),
+																		"users",
+																		MakeFileName(u.Name)
+																	}));
 
-			foreach (Synonym s in Synonyms)
-			{
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "synonyms", MakeFileName(s)),
-					s.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Synonyms.SelectMany(s => new string[] {
+																			 s.ScriptCreate(),
+																			 "synonyms",
+																			 MakeFileName(s)
+																		 }));
 
+
+			int index = -1;
+			string folder = null;
+			string script = null;
+			foreach (string s in files) {
+				index ++;
+				switch (index) {
+					case 0:
+						script = s;
+						break;
+					case 1:
+						folder = Path.Combine(Dir, s);
+						Directory.CreateDirectory(folder); // if the directory already exists, no problem
+						break;
+					case 2:
+						File.WriteAllText(Path.Combine(folder, s + ".sql"), script + "\r\nGO\r\n");
+
+						index = -1;
+						break;
+				}
+			}
 
 			ExportData(tableHint);
 		}
