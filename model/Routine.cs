@@ -20,6 +20,9 @@ namespace SchemaZen.model {
 		public RoutineKind RoutineType;
 		public string Schema;
 		public string Text;
+		public bool Disabled;
+		public string RelatedTableSchema;
+		public string RelatedTableName;
 
 		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
 		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
@@ -57,7 +60,10 @@ namespace SchemaZen.model {
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
 			if (after != string.Empty)
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
-			
+
+			if (RoutineType == RoutineKind.Trigger)
+				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Schema, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
+
 			return before + definition + after;
 		}
 

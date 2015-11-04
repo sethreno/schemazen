@@ -305,12 +305,15 @@ namespace SchemaZen.model {
 						m.definition,
 						m.uses_ansi_nulls,
 						m.uses_quoted_identifier,
-						t.name as tableName
+						s2.name as tableSchema,
+						t.name as tableName,
+						tr.is_disabled as trigger_disabled
 					from sys.sql_modules m
 						inner join sys.objects o on m.object_id = o.object_id
 						inner join sys.schemas s on s.schema_id = o.schema_id
 						left join sys.triggers tr on m.object_id = tr.object_id
 						left join sys.tables t on tr.parent_id = t.object_id
+						left join sys.schemas s2 on s2.schema_id = t.schema_id
 					where objectproperty(o.object_id, 'IsMSShipped') = 0
 					";
 			using (SqlDataReader dr = cm.ExecuteReader())
@@ -339,6 +342,9 @@ namespace SchemaZen.model {
 								break;
 							case "SQL_TRIGGER":
 								r.RoutineType = Routine.RoutineKind.Trigger;
+								r.RelatedTableName = (string)dr["tableName"];
+								r.RelatedTableSchema = (string)dr["tableSchema"];
+								r.Disabled = (bool)dr["trigger_disabled"];
 								break;
 							case "SQL_SCALAR_FUNCTION":
 							case "SQL_INLINE_TABLE_VALUED_FUNCTION":
