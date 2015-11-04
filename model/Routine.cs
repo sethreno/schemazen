@@ -104,20 +104,25 @@ namespace SchemaZen.model {
 		}
 
 		public IEnumerable<string> Warnings () {
-			// check if the name is correct
-			var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
-			var match = regex.Match(Text);
+			if (string.IsNullOrEmpty(Text)) {
+				yield return "Script definition could not be retrieved.";
+			} else {
 
-			// the schema is captured in group index 2, and the name in 3
+				// check if the name is correct
+				var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
+				var match = regex.Match(Text);
 
-			var nameGroup = match.Groups[3];
-			if (nameGroup.Success) {
-				var name = nameGroup.Value;
-				if (name.StartsWith("[") && name.EndsWith("]"))
-					name = name.Substring(1, name.Length - 2);
+				// the schema is captured in group index 2, and the name in 3
 
-				if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
-					yield return string.Format("Name from script definition '{0}' does not match expected name '{1}'", name, Name);
+				var nameGroup = match.Groups[3];
+				if (nameGroup.Success) {
+					var name = nameGroup.Value;
+					if (name.StartsWith("[") && name.EndsWith("]"))
+						name = name.Substring(1, name.Length - 2);
+
+					if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
+						yield return string.Format("Name from script definition '{0}' does not match expected name '{1}'", name, Name);
+					}
 				}
 			}
 		} 

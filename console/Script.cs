@@ -56,7 +56,7 @@ namespace SchemaZen.console
 																   }).Where(r => r.Warnings.Any()).ToList();
 			if (routinesWithWarnings.Any()) {
 				Console.WriteLine("With the following warnings:");
-				foreach (var warning in routinesWithWarnings.SelectMany(r => r.Warnings.Select(w => "- " + r.Routine.RoutineType.ToString() + " " + r.Routine.Name + ": " + w))) {
+				foreach (var warning in routinesWithWarnings.SelectMany(r => r.Warnings.Select(w => string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Schema, r.Routine.Name, w)))) {
 					Console.WriteLine(warning);
 				}
 			}

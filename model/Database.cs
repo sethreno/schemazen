@@ -320,40 +320,30 @@ namespace SchemaZen.model {
 			{
 				while (dr.Read())
 				{
-					// TODO: consider refactoring - it is bad practice to write to the console from a class library...
-					if (dr["definition"] is DBNull)
-					{
-						Console.ForegroundColor = ConsoleColor.Magenta;
-						Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
-						Console.ForegroundColor = ConsoleColor.White;
-					}
-					else
-					{
-						var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
-						r.Text = (string)dr["definition"];
-						r.AnsiNull = (bool)dr["uses_ansi_nulls"];
-						r.QuotedId = (bool)dr["uses_quoted_identifier"];
-						Routines.Add(r);
+					var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
+					r.Text = dr["definition"] is DBNull ? string.Empty : (string)dr["definition"];
+					r.AnsiNull = (bool)dr["uses_ansi_nulls"];
+					r.QuotedId = (bool)dr["uses_quoted_identifier"];
+					Routines.Add(r);
 
-						switch ((string)dr["type_desc"])
-						{
-							case "SQL_STORED_PROCEDURE":
-								r.RoutineType = Routine.RoutineKind.Procedure;
-								break;
-							case "SQL_TRIGGER":
-								r.RoutineType = Routine.RoutineKind.Trigger;
-								r.RelatedTableName = (string)dr["tableName"];
-								r.RelatedTableSchema = (string)dr["tableSchema"];
-								r.Disabled = (bool)dr["trigger_disabled"];
-								break;
-							case "SQL_SCALAR_FUNCTION":
-							case "SQL_INLINE_TABLE_VALUED_FUNCTION":
-								r.RoutineType = Routine.RoutineKind.Function;
-								break;
-							case "VIEW":
-								r.RoutineType = Routine.RoutineKind.View;
-								break;
-						}
+					switch ((string)dr["type_desc"])
+					{
+						case "SQL_STORED_PROCEDURE":
+							r.RoutineType = Routine.RoutineKind.Procedure;
+							break;
+						case "SQL_TRIGGER":
+							r.RoutineType = Routine.RoutineKind.Trigger;
+							r.RelatedTableName = (string)dr["tableName"];
+							r.RelatedTableSchema = (string)dr["tableSchema"];
+							r.Disabled = (bool)dr["trigger_disabled"];
+							break;
+						case "SQL_SCALAR_FUNCTION":
+						case "SQL_INLINE_TABLE_VALUED_FUNCTION":
+							r.RoutineType = Routine.RoutineKind.Function;
+							break;
+						case "VIEW":
+							r.RoutineType = Routine.RoutineKind.View;
+							break;
 					}
 				}
 			}
