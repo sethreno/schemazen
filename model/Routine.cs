@@ -58,11 +58,14 @@ namespace SchemaZen.model {
 		{
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
-			if (after != string.Empty)
+			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
 			if (RoutineType == RoutineKind.Trigger)
 				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Schema, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
+
+			if (string.IsNullOrEmpty(definition))
+				definition = string.Format("/* missing definition for {0} [{1}].[{2}] */", RoutineType, Schema, Name);
 
 			return before + definition + after;
 		}
