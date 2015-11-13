@@ -1,11 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace SchemaZen.model {
-	public class Routine {
+	public class Routine : INameable, IHasOwner, IScriptable {
 		public enum RoutineKind {
 			Procedure,
 			Function,
@@ -15,21 +14,23 @@ namespace SchemaZen.model {
 		}
 
 		public bool AnsiNull;
-		public string Name;
+		public string Name { get; set; }
 		public bool QuotedId;
 		public RoutineKind RoutineType;
-		public string Schema;
+		public string Owner { get; set; }
 		public string Text;
 		public bool Disabled;
 		public string RelatedTableSchema;
 		public string RelatedTableName;
+		public Database Db;
 
 		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
 		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
-		public Routine(string schema, string name) {
-			Schema = schema;
+		public Routine(string owner, string name, Database db) {
+			Owner = owner;
 			Name = name;
+			Db = db;
 		}
 
 		private string ScriptQuotedIdAndAnsiNulls(Database db, bool databaseDefaults)
@@ -62,16 +63,16 @@ namespace SchemaZen.model {
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
 			if (RoutineType == RoutineKind.Trigger)
-				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Schema, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
+				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Owner, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
 
 			if (string.IsNullOrEmpty(definition))
-				definition = string.Format("/* missing definition for {0} [{1}].[{2}] */", RoutineType, Schema, Name);
+				definition = string.Format("/* missing definition for {0} [{1}].[{2}] */", RoutineType, Owner, Name);
 
 			return before + definition + after;
 		}
 
-		public string ScriptCreate(Database db) {
-			return ScriptBase(db, Text);
+		public string ScriptCreate() {
+			return ScriptBase(Db, Text);
 		}
 
 		public string GetSQLTypeForRegEx() {
@@ -90,7 +91,7 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptDrop() {
-			return string.Format("DROP {0} [{1}].[{2}]", GetSQLType(), Schema, Name);
+			return string.Format("DROP {0} [{1}].[{2}]", GetSQLType(), Owner, Name);
 		}
 
 
@@ -103,7 +104,7 @@ namespace SchemaZen.model {
 					return ScriptBase(db, Text.Substring(0, group.Index) + "ALTER" + Text.Substring(group.Index + group.Length));
 				}
 			}
-			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Schema, Name));
+			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Owner, Name));
 		}
 
 		public IEnumerable<string> Warnings () {

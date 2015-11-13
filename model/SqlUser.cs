@@ -3,15 +3,15 @@ using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.model {
-	public class SqlUser {
+	public class SqlUser : INameable, IHasOwner, IScriptable {
 		public List<string> DatabaseRoles = new List<string>();
-		public string DefaultSchema;
-		public string Name;
+		public string Owner { get; set; }
+		public string Name { get; set; }
 		public byte[] PasswordHash;
 
-		public SqlUser(string name, string defaultSchema) {
+		public SqlUser(string name, string owner) {
 			Name = name;
-			DefaultSchema = defaultSchema;
+			Owner = owner;
 		}
 
 		public string ScriptDrop() {
@@ -19,14 +19,14 @@ namespace SchemaZen.model {
 			// NOTE: login is deliberately not dropped
 		}
 
-		public string ScriptCreate(Database db) {
+		public string ScriptCreate() {
 			string login = PasswordHash == null ? string.Empty : string.Format(@"IF SUSER_ID('{0}') IS NULL
 				BEGIN CREATE LOGIN {0} WITH PASSWORD = {1} HASHED END
 ", Name, "0x" + new SoapHexBinary(PasswordHash));
 
 			return login +
 			       string.Format("CREATE USER {0} {1} {2}{3}", Name, PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name,
-				       string.IsNullOrEmpty(DefaultSchema) ? string.Empty : "WITH DEFAULT_SCHEMA = ", DefaultSchema)
+				       string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ", Owner)
 			       + "\r\n" +
 			       string.Join("\r\n",
 				       DatabaseRoles.Select(

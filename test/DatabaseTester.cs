@@ -183,7 +183,7 @@ namespace SchemaZen.test {
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
-			source.Routines.Add(new Routine("dbo", "test"));
+			source.Routines.Add(new Routine("dbo", "test", null));
 			source.FindRoutine("test", "dbo").RoutineType = Routine.RoutineKind.Procedure;
 			source.FindRoutine("test", "dbo").Text = @"
 create procedure [dbo].[test]

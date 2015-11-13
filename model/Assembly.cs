@@ -3,9 +3,9 @@ using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.model {
-	public class SqlAssembly {
+	public class SqlAssembly : INameable, IScriptable {
 		public List<KeyValuePair<string, byte[]>> Files = new List<KeyValuePair<string, byte[]>>();
-		public string Name;
+		public string Name { get; set; }
 		public string PermissionSet;
 
 		public SqlAssembly(string permissionSet, string name) {
@@ -16,7 +16,7 @@ namespace SchemaZen.model {
 				PermissionSet = "SAFE";
 		}
 
-		public string ScriptCreate(Database db) {
+		public string ScriptCreate() {
 			IEnumerable<string> commands =
 				Files.Select(
 					(kvp, index) =>

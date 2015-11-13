@@ -15,7 +15,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("zip", "char", 5, false, null));
 			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-			var getAddress = new Routine("dbo", "GetAddress");
+			var getAddress = new Routine("dbo", "GetAddress", null);
 			getAddress.Text = @"
 CREATE PROCEDURE [dbo].[GetAddress]
 	@id int
@@ -24,7 +24,7 @@ AS
 ";
 
 			TestHelper.ExecSql(t.ScriptCreate(), "");
-			TestHelper.ExecBatchSql(getAddress.ScriptCreate(null) + "\nGO", "");
+			TestHelper.ExecBatchSql(getAddress.ScriptCreate() + "\nGO", "");
 
 			TestHelper.ExecSql("drop table [dbo].[Address]", "");
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
@@ -39,7 +39,7 @@ CREATE PROCEDURE {0}
 AS
 	select * from Address where id = @id
 ";
-			var getAddress = new Routine("dbo", "GetAddress");
+			var getAddress = new Routine("dbo", "GetAddress", null);
 			getAddress.RoutineType = Routine.RoutineKind.Procedure;
 
 			getAddress.Text = string.Format(baseText, "[dbo].[NamedDifferently]");

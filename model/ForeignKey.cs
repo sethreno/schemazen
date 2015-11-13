@@ -4,10 +4,10 @@ using System.Linq;
 using System.Text;
 
 namespace SchemaZen.model {
-	public class ForeignKey {
+	public class ForeignKey : INameable, IScriptable {
 		public bool Check;
 		public List<string> Columns = new List<string>();
-		public string Name;
+		public string Name { get; set; }
 		public string OnDelete;
 		public string OnUpdate;
 		public List<string> RefColumns = new List<string>();

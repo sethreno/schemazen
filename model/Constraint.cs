@@ -1,11 +1,11 @@
 ﻿using System.Collections.Generic;
 
 namespace SchemaZen.model {
-	public class Constraint {
+	public class Constraint : INameable, IScriptable {
 		public bool Clustered;
 		public List<string> Columns = new List<string>();
 		public List<string> IncludedColumns = new List<string>();
-		public string Name;
+		public string Name { get; set; }
 		public Table Table;
 		public string Type;
 		public bool Unique;
@@ -26,7 +26,7 @@ namespace SchemaZen.model {
 			get { return !Unique ? "" : "UNIQUE"; }
 		}
 
-		public string Script() {
+		public string ScriptCreate() {
 			if (Type == "INDEX") {
 				string sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])", UniqueText, ClusteredText, Name,
 					Table.Owner, Table.Name,

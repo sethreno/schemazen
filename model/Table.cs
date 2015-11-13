@@ -8,17 +8,26 @@ using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
 namespace SchemaZen.model {
-	public class Schema {
-		public string Name;
-		public string Owner;
+	public class Schema : INameable, IHasOwner, IScriptable {
+		public string Name { get; set; }
+		public string Owner { get; set; }
 
 		public Schema(string name, string owner) {
 			Owner = owner;
 			Name = name;
 		}
+
+		public string ScriptCreate() {
+			return String.Format(@"
+if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
+	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
+	exec sp_executesql N'create schema [{0}] authorization [{1}]'
+end
+", Name, Owner);
+		}
 	}
 
-	public class Table {
+	public class Table : INameable, IHasOwner, IScriptable {
 		private const string fieldSeparator = "\t";
 		private const string escapeFieldSeparator = "--SchemaZenFieldSeparator--";
 		private const string rowSeparator = "\r\n";
@@ -28,8 +37,8 @@ namespace SchemaZen.model {
 
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
-		public string Name;
-		public string Owner;
+		public string Name { get; set; }
+		public string Owner { get; set; }
 		public bool IsType;
 
 		public Table(string owner, string name) {
@@ -75,7 +84,7 @@ namespace SchemaZen.model {
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
 				} else {
-					if (c.Script() != c2.Script()) {
+					if (c.ScriptCreate() != c2.ScriptCreate()) {
 						diff.ConstraintsChanged.Add(c);
 					}
 				}
@@ -94,12 +103,12 @@ namespace SchemaZen.model {
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
 			foreach (Constraint c in Constraints.Where(c => c.Type != "INDEX")) {
-				text.AppendLine("   ," + c.Script());
+				text.AppendLine("   ," + c.ScriptCreate());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
 			foreach (Constraint c in Constraints.Where(c => c.Type == "INDEX")) {
-				text.AppendLine(c.Script());
+				text.AppendLine(c.ScriptCreate());
 			}
 			return text.ToString();
 		}
