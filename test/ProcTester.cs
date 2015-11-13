@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Linq;
+using NUnit.Framework;
 using SchemaZen.model;
 
 namespace SchemaZen.test {
@@ -24,8 +25,36 @@ AS
 
 			TestHelper.ExecSql(t.ScriptCreate(), "");
 			TestHelper.ExecBatchSql(getAddress.ScriptCreate(null) + "\nGO", "");
+
 			TestHelper.ExecSql("drop table [dbo].[Address]", "");
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
+		}
+
+		[Test]
+		public void TestScriptWarnings()
+		{
+			const string baseText = @"--example of routine that has been renamed since creation
+CREATE PROCEDURE {0}
+	@id int
+AS
+	select * from Address where id = @id
+";
+			var getAddress = new Routine("dbo", "GetAddress");
+			getAddress.RoutineType = Routine.RoutineKind.Procedure;
+
+			getAddress.Text = string.Format(baseText, "[dbo].[NamedDifferently]");
+			Assert.IsTrue(getAddress.Warnings().Any());
+			getAddress.Text = string.Format(baseText, "dbo.NamedDifferently");
+			Assert.IsTrue(getAddress.Warnings().Any());
+
+			getAddress.Text = string.Format(baseText, "dbo.[GetAddress]");
+			Assert.IsFalse(getAddress.Warnings().Any());
+
+			getAddress.Text = string.Format(baseText, "dbo.GetAddress");
+			Assert.IsFalse(getAddress.Warnings().Any());
+
+			getAddress.Text = string.Format(baseText, "GetAddress");
+			Assert.IsFalse(getAddress.Warnings().Any());
 		}
 	}
 }

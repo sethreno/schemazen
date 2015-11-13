@@ -50,6 +50,7 @@ namespace SchemaZen.model {
 		public const string SqlWhitespaceOrCommentRegex = @"(?>(?:\s+|--.*?(?:\r|\n)|/\*.*?\*/))";
 		public const string SqlEnclosedIdentifierRegex = @"\[.+?\]";
 		public const string SqlQuotedIdentifierRegex = "\".+?\"";
+		public const string SqlRegularIdentifierRegex = @"(?!\d)[\w@$#]+"; // see rules for regular identifiers here https://msdn.microsoft.com/en-us/library/ms175874.aspx
 
 		#region " Properties "
 
@@ -195,18 +196,16 @@ namespace SchemaZen.model {
 		{
 			// get users that have access to the database
 			cm.CommandText = @"
-					select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
-					from sys.database_principals dp
-					left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
-					where dp.type_desc = 'SQL_USER'
-					and dp.sid not in (0x00, 0x01) --ignore guest and dbo
-					and dp.is_fixed_role = 0
-					order by dp.name";
+				select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
+				from sys.database_principals dp
+				left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
+				where dp.type_desc = 'SQL_USER'
+				and dp.sid not in (0x00, 0x01) --ignore guest and dbo
+				and dp.is_fixed_role = 0
+				order by dp.name";
 			SqlUser u = null;
-			using (SqlDataReader dr = cm.ExecuteReader())
-			{
-				while (dr.Read())
-				{
+			using (SqlDataReader dr = cm.ExecuteReader()) {
+				while (dr.Read()) {
 					if (u == null || u.Name != (string)dr["UserName"])
 						u = new SqlUser((string)dr["UserName"], (string)dr["default_schema_name"]);
 					if (!(dr["AssociatedDBRole"] is DBNull))
@@ -216,22 +215,24 @@ namespace SchemaZen.model {
 				}
 			}
 
-			// get sql logins
-			cm.CommandText = @"
+			try {
+				// get sql logins
+				cm.CommandText = @"
 					select sp.name,  sl.password_hash
 					from sys.server_principals sp
 					inner join sys.sql_logins sl on sp.principal_id = sl.principal_id and sp.type_desc = 'SQL_LOGIN'
 					where sp.name not like '##%##'
 					and sp.name != 'SA'
 					order by sp.name";
-			using (SqlDataReader dr = cm.ExecuteReader())
-			{
-				while (dr.Read())
-				{
-					u = FindUser((string)dr["name"]);
-					if (u != null && !(dr["password_hash"] is DBNull))
-						u.PasswordHash = (byte[])dr["password_hash"];
+				using (SqlDataReader dr = cm.ExecuteReader()) {
+					while (dr.Read()) {
+						u = FindUser((string)dr["name"]);
+						if (u != null && !(dr["password_hash"] is DBNull))
+							u.PasswordHash = (byte[])dr["password_hash"];
+					}
 				}
+			} catch (SqlException) {
+				// SQL server version (i.e. Azure) doesn't support logins, nothing to do here
 			}
 		}
 
@@ -304,49 +305,45 @@ namespace SchemaZen.model {
 						m.definition,
 						m.uses_ansi_nulls,
 						m.uses_quoted_identifier,
-						t.name as tableName
+						s2.name as tableSchema,
+						t.name as tableName,
+						tr.is_disabled as trigger_disabled
 					from sys.sql_modules m
 						inner join sys.objects o on m.object_id = o.object_id
 						inner join sys.schemas s on s.schema_id = o.schema_id
 						left join sys.triggers tr on m.object_id = tr.object_id
 						left join sys.tables t on tr.parent_id = t.object_id
+						left join sys.schemas s2 on s2.schema_id = t.schema_id
 					where objectproperty(o.object_id, 'IsMSShipped') = 0
 					";
 			using (SqlDataReader dr = cm.ExecuteReader())
 			{
 				while (dr.Read())
 				{
-					// TODO: consider refactoring - it is bad practice to write to the console from a class library...
-					if (dr["definition"] is DBNull)
-					{
-						Console.ForegroundColor = ConsoleColor.Magenta;
-						Console.WriteLine("Warning: Unable to get definition for {0} {1}.{2}", (string)dr["type_desc"], (string)dr["schemaName"], (string)dr["routineName"]);
-						Console.ForegroundColor = ConsoleColor.White;
-					}
-					else
-					{
-						var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
-						r.Text = (string)dr["definition"];
-						r.AnsiNull = (bool)dr["uses_ansi_nulls"];
-						r.QuotedId = (bool)dr["uses_quoted_identifier"];
-						Routines.Add(r);
+					var r = new Routine((string)dr["schemaName"], (string)dr["routineName"]);
+					r.Text = dr["definition"] is DBNull ? string.Empty : (string)dr["definition"];
+					r.AnsiNull = (bool)dr["uses_ansi_nulls"];
+					r.QuotedId = (bool)dr["uses_quoted_identifier"];
+					Routines.Add(r);
 
-						switch ((string)dr["type_desc"])
-						{
-							case "SQL_STORED_PROCEDURE":
-								r.RoutineType = Routine.RoutineKind.Procedure;
-								break;
-							case "SQL_TRIGGER":
-								r.RoutineType = Routine.RoutineKind.Trigger;
-								break;
-							case "SQL_SCALAR_FUNCTION":
-							case "SQL_INLINE_TABLE_VALUED_FUNCTION":
-								r.RoutineType = Routine.RoutineKind.Function;
-								break;
-							case "VIEW":
-								r.RoutineType = Routine.RoutineKind.View;
-								break;
-						}
+					switch ((string)dr["type_desc"])
+					{
+						case "SQL_STORED_PROCEDURE":
+							r.RoutineType = Routine.RoutineKind.Procedure;
+							break;
+						case "SQL_TRIGGER":
+							r.RoutineType = Routine.RoutineKind.Trigger;
+							r.RelatedTableName = (string)dr["tableName"];
+							r.RelatedTableSchema = (string)dr["tableSchema"];
+							r.Disabled = (bool)dr["trigger_disabled"];
+							break;
+						case "SQL_SCALAR_FUNCTION":
+						case "SQL_INLINE_TABLE_VALUED_FUNCTION":
+							r.RoutineType = Routine.RoutineKind.Function;
+							break;
+						case "VIEW":
+							r.RoutineType = Routine.RoutineKind.View;
+							break;
 					}
 				}
 			}
@@ -1031,83 +1028,91 @@ where name = @dbname
 		public void ScriptToDir(string tableHint = null) {
 			if (Directory.Exists(Dir)) {
 				// delete the existing script files
-				foreach (
-					string f in
-						dirs.Where(dir => Directory.Exists(Dir + "/" + dir)).SelectMany(dir => Directory.GetFiles(Dir + "/" + dir))) {
+				foreach (string f in
+					dirs.Select(dir => Path.Combine(Dir, dir)).Where(Directory.Exists).SelectMany(Directory.GetFiles))
+				{
 					File.Delete(f);
 				}
 			}
-			// create dir tree
-			foreach (string dir in dirs.Where(dir => !Directory.Exists(Dir + "/" + dir))) {
-				Directory.CreateDirectory(Dir + "/" + dir);
-			}
 
-			var text = new StringBuilder();
-			text.Append(ScriptPropList(Props));
-			text.AppendLine("GO");
-			text.AppendLine();
-			File.WriteAllText(string.Format("{0}/props.sql", Dir),
-				text.ToString());
-
+			IEnumerable<string> files = new string[] { };
+			files = files.Concat(new string[] {
+												  ScriptPropList(Props),
+												  string.Empty,
+												  "props",
+											  });
+			
 			if (Schemas.Count > 0) {
-				text = new StringBuilder();
-				text.Append(ScriptSchemas(Schemas));
-				text.AppendLine("GO");
-				text.AppendLine();
-				File.WriteAllText(string.Format("{0}/schemas.sql", Dir),
-					text.ToString());
+				files = files.Concat(new string[] {
+													  ScriptSchemas(Schemas),
+													  string.Empty,
+													  "schemas",
+												  });
 			}
 
-			foreach (Table t in Tables.Concat(TableTypes)) {
-				File.WriteAllText(
-					string.Format("{0}/tables/{1}.sql", Dir, MakeFileName(t)),
-					t.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Tables.Concat(TableTypes).SelectMany(t => new string[] {
+																							t.ScriptCreate(),
+																							"tables",
+																							MakeFileName(t)
+																						}));
 
-			foreach (ForeignKey fk in ForeignKeys) {
-				File.AppendAllText(
-					string.Format("{0}/foreign_keys/{1}.sql", Dir, MakeFileName(fk.Table)),
-					fk.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(ForeignKeys.SelectMany(fk => new string[] {
+																			   fk.ScriptCreate(),
+																			   "foreign_keys",
+																			   MakeFileName(fk.Table)
+																		   }));
 
-			foreach (Routine r in Routines) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, r.RoutineType.ToString().ToLower() + "s", MakeFileName(r)),
-					r.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Routines.SelectMany(r => new string[] {
+																		   r.ScriptCreate(this),
+																		   r.RoutineType.ToString().ToLower() + "s",
+																		   MakeFileName(r)
+																	   }));
 
-			foreach (Constraint c in ViewIndexes) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "views", MakeFileName(c.Name)),
-					c.Script() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(ViewIndexes.SelectMany(c => new string[] {
+																			  c.Script(),
+																			  "views",
+																			  MakeFileName(c.Name)
+																		  }));
 
-			foreach (SqlAssembly a in Assemblies) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "assemblies", MakeFileName(a.Name)),
-					a.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Assemblies.SelectMany(a => new string[] {
+																			 a.ScriptCreate(this),
+																			 "assemblies",
+																			 MakeFileName(a.Name)
+																		 }));
 
-			foreach (SqlUser u in Users) {
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "users", MakeFileName(u.Name)),
-					u.ScriptCreate(this) + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Users.SelectMany(u => new string[] {
+																		u.ScriptCreate(this),
+																		"users",
+																		MakeFileName(u.Name)
+																	}));
 
-			foreach (Synonym s in Synonyms)
-			{
-				File.WriteAllText(
-					string.Format("{0}/{1}/{2}.sql", Dir, "synonyms", MakeFileName(s)),
-					s.ScriptCreate() + "\r\nGO\r\n"
-					);
-			}
+			files = files.Concat(Synonyms.SelectMany(s => new string[] {
+																			 s.ScriptCreate(),
+																			 "synonyms",
+																			 MakeFileName(s)
+																		 }));
 
+
+			int index = -1;
+			string folder = null;
+			string script = null;
+			foreach (string s in files) {
+				index ++;
+				switch (index) {
+					case 0:
+						script = s;
+						break;
+					case 1:
+						folder = Path.Combine(Dir, s);
+						Directory.CreateDirectory(folder); // if the directory already exists, no problem
+						break;
+					case 2:
+						File.WriteAllText(Path.Combine(folder, s + ".sql"), script + "\r\nGO\r\n");
+
+						index = -1;
+						break;
+				}
+			}
 
 			ExportData(tableHint);
 		}

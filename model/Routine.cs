@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -18,9 +20,12 @@ namespace SchemaZen.model {
 		public RoutineKind RoutineType;
 		public string Schema;
 		public string Text;
+		public bool Disabled;
+		public string RelatedTableSchema;
+		public string RelatedTableName;
 
 		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
-		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(" + Database.SqlEnclosedIdentifierRegex + @"\." + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlEnclosedIdentifierRegex + @"|\S+)(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
+		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
 		public Routine(string schema, string name) {
 			Schema = schema;
@@ -53,9 +58,15 @@ namespace SchemaZen.model {
 		{
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
-			if (after != string.Empty)
+			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
-			
+
+			if (RoutineType == RoutineKind.Trigger)
+				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Schema, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
+
+			if (string.IsNullOrEmpty(definition))
+				definition = string.Format("/* missing definition for {0} [{1}].[{2}] */", RoutineType, Schema, Name);
+
 			return before + definition + after;
 		}
 
@@ -94,5 +105,29 @@ namespace SchemaZen.model {
 			}
 			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Schema, Name));
 		}
+
+		public IEnumerable<string> Warnings () {
+			if (string.IsNullOrEmpty(Text)) {
+				yield return "Script definition could not be retrieved.";
+			} else {
+
+				// check if the name is correct
+				var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
+				var match = regex.Match(Text);
+
+				// the schema is captured in group index 2, and the name in 3
+
+				var nameGroup = match.Groups[3];
+				if (nameGroup.Success) {
+					var name = nameGroup.Value;
+					if (name.StartsWith("[") && name.EndsWith("]"))
+						name = name.Substring(1, name.Length - 2);
+
+					if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
+						yield return string.Format("Name from script definition '{0}' does not match expected name '{1}'", name, Name);
+					}
+				}
+			}
+		} 
 	}
 }
