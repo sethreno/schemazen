@@ -10,7 +10,7 @@ namespace SchemaZen.test {
 			const string script = @"SELECT FOO
 /*TEST*/ GO
 BAR";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 
@@ -20,7 +20,7 @@ BAR";
 		ADD [Url] VARCHAR(255) NULL
 GO
 				AND             COLUMN_NAME = 'BlogGroup') IS NULL";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 
@@ -30,7 +30,7 @@ GO
 SELECT * FROM BLAH
 GO
 PRINT 'FOO'";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 
@@ -39,7 +39,7 @@ PRINT 'FOO'";
 			const string script = @"SELECT * FROM foo;
  GO --  Hello Phil
 CREATE PROCEDURE dbo.Test AS SELECT * FROM foo";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 
@@ -49,7 +49,7 @@ CREATE PROCEDURE dbo.Test AS SELECT * FROM foo";
 GO
 FOOBAR
 GO";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 
@@ -61,7 +61,7 @@ select 1
 go
 delete from users
 -- */";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(1, scripts.Length, "This contains a comment and no scripts.");
 		}
 
@@ -70,22 +70,22 @@ delete from users
 			const string script = @"INSERT INTO #Indexes
 		EXEC sp_helpindex 'dbo.subtext_URLs'";
 
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(script, scripts[0], "Script text should not be modified");
 		}
 
 		[Test]
 		public void CanParseSimpleScript() {
-			string script = "Test" + Environment.NewLine + "go";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var script = "Test" + Environment.NewLine + "go";
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(1, scripts.Length);
 			Assert.AreEqual("Test" + Environment.NewLine, scripts[0]);
 		}
 
 		[Test]
 		public void CanParseSimpleScriptEndingInNewLine() {
-			string script = "Test" + Environment.NewLine + "GO" + Environment.NewLine;
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var script = "Test" + Environment.NewLine + "GO" + Environment.NewLine;
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(1, scripts.Length);
 			Assert.AreEqual("Test" + Environment.NewLine, scripts[0]);
 		}
@@ -94,19 +94,19 @@ delete from users
 		public void CanParseSuccessiveGoStatements() {
 			const string script = @"GO
 GO";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(0, scripts.Length, "Expected no scripts since they would be empty.");
 		}
 
 		[Test]
 		public void MultiLineQuoteShouldNotBeSplitByGoKeyword() {
-			string script = "PRINT '" + Environment.NewLine
-							+ "GO" + Environment.NewLine
-							+ "SELECT * FROM BLAH" + Environment.NewLine
-							+ "GO" + Environment.NewLine
-							+ "'";
+			var script = "PRINT '" + Environment.NewLine
+			             + "GO" + Environment.NewLine
+			             + "SELECT * FROM BLAH" + Environment.NewLine
+			             + "GO" + Environment.NewLine
+			             + "'";
 
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 
 			Assert.AreEqual(script, scripts[0]);
 			Assert.AreEqual(1, scripts.Length, "expected only one script");
@@ -114,14 +114,14 @@ GO";
 
 		[Test]
 		public void MultiLineQuoteShouldNotIgnoreDoubleQuote() {
-			string script = "PRINT '" + Environment.NewLine
-							+ "''" + Environment.NewLine
-							+ "GO" + Environment.NewLine
-							+ "/*" + Environment.NewLine
-							+ "GO"
-							+ "'";
+			var script = "PRINT '" + Environment.NewLine
+			             + "''" + Environment.NewLine
+			             + "GO" + Environment.NewLine
+			             + "/*" + Environment.NewLine
+			             + "GO"
+			             + "'";
 
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 
 			Assert.AreEqual(1, scripts.Length);
 			Assert.AreEqual(script, scripts[0]);
@@ -156,7 +156,7 @@ CREATE TABLE [<username,varchar,dbo>].[blog_Gost] (
 gO
 
 ";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(3, scripts.Length, "This should parse to three scripts.");
 			//for (int i = 0; i < scripts.Length; i++) {
 			//    Script sqlScript = scripts[i];
@@ -188,7 +188,7 @@ gO
 		[Test]
 		public void SemiColonDoesNotSplitScript() {
 			const string script = "CREATE PROC Blah AS SELECT FOO; SELECT Bar;";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(1, scripts.Length, "Expected no scripts since they would be empty.");
 		}
 
@@ -204,7 +204,7 @@ GO /* blah */";
 
 		[Test]
 		public void TestCommentFollowingGO() {
-			string[] scripts = BatchSqlParser.SplitBatch("/*script1*/GO/*script2*/");
+			var scripts = BatchSqlParser.SplitBatch("/*script1*/GO/*script2*/");
 			Assert.AreEqual(2, scripts.Length);
 			Assert.AreEqual("/*script1*/", scripts[0]);
 			Assert.AreEqual("/*script2*/", scripts[1]);
@@ -212,7 +212,7 @@ GO /* blah */";
 
 		[Test]
 		public void TestCommentPrecedingGO() {
-			string[] scripts = BatchSqlParser.SplitBatch("/*script1*/GO--script2");
+			var scripts = BatchSqlParser.SplitBatch("/*script1*/GO--script2");
 			Assert.AreEqual(2, scripts.Length);
 			Assert.AreEqual("/*script1*/", scripts[0]);
 			Assert.AreEqual("--script2", scripts[1]);
@@ -248,13 +248,13 @@ GO /* blah */";
 
 		[Test]
 		public void TestScriptWithGOTO() {
-			string script = @"script 1
+			var script = @"script 1
 GO
 script 2
 GOTO <-- not a GO <-- niether is this
 NOGO <-- also not a GO <-- still no
 ";
-			string[] scripts = BatchSqlParser.SplitBatch(script);
+			var scripts = BatchSqlParser.SplitBatch(script);
 			Assert.AreEqual(2, scripts.Length);
 		}
 

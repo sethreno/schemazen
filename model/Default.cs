@@ -12,13 +12,11 @@
 			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", Name, Value);
 		}
 
-		public string ScriptDrop()
-		{
+		public string ScriptDrop() {
 			return string.Format("DROP CONSTRAINT [{0}]", Name);
 		}
 
-		public string ScriptCreate(Column column)
-		{
+		public string ScriptCreate(Column column) {
 			return string.Format("ADD {0} FOR [{1}]", ScriptAsPartOfColumnDefinition(), column.Name);
 		}
 	}

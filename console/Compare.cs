@@ -45,7 +45,7 @@ namespace SchemaZen.console {
 			targetDb.Connection = _target;
 			sourceDb.Load();
 			targetDb.Load();
-			DatabaseDiff diff = sourceDb.Compare(targetDb);
+			var diff = sourceDb.Compare(targetDb);
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");
 				Console.WriteLine(diff.SummarizeChanges(_verbose));

@@ -43,13 +43,13 @@ namespace SchemaZen.model {
 		public static string[] SplitBatch(string batchSql) {
 			var scripts = new List<string>();
 			var state = State.Searching;
-			bool foundGO = false;
-			int commentDepth = 0;
+			var foundGO = false;
+			var commentDepth = 0;
 			// previous 3, current, & next 2 chars
 			char p3 = ' ', p2 = ' ', p = ' ', c = ' ', n = ' ', n2 = ' ';
-			int scriptStartIndex = 0;
+			var scriptStartIndex = 0;
 
-			for (int i = 0; i < batchSql.Length; i++) {
+			for (var i = 0; i < batchSql.Length; i++) {
 				// previous 3, current, & next 2 chars
 				// out of bounds chars are treated as whitespace
 				p3 = i > 2 ? batchSql[i - 3] : ' ';
@@ -93,7 +93,7 @@ namespace SchemaZen.model {
 				if (foundGO) {
 					// store the current script and continue searching
 					// set length -1 so 'G' is not included in the script
-					int length = i - scriptStartIndex - 1;
+					var length = i - scriptStartIndex - 1;
 					scripts.Add(batchSql.Substring(scriptStartIndex, length));
 					// start the next script after the 'O' in "GO"
 					scriptStartIndex = i + 1;
@@ -101,7 +101,7 @@ namespace SchemaZen.model {
 				} else if (i == batchSql.Length - 1) {
 					// end of batch
 					// set lenght +1 to include the current char
-					int length = i - scriptStartIndex + 1;
+					var length = i - scriptStartIndex + 1;
 					scripts.Add(batchSql.Substring(scriptStartIndex, length));
 				}
 			}

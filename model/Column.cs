@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.model {
 	public class Column {
@@ -25,14 +24,12 @@ namespace SchemaZen.model {
 		}
 
 		public Column(string name, string type, int length, bool nullable, Default defaultValue)
-			: this(name, type, nullable, defaultValue)
-		{
+			: this(name, type, nullable, defaultValue) {
 			Length = length;
 		}
 
 		public Column(string name, string type, byte precision, int scale, bool nullable, Default defaultValue)
-			: this(name, type, nullable, defaultValue)
-		{
+			: this(name, type, nullable, defaultValue) {
 			Precision = precision;
 			Scale = scale;
 		}
@@ -58,24 +55,17 @@ namespace SchemaZen.model {
 			}
 		}
 
-		public string RowGuidColText
-		{
-			get
-			{
-				return IsRowGuidCol ? "ROWGUIDCOL" : string.Empty;
-			}
+		public string RowGuidColText {
+			get { return IsRowGuidCol ? "ROWGUIDCOL" : string.Empty; }
 		}
 
 		public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
 		}
 
-		private string ScriptBase(bool includeDefaultConstraint)
-		{
-			if (string.IsNullOrEmpty(ComputedDefinition))
-			{
-				switch (Type)
-				{
+		private string ScriptBase(bool includeDefaultConstraint) {
+			if (string.IsNullOrEmpty(ComputedDefinition)) {
+				switch (Type) {
 					case "bigint":
 					case "bit":
 					case "date":
@@ -99,29 +89,29 @@ namespace SchemaZen.model {
 					case "uniqueidentifier":
 					case "xml":
 
-						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText);
+						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText);
 					case "binary":
 					case "char":
 					case "nchar":
 					case "nvarchar":
 					case "varbinary":
 					case "varchar":
-						string lengthString = Length.ToString();
+						var lengthString = Length.ToString();
 						if (lengthString == "-1") lengthString = "max";
 
-						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty);
+						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty);
 					case "decimal":
 					case "numeric":
 
-						return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText, includeDefaultConstraint ? DefaultText : string.Empty);
+						return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty);
 					default:
 						throw new NotSupportedException("SQL data type " + Type + " is not supported.");
 				}
 			}
-			else
-			{
-				return string.Format("[{0}] AS {1}", Name, ComputedDefinition);
-			}
+			return string.Format("[{0}] AS {1}", Name, ComputedDefinition);
 		}
 
 		public string ScriptCreate() {
@@ -132,27 +122,26 @@ namespace SchemaZen.model {
 			return ScriptBase(false);
 		}
 
-		internal static Type SqlTypeToNativeType(string sqlType)
-		{
-			switch (sqlType.ToLower())
-			{
+		internal static Type SqlTypeToNativeType(string sqlType) {
+			switch (sqlType.ToLower()) {
 				case "bit":
-					return typeof(bool);
+					return typeof (bool);
 				case "datetime":
 				case "smalldatetime":
-					return typeof(DateTime);
+					return typeof (DateTime);
 				case "int":
-					return typeof(int);
+					return typeof (int);
 				case "uniqueidentifier":
-					return typeof(Guid);
+					return typeof (Guid);
 				case "varbinary":
-					return typeof(byte[]);
+				case "image":
+					return typeof (byte[]);
 				default:
-					return typeof(string);
+					return typeof (string);
 			}
 		}
 
-		public Type SqlTypeToNativeType () {
+		public Type SqlTypeToNativeType() {
 			return SqlTypeToNativeType(Type);
 		}
 	}
@@ -167,34 +156,23 @@ namespace SchemaZen.model {
 		}
 
 		public bool IsDiff {
-			get
-			{
-				return IsDiffBase || DefaultIsDiff;
+			get { return IsDiffBase || DefaultIsDiff; }
+		}
+
+		private bool IsDiffBase {
+			get {
+				return Source.IsNullable != Target.IsNullable || Source.Length != Target.Length ||
+				       Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision ||
+				       Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition;
 			}
 		}
 
-		private bool IsDiffBase
-		{
-			get
-			{
-				return Source.IsNullable != Target.IsNullable || Source.Length != Target.Length || Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision || Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition;
-			}
+		public bool DefaultIsDiff {
+			get { return Source.DefaultText != Target.DefaultText; }
 		}
 
-		public bool DefaultIsDiff
-		{
-			get
-			{
-				return Source.DefaultText != Target.DefaultText;
-			}
-		}
-
-		public bool OnlyDefaultIsDiff
-		{
-			get
-			{
-				return DefaultIsDiff && !IsDiffBase;
-			}
+		public bool OnlyDefaultIsDiff {
+			get { return DefaultIsDiff && !IsDiffBase; }
 		}
 
 		/*public string Script() {

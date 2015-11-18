@@ -8,26 +8,37 @@ using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
 namespace SchemaZen.model {
-	public class Schema {
-		public string Name;
-		public string Owner;
+	public class Schema : INameable, IHasOwner, IScriptable {
+		public string Name { get; set; }
+		public string Owner { get; set; }
 
 		public Schema(string name, string owner) {
 			Owner = owner;
 			Name = name;
 		}
+
+		public string ScriptCreate() {
+			return String.Format(@"
+if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
+	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
+	exec sp_executesql N'create schema [{0}] authorization [{1}]'
+end
+", Name, Owner);
+		}
 	}
 
-	public class Table {
+	public class Table : INameable, IHasOwner, IScriptable {
 		private const string fieldSeparator = "\t";
 		private const string escapeFieldSeparator = "--SchemaZenFieldSeparator--";
 		private const string rowSeparator = "\r\n";
 		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string nullValue = "--SchemaZenNull--";
+		private const int rowsInBatch = 15000;
+
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
-		public string Name;
-		public string Owner;
+		public string Name { get; set; }
+		public string Owner { get; set; }
 		public bool IsType;
 
 		public Table(string owner, string name) {
@@ -49,13 +60,13 @@ namespace SchemaZen.model {
 			diff.Name = t.Name;
 
 			//get additions and compare mutual columns
-			foreach (Column c in Columns.Items) {
-				Column c2 = t.Columns.Find(c.Name);
+			foreach (var c in Columns.Items) {
+				var c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
 					diff.ColumnsAdded.Add(c);
 				} else {
 					//compare mutual columns
-					ColumnDiff cDiff = c.Compare(c2);
+					var cDiff = c.Compare(c2);
 					if (cDiff.IsDiff) {
 						diff.ColumnsDiff.Add(cDiff);
 					}
@@ -63,23 +74,23 @@ namespace SchemaZen.model {
 			}
 
 			//get deletions
-			foreach (Column c in t.Columns.Items.Where(c => Columns.Find(c.Name) == null)) {
+			foreach (var c in t.Columns.Items.Where(c => Columns.Find(c.Name) == null)) {
 				diff.ColumnsDropped.Add(c);
 			}
 
 			//get added and compare mutual constraints
-			foreach (Constraint c in Constraints) {
-				Constraint c2 = t.FindConstraint(c.Name);
+			foreach (var c in Constraints) {
+				var c2 = t.FindConstraint(c.Name);
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
 				} else {
-					if (c.Script() != c2.Script()) {
+					if (c.ScriptCreate() != c2.ScriptCreate()) {
 						diff.ConstraintsChanged.Add(c);
 					}
 				}
 			}
 			//get deleted constraints
-			foreach (Constraint c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
+			foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
 				diff.ConstraintsDeleted.Add(c);
 			}
 
@@ -88,16 +99,17 @@ namespace SchemaZen.model {
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE", IsType ? "AS TABLE " : string.Empty);
+			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE",
+				IsType ? "AS TABLE " : string.Empty);
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
-			foreach (Constraint c in Constraints.Where(c => c.Type != "INDEX")) {
-				text.AppendLine("   ," + c.Script());
+			foreach (var c in Constraints.Where(c => c.Type != "INDEX")) {
+				text.AppendLine("   ," + c.ScriptCreate());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
-			foreach (Constraint c in Constraints.Where(c => c.Type == "INDEX")) {
-				text.AppendLine(c.Script());
+			foreach (var c in Constraints.Where(c => c.Type == "INDEX")) {
+				text.AppendLine(c.ScriptCreate());
 			}
 			return text.ToString();
 		}
@@ -113,7 +125,7 @@ namespace SchemaZen.model {
 
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -122,11 +134,11 @@ namespace SchemaZen.model {
 				sql.AppendFormat(" WITH ({0})", tableHint);
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = sql.ToString();
-					using (SqlDataReader dr = cm.ExecuteReader()) {
+					using (var dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							foreach (Column c in Columns.Items) {
+							foreach (var c in Columns.Items) {
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
@@ -145,38 +157,80 @@ namespace SchemaZen.model {
 			}
 		}
 
-		public void ImportData(string conn, string data) {
+		public void ImportData(string conn, string filename) {
 			if (IsType)
 				throw new InvalidOperationException();
 
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
-			string[] lines = data.Split(new[] {rowSeparator}, StringSplitOptions.RemoveEmptyEntries);
-			int i = 0;
-			foreach (string line in lines) {
-				i++;
-				DataRow row = dt.NewRow();
-				string[] fields = line.Split(new[] {fieldSeparator}, StringSplitOptions.None);
-				if (fields.Length != dt.Columns.Count) {
-					throw new DataException("Incorrect number of columns", i);
-				}
-				for (int j = 0; j < fields.Length; j++) {
-					try {
-						row[j] = ConvertType(Columns.Items[j].Type,
-							fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
-					} catch (FormatException ex) {
-						throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), i);
+
+			var linenumber = 0;
+			var batch_rows = 0;
+			SqlBulkCopy bulk;
+
+			using (var file = new StreamReader(filename)) {
+				var line = new List<char>();
+				while (file.Peek() >= 0) {
+					var rowsep_cnt = 0;
+					line.Clear();
+
+					while (file.Peek() >= 0) {
+						var ch = (char) file.Read();
+						line.Add(ch);
+
+						if (ch == rowSeparator[rowsep_cnt])
+							rowsep_cnt++;
+						else
+							rowsep_cnt = 0;
+
+						if (rowsep_cnt == rowSeparator.Length) {
+							// Remove rowseparator from line
+							line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
+							break;
+						}
+					}
+					linenumber++;
+
+					// Skip empty lines
+					if (line.Count == 0)
+						continue;
+
+					batch_rows ++;
+
+					var row = dt.NewRow();
+					var fields = (new String(line.ToArray())).Split(new[] {fieldSeparator}, StringSplitOptions.None);
+					if (fields.Length != dt.Columns.Count) {
+						throw new DataException("Incorrect number of columns", linenumber);
+					}
+					for (var j = 0; j < fields.Length; j++) {
+						try {
+							row[j] = ConvertType(Columns.Items[j].Type,
+								fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
+						} catch (FormatException ex) {
+							throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), linenumber);
+						}
+					}
+					dt.Rows.Add(row);
+
+					if (batch_rows == rowsInBatch) {
+						batch_rows = 0;
+						bulk = new SqlBulkCopy(conn,
+							SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
+						bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
+						bulk.WriteToServer(dt);
+						bulk.Close();
+						dt.Clear();
 					}
 				}
-				dt.Rows.Add(row);
 			}
 
-			var bulk = new SqlBulkCopy(conn,
+			bulk = new SqlBulkCopy(conn,
 				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-			bulk.DestinationTableName = Name;
+			bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
 			bulk.WriteToServer(dt);
+			bulk.Close();
 		}
 
 		public static object ConvertType(string sqlType, string val) {
@@ -197,6 +251,7 @@ namespace SchemaZen.model {
 				case "uniqueidentifier":
 					return new Guid(val);
 				case "varbinary":
+				case "image":
 					return SoapHexBinary.Parse(val).Value;
 				default:
 					return val;
@@ -225,15 +280,15 @@ namespace SchemaZen.model {
 		public string Script() {
 			var text = new StringBuilder();
 
-			foreach (Column c in ColumnsAdded) {
+			foreach (var c in ColumnsAdded) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.ScriptCreate());
 			}
 
-			foreach (Column c in ColumnsDropped) {
+			foreach (var c in ColumnsDropped) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
 			}
 
-			foreach (ColumnDiff c in ColumnsDiff) {
+			foreach (var c in ColumnsDiff) {
 				if (c.DefaultIsDiff) {
 					if (c.Source.Default != null) {
 						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Source.Default.ScriptDrop());
