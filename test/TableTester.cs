@@ -10,9 +10,9 @@ namespace SchemaZen.test {
 	public class TableTester {
 		private List<List<string>> TabDataToList(string data) {
 			var lines = new List<List<string>>();
-			foreach (string line in data.Split('\t')) {
+			foreach (var line in data.Split('\t')) {
 				lines.Add(new List<string>());
-				foreach (string field in line.Split('\t')) {
+				foreach (var field in line.Split('\t')) {
 					lines[lines.Count - 1].Add(field);
 				}
 			}
@@ -28,7 +28,7 @@ namespace SchemaZen.test {
 		public void TestCompare() {
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
-			TableDiff diff = default(TableDiff);
+			var diff = default(TableDiff);
 
 			//test equal
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
@@ -76,20 +76,20 @@ namespace SchemaZen.test {
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-			string conn = TestHelper.GetConnString("TESTDB");
+			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
 			DBHelper.CreateDb(conn);
 			SqlConnection.ClearAllPools();
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
-			string dataIn =
+			var dataIn =
 				@"1	R	Ready
 2	P	Processing
 3	F	Frozen
 ";
-			string filename =  Path.GetTempFileName();
+			var filename = Path.GetTempFileName();
 
-			StreamWriter writer = File.AppendText(filename);
+			var writer = File.AppendText(filename);
 			writer.Write(dataIn);
 			writer.Flush();
 			writer.Close();

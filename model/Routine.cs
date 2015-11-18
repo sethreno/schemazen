@@ -24,8 +24,13 @@ namespace SchemaZen.model {
 		public string RelatedTableName;
 		public Database Db;
 
-		private const string SqlCreateRegex = @"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
-		private const string SqlCreateWithNameRegex = SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" + Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
+		private const string SqlCreateRegex =
+			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
+
+		private const string SqlCreateWithNameRegex =
+			SqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex +
+			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" +
+			Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
 		public Routine(string owner, string name, Database db) {
 			Owner = owner;
@@ -33,10 +38,9 @@ namespace SchemaZen.model {
 			Db = db;
 		}
 
-		private string ScriptQuotedIdAndAnsiNulls(Database db, bool databaseDefaults)
-		{
-			string script = "";
-			bool defaultQuotedId = !QuotedId;
+		private string ScriptQuotedIdAndAnsiNulls(Database db, bool databaseDefaults) {
+			var script = "";
+			var defaultQuotedId = !QuotedId;
 			if (db != null && db.FindProp("QUOTED_IDENTIFIER") != null) {
 				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
@@ -44,7 +48,7 @@ namespace SchemaZen.model {
 				script += string.Format(@"SET QUOTED_IDENTIFIER {0} {1}GO{1}",
 					((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF"), Environment.NewLine);
 			}
-			bool defaultAnsiNulls = !AnsiNull;
+			var defaultAnsiNulls = !AnsiNull;
 			if (db != null && db.FindProp("ANSI_NULLS") != null) {
 				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
 			}
@@ -55,15 +59,16 @@ namespace SchemaZen.model {
 			return script;
 		}
 
-		private string ScriptBase(Database db, string definition)
-		{
+		private string ScriptBase(Database db, string definition) {
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
 			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
 			if (RoutineType == RoutineKind.Trigger)
-				after += string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Owner, Name, RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
+				after +=
+					string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Owner, Name,
+						RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
 
 			if (string.IsNullOrEmpty(definition))
 				definition = string.Format("/* missing definition for {0} [{1}].[{2}] */", RoutineType, Owner, Name);
@@ -79,12 +84,11 @@ namespace SchemaZen.model {
 			var text = GetSQLType();
 			if (RoutineType == RoutineKind.Procedure) // support shorthand - PROC
 				return "(?:" + text + "|" + text.Substring(0, 4) + ")";
-			else
-				return text;
+			return text;
 		}
 
 		public string GetSQLType() {
-			string text = RoutineType.ToString();
+			var text = RoutineType.ToString();
 			return string.Join(string.Empty, text.AsEnumerable().Select(
 				(c, i) => ((char.IsUpper(c) || i == 0) ? " " + char.ToUpper(c).ToString() : c.ToString())
 				).ToArray()).Trim();
@@ -107,13 +111,13 @@ namespace SchemaZen.model {
 			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Owner, Name));
 		}
 
-		public IEnumerable<string> Warnings () {
+		public IEnumerable<string> Warnings() {
 			if (string.IsNullOrEmpty(Text)) {
 				yield return "Script definition could not be retrieved.";
 			} else {
-
 				// check if the name is correct
-				var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase | RegexOptions.Singleline);
+				var regex = new Regex(string.Format(SqlCreateWithNameRegex, GetSQLTypeForRegEx()),
+					RegexOptions.IgnoreCase | RegexOptions.Singleline);
 				var match = regex.Match(Text);
 
 				// the schema is captured in group index 2, and the name in 3
@@ -129,6 +133,6 @@ namespace SchemaZen.model {
 					}
 				}
 			}
-		} 
+		}
 	}
 }

@@ -17,31 +17,29 @@ END
 		[Test]
 		public void TestScript() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
-			  RoutineType = Routine.RoutineKind.Function,
-			  Text = ExampleFunc
-		  };
+				RoutineType = Routine.RoutineKind.Function,
+				Text = ExampleFunc
+			};
 			Console.WriteLine(f.ScriptCreate());
 			TestHelper.ExecBatchSql(f.ScriptCreate() + "\nGO", "");
 			TestHelper.ExecSql("drop function [dbo].[udf_GetDate]", "");
 		}
 
 		[Test]
-		public void TestScriptNoWarnings()
-		{
+		public void TestScriptNoWarnings() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
-				  Text = ExampleFunc,
-				  RoutineType = Routine.RoutineKind.Function
-			  };
+				Text = ExampleFunc,
+				RoutineType = Routine.RoutineKind.Function
+			};
 			Assert.IsFalse(f.Warnings().Any());
 		}
 
 		[Test]
-		public void TestScriptWarnings()
-		{
+		public void TestScriptWarnings() {
 			var f = new Routine("dbo", "udf_GetDate2", null) {
 				Text = ExampleFunc,
 				RoutineType = Routine.RoutineKind.Function
-		   };
+			};
 			Assert.IsTrue(f.Warnings().Any());
 		}
 	}

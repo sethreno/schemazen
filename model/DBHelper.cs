@@ -9,7 +9,7 @@ namespace SchemaZen.model {
 			if (EchoSql) Console.WriteLine(sql);
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = sql;
 					cm.ExecuteNonQuery();
 				}
@@ -17,11 +17,11 @@ namespace SchemaZen.model {
 		}
 
 		public static void ExecBatchSql(string conn, string sql) {
-			int prevLines = 0;
+			var prevLines = 0;
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
-					foreach (string script in BatchSqlParser.SplitBatch(sql)) {
+				using (var cm = cn.CreateCommand()) {
+					foreach (var script in BatchSqlParser.SplitBatch(sql)) {
 						if (EchoSql) Console.WriteLine(script);
 						cm.CommandText = script;
 						try {
@@ -39,7 +39,7 @@ namespace SchemaZen.model {
 
 		public static void DropDb(string conn) {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
-			string dbName = cnBuilder.InitialCatalog;
+			var dbName = cnBuilder.InitialCatalog;
 			if (DbExists(cnBuilder.ToString())) {
 				cnBuilder.InitialCatalog = "master";
 				ExecSql(cnBuilder.ToString(), "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
@@ -52,20 +52,20 @@ namespace SchemaZen.model {
 
 		public static void CreateDb(string conn) {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
-			string dbName = cnBuilder.InitialCatalog;
+			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
 			ExecSql(cnBuilder.ToString(), "CREATE DATABASE " + dbName);
 		}
 
 		public static bool DbExists(string conn) {
-			bool exists = false;
+			var exists = false;
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
-			string dbName = cnBuilder.InitialCatalog;
+			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
 
 			using (var cn = new SqlConnection(cnBuilder.ToString())) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = "select db_id('" + dbName + "')";
 					exists = (!ReferenceEquals(cm.ExecuteScalar(), DBNull.Value));
 				}

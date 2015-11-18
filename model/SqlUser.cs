@@ -20,7 +20,7 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptCreate() {
-			string login = PasswordHash == null ? string.Empty : string.Format(@"IF SUSER_ID('{0}') IS NULL
+			var login = PasswordHash == null ? string.Empty : string.Format(@"IF SUSER_ID('{0}') IS NULL
 				BEGIN CREATE LOGIN {0} WITH PASSWORD = {1} HASHED END
 ", Name, "0x" + new SoapHexBinary(PasswordHash));
 

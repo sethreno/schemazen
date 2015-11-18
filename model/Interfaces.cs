@@ -1,6 +1,4 @@
-﻿
-namespace SchemaZen.model {
-
+﻿namespace SchemaZen.model {
 	public interface INameable {
 		string Name { get; set; }
 	}
@@ -12,5 +10,4 @@ namespace SchemaZen.model {
 	public interface IScriptable {
 		string ScriptCreate();
 	}
-
 }

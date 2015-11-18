@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using SchemaZen.model;
 
-namespace SchemaZen.console
-{
+namespace SchemaZen.console {
 	public class Script : DbCommand {
 		public Script()
 			: base(
@@ -29,15 +27,15 @@ namespace SchemaZen.console
 		protected string TableHint { get; set; }
 
 		public override int Run(string[] args) {
-			Database db = CreateDatabase();
+			var db = CreateDatabase();
 			db.Load();
 
 			if (!string.IsNullOrEmpty(DataTables)) {
 				HandleDataTables(db, DataTables);
 			}
 			if (!string.IsNullOrEmpty(DataTablesPattern)) {
-				List<Table> tables = db.FindTablesRegEx(DataTablesPattern);
-				foreach (Table t in tables.Where(t => !db.DataTables.Contains(t))) {
+				var tables = db.FindTablesRegEx(DataTablesPattern);
+				foreach (var t in tables.Where(t => !db.DataTables.Contains(t))) {
 					db.DataTables.Add(t);
 				}
 			}
@@ -51,12 +49,17 @@ namespace SchemaZen.console
 
 			Console.WriteLine("Snapshot successfully created at " + db.Dir);
 			var routinesWithWarnings = db.Routines.Select(r => new {
-																	   Routine = r,
-																	   Warnings = r.Warnings().ToList()
-																   }).Where(r => r.Warnings.Any()).ToList();
+				Routine = r,
+				Warnings = r.Warnings().ToList()
+			}).Where(r => r.Warnings.Any()).ToList();
 			if (routinesWithWarnings.Any()) {
 				Console.WriteLine("With the following warnings:");
-				foreach (var warning in routinesWithWarnings.SelectMany(r => r.Warnings.Select(w => string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Owner, r.Routine.Name, w)))) {
+				foreach (
+					var warning in
+						routinesWithWarnings.SelectMany(
+							r =>
+								r.Warnings.Select(
+									w => string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Owner, r.Routine.Name, w)))) {
 					Console.WriteLine(warning);
 				}
 			}
@@ -64,14 +67,14 @@ namespace SchemaZen.console
 		}
 
 		private static void HandleDataTables(Database db, string tableNames) {
-			foreach (string value in tableNames.Split(',')) {
-				string schema = "dbo";
-				string name = value;
+			foreach (var value in tableNames.Split(',')) {
+				var schema = "dbo";
+				var name = value;
 				if (value.Contains(".")) {
 					schema = value.Split('.')[0];
 					name = value.Split('.')[1];
 				}
-				Table t = db.FindTable(name, schema);
+				var t = db.FindTable(name, schema);
 				if (t == null) {
 					Console.WriteLine(
 						"warning: could not find data table {0}.{1}",

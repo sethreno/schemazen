@@ -31,8 +31,7 @@ AS
 		}
 
 		[Test]
-		public void TestScriptWarnings()
-		{
+		public void TestScriptWarnings() {
 			const string baseText = @"--example of routine that has been renamed since creation
 CREATE PROCEDURE {0}
 	@id int

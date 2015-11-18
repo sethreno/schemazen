@@ -60,13 +60,13 @@ end
 			diff.Name = t.Name;
 
 			//get additions and compare mutual columns
-			foreach (Column c in Columns.Items) {
-				Column c2 = t.Columns.Find(c.Name);
+			foreach (var c in Columns.Items) {
+				var c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
 					diff.ColumnsAdded.Add(c);
 				} else {
 					//compare mutual columns
-					ColumnDiff cDiff = c.Compare(c2);
+					var cDiff = c.Compare(c2);
 					if (cDiff.IsDiff) {
 						diff.ColumnsDiff.Add(cDiff);
 					}
@@ -74,13 +74,13 @@ end
 			}
 
 			//get deletions
-			foreach (Column c in t.Columns.Items.Where(c => Columns.Find(c.Name) == null)) {
+			foreach (var c in t.Columns.Items.Where(c => Columns.Find(c.Name) == null)) {
 				diff.ColumnsDropped.Add(c);
 			}
 
 			//get added and compare mutual constraints
-			foreach (Constraint c in Constraints) {
-				Constraint c2 = t.FindConstraint(c.Name);
+			foreach (var c in Constraints) {
+				var c2 = t.FindConstraint(c.Name);
 				if (c2 == null) {
 					diff.ConstraintsAdded.Add(c);
 				} else {
@@ -90,7 +90,7 @@ end
 				}
 			}
 			//get deleted constraints
-			foreach (Constraint c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
+			foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
 				diff.ConstraintsDeleted.Add(c);
 			}
 
@@ -99,15 +99,16 @@ end
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE", IsType ? "AS TABLE " : string.Empty);
+			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE",
+				IsType ? "AS TABLE " : string.Empty);
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
-			foreach (Constraint c in Constraints.Where(c => c.Type != "INDEX")) {
+			foreach (var c in Constraints.Where(c => c.Type != "INDEX")) {
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
-			foreach (Constraint c in Constraints.Where(c => c.Type == "INDEX")) {
+			foreach (var c in Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
 			}
 			return text.ToString();
@@ -124,7 +125,7 @@ end
 
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -133,11 +134,11 @@ end
 				sql.AppendFormat(" WITH ({0})", tableHint);
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
-				using (SqlCommand cm = cn.CreateCommand()) {
+				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = sql.ToString();
-					using (SqlDataReader dr = cm.ExecuteReader()) {
+					using (var dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							foreach (Column c in Columns.Items) {
+							foreach (var c in Columns.Items) {
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
@@ -161,23 +162,22 @@ end
 				throw new InvalidOperationException();
 
 			var dt = new DataTable();
-			foreach (Column c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 
-			int linenumber = 0;
-			int batch_rows = 0;
+			var linenumber = 0;
+			var batch_rows = 0;
 			SqlBulkCopy bulk;
 
-			using (StreamReader file = new StreamReader(filename)) {
-				List<char> line = new List<char>();
+			using (var file = new StreamReader(filename)) {
+				var line = new List<char>();
 				while (file.Peek() >= 0) {
-
-					int rowsep_cnt = 0;
+					var rowsep_cnt = 0;
 					line.Clear();
 
 					while (file.Peek() >= 0) {
-						char ch = (char)file.Read();
+						var ch = (char) file.Read();
 						line.Add(ch);
 
 						if (ch == rowSeparator[rowsep_cnt])
@@ -190,7 +190,6 @@ end
 							line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
 							break;
 						}
-
 					}
 					linenumber++;
 
@@ -200,15 +199,15 @@ end
 
 					batch_rows ++;
 
-					DataRow row = dt.NewRow();
-					string[] fields = (new String(line.ToArray())).Split(new[] {fieldSeparator}, StringSplitOptions.None);
+					var row = dt.NewRow();
+					var fields = (new String(line.ToArray())).Split(new[] {fieldSeparator}, StringSplitOptions.None);
 					if (fields.Length != dt.Columns.Count) {
 						throw new DataException("Incorrect number of columns", linenumber);
 					}
-					for (int j = 0; j < fields.Length; j++) {
+					for (var j = 0; j < fields.Length; j++) {
 						try {
 							row[j] = ConvertType(Columns.Items[j].Type,
-									fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
+								fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
 						} catch (FormatException ex) {
 							throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), linenumber);
 						}
@@ -218,7 +217,7 @@ end
 					if (batch_rows == rowsInBatch) {
 						batch_rows = 0;
 						bulk = new SqlBulkCopy(conn,
-								SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
+							SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
 						bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
 						bulk.WriteToServer(dt);
 						bulk.Close();
@@ -228,7 +227,7 @@ end
 			}
 
 			bulk = new SqlBulkCopy(conn,
-					SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
+				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
 			bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
 			bulk.WriteToServer(dt);
 			bulk.Close();
@@ -281,15 +280,15 @@ end
 		public string Script() {
 			var text = new StringBuilder();
 
-			foreach (Column c in ColumnsAdded) {
+			foreach (var c in ColumnsAdded) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.ScriptCreate());
 			}
 
-			foreach (Column c in ColumnsDropped) {
+			foreach (var c in ColumnsDropped) {
 				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
 			}
 
-			foreach (ColumnDiff c in ColumnsDiff) {
+			foreach (var c in ColumnsDiff) {
 				if (c.DefaultIsDiff) {
 					if (c.Source.Default != null) {
 						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Source.Default.ScriptDrop());

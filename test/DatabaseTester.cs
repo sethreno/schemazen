@@ -22,7 +22,7 @@ namespace SchemaZen.test {
 			copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
 			copy.Load();
 			SqlConnection.ClearAllPools();
-			string scripted = copy.ScriptCreate();
+			var scripted = copy.ScriptCreate();
 			TestHelper.ExecBatchSql(scripted, "master");
 
 			//compare the dbs to make sure they are the same
@@ -64,7 +64,7 @@ namespace SchemaZen.test {
 
 		[Test]
 		public void TestCollate() {
-			string pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
+			var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
 			TestHelper.DropDb("TEST_SOURCE");
 
 			//create the db from sql script
@@ -81,7 +81,7 @@ namespace SchemaZen.test {
 
 		[Test]
 		public void TestCopy() {
-			foreach (string script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
+			foreach (var script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
 				Console.WriteLine("Testing {0}", script);
 				TestCopySchema(script);
 			}
@@ -94,7 +94,7 @@ namespace SchemaZen.test {
 			TestHelper.DropDb("TEST_COPY");
 
 			//create the dbs from sql script
-			string script = File.ReadAllText(ConfigHelper.TestSchemaDir + "\\BOP_QUOTE.sql");
+			var script = File.ReadAllText(ConfigHelper.TestSchemaDir + "\\BOP_QUOTE.sql");
 			TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
 			TestHelper.ExecBatchSql(script, "TEST_SOURCE");
 
@@ -111,11 +111,11 @@ namespace SchemaZen.test {
 			copy.Load();
 
 			//execute migration script to make SOURCE the same as COPY
-			DatabaseDiff diff = copy.Compare(source);
+			var diff = copy.Compare(source);
 			TestHelper.ExecBatchSql(diff.Script(), "TEST_SOURCE");
 
 			//compare the dbs to make sure they are the same
-			string cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
+			var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
 				"localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y",
 				"SqlDbDiff.XML CompareResult.txt null");
 			var proc = new Process();
@@ -146,15 +146,15 @@ namespace SchemaZen.test {
 		public void TestScript() {
 			var db = new Database("TEST_TEMP");
 			var t1 = new Table("dbo", "t1");
-			t1.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
-			t1.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
+			t1.Columns.Add(new Column("col1", "int", false, null) {Position = 1});
+			t1.Columns.Add(new Column("col2", "int", false, null) {Position = 2});
 			t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "col1,col2"));
 			t1.FindConstraint("pk_t1").Clustered = true;
 
 			var t2 = new Table("dbo", "t2");
-			t2.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
-			t2.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
-			t2.Columns.Add(new Column("col3", "int", false, null) { Position = 3 });
+			t2.Columns.Add(new Column("col1", "int", false, null) {Position = 1});
+			t2.Columns.Add(new Column("col2", "int", false, null) {Position = 2});
+			t2.Columns.Add(new Column("col3", "int", false, null) {Position = 3});
 			t2.Constraints.Add(new Constraint("pk_t2", "PRIMARY KEY", "col1"));
 			t2.FindConstraint("pk_t2").Clustered = true;
 			t2.Constraints.Add(new Constraint("IX_col3", "UNIQUE", "col3"));
@@ -174,7 +174,7 @@ namespace SchemaZen.test {
 
 			TestHelper.DropDb("TEST_TEMP");
 
-			foreach (Table t in db.Tables) {
+			foreach (var t in db.Tables) {
 				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
 				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
 			}
@@ -192,8 +192,8 @@ select * from Table1
 ";
 
 			var target = new Database();
-			string scriptUp = target.Compare(source).Script();
-			string scriptDown = source.Compare(target).Script();
+			var scriptUp = target.Compare(source).Script();
+			var scriptDown = source.Compare(target).Script();
 			Assert.IsTrue(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
 			Assert.IsTrue(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
 		}
@@ -201,25 +201,25 @@ select * from Table1
 		[Test]
 		public void TestScriptToDir() {
 			var policy = new Table("dbo", "Policy");
-			policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
-			policy.Columns.Add(new Column("form", "tinyint", false, null) { Position = 2 });
+			policy.Columns.Add(new Column("id", "int", false, null) {Position = 1});
+			policy.Columns.Add(new Column("form", "tinyint", false, null) {Position = 2});
 			policy.Constraints.Add(new Constraint("PK_Policy", "PRIMARY KEY", "id"));
 			policy.Constraints[0].Clustered = true;
 			policy.Constraints[0].Unique = true;
 			policy.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var loc = new Table("dbo", "Location");
-			loc.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
-			loc.Columns.Add(new Column("policyId", "int", false, null) { Position = 2 });
-			loc.Columns.Add(new Column("storage", "bit", false, null) { Position = 3 });
+			loc.Columns.Add(new Column("id", "int", false, null) {Position = 1});
+			loc.Columns.Add(new Column("policyId", "int", false, null) {Position = 2});
+			loc.Columns.Add(new Column("storage", "bit", false, null) {Position = 3});
 			loc.Constraints.Add(new Constraint("PK_Location", "PRIMARY KEY", "id"));
 			loc.Constraints[0].Clustered = true;
 			loc.Constraints[0].Unique = true;
 			loc.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var formType = new Table("dbo", "FormType");
-			formType.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
-			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
+			formType.Columns.Add(new Column("code", "tinyint", false, null) {Position = 1});
+			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
 			formType.Constraints.Add(new Constraint("PK_FormType", "PRIMARY KEY", "code"));
 			formType.Constraints[0].Clustered = true;
 
@@ -288,13 +288,13 @@ select * from Table1
 			Assert.IsTrue(Directory.Exists(db.Name + "\\tables"));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
 
-			foreach (Table t in db.DataTables) {
+			foreach (var t in db.DataTables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
 			}
-			foreach (Table t in db.Tables) {
+			foreach (var t in db.Tables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
 			}
-			foreach (string expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
+			foreach (var expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
 
