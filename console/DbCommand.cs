@@ -1,4 +1,6 @@
-﻿using System.Data.SqlClient;
+﻿using System;
+using System.Data.SqlClient;
+using System.Reflection;
 using ManyConsole;
 using NDesk.Options;
 using SchemaZen.model;
@@ -34,7 +36,8 @@ namespace SchemaZen.console {
 			var builder = new SqlConnectionStringBuilder {
 				DataSource = Server,
 				InitialCatalog = DbName,
-				IntegratedSecurity = string.IsNullOrEmpty(User)
+				IntegratedSecurity = string.IsNullOrEmpty(User),
+				ApplicationName = ((AssemblyTitleAttribute)Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyTitleAttribute), false)).Title
 			};
 			if (!builder.IntegratedSecurity) {
 				builder.UserID = User;
