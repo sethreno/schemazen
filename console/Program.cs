@@ -10,6 +10,7 @@ namespace SchemaZen.console {
 				return ConsoleCommandDispatcher.DispatchCommand(
 					GetCommands(), args, Console.Out);
 			} catch (Exception ex) {
+				Console.WriteLine(); // write empty line in case last character was a carriage return, for verbose logging
 				Console.WriteLine(ex.Message);
 				Console.WriteLine(ex.StackTrace);
 				return -1;
