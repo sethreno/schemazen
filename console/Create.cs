@@ -10,9 +10,7 @@ namespace SchemaZen.console {
 		public override int Run(string[] remainingArguments) {
 			var db = CreateDatabase();
 			if (!Directory.Exists(db.Dir)) {
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("Snapshot dir {0} does not exist.", db.Dir);
-				Console.ForegroundColor = ConsoleColor.White;
+				Log(TraceLevel.Error, string.Format("Snapshot dir {0} does not exist.", db.Dir));
 				return 1;
 			}
 
@@ -25,31 +23,25 @@ namespace SchemaZen.console {
 				Overwrite = true;
 			}
 
-			var prevColor = Console.ForegroundColor;
-
 			try {
 				db.CreateFromDir(Overwrite, Log);
 				Log(TraceLevel.Info, string.Empty);
 				Log(TraceLevel.Info, "Database created successfully.");
 			} catch (BatchSqlFileException ex) {
-				Console.WriteLine();
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.WriteLine("Create completed with the following errors:");
-				Console.ForegroundColor = prevColor;
+				Log(TraceLevel.Info, string.Empty);
+				Log(TraceLevel.Info, "Create completed with the following errors:");
 				foreach (var e in ex.Exceptions)
 				{
-					Console.WriteLine("- {0} (Line {1}):", e.FileName.Replace("/", "\\"), e.LineNumber);
-					Console.ForegroundColor = ConsoleColor.Red;
-					Console.WriteLine(" {0}", e.Message);
-					Console.ForegroundColor = prevColor;
+					Log(TraceLevel.Info, string.Format("- {0} (Line {1}):", e.FileName.Replace("/", "\\"), e.LineNumber));
+					Log(TraceLevel.Error, string.Format(" {0}", e.Message));
 				}
 
 				return -1;
 			} catch (SqlFileException ex) {
-				Console.ForegroundColor = ConsoleColor.Red;
-				Console.Write(@"An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
-{0} (Line {1}): {2}", ex.FileName.Replace("/", "\\"), ex.LineNumber, ex.Message);
-				Console.ForegroundColor = prevColor;
+				Log(TraceLevel.Info, string.Empty);
+				Log(TraceLevel.Info, string.Format(@"An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
+{0} (Line {1}):", ex.FileName.Replace("/", "\\"), ex.LineNumber));
+				Log(TraceLevel.Error, ex.Message);
 				return -1;
 			}
 

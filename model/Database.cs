@@ -1171,15 +1171,13 @@ where name = @dbname
 			// if the number of failures stops decreasing then give up
 			var scripts = GetScripts();
 
-			log(TraceLevel.Verbose, string.Format("- Executing {0} scripts...", scripts.Count));
-
 			var errors = new List<SqlFileException>();
 			var prevCount = -1;
 			while (scripts.Count > 0 && (prevCount == -1 || errors.Count < prevCount)) {
 				if (errors.Count > 0) {
 					prevCount = errors.Count;
-					Console.WriteLine(
-						"- {0} errors occurred, retrying...", errors.Count);
+					log(TraceLevel.Info, string.Format(
+						"{0} errors occurred, retrying...", errors.Count));
 				}
 				errors.Clear();
 				var index = 0;
@@ -1196,8 +1194,8 @@ where name = @dbname
 				log(TraceLevel.Verbose, string.Empty); // clear carriage return
 			}
 			if (prevCount > 0)
-				log(TraceLevel.Info, errors.Any() ? string.Format("- {0} errors unresolved. Details will follow later.", prevCount) : "- All errors resolved, were probably dependency issues...");
-			log(TraceLevel.Info, Environment.NewLine);
+				log(TraceLevel.Info, errors.Any() ? string.Format("{0} errors unresolved. Details will follow later.", prevCount) : "All errors resolved, were probably dependency issues...");
+			log(TraceLevel.Info, string.Empty);
 
 			ImportData(log);
 
