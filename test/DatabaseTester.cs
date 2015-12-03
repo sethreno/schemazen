@@ -282,7 +282,7 @@ select * from Table1
 
 			db.DataTables.Add(formType);
 			db.Dir = db.Name;
-			db.ScriptToDir();
+			db.ScriptToDir(((level, s) => Console.WriteLine(s)));
 			Assert.IsTrue(Directory.Exists(db.Name));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\data"));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\tables"));
@@ -301,7 +301,7 @@ select * from Table1
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
 			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
-			copy.CreateFromDir(true);
+			copy.CreateFromDir(true, (level, s) => Console.WriteLine(s));
 			copy.Load();
 			TestCompare(db, copy);
 		}
