@@ -110,6 +110,10 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\helpers\helpers.csproj">
+      <Project>{3d95baa1-0d7d-450e-8d02-8c27247c6e62}</Project>
+      <Name>helpers</Name>
+    </ProjectReference>
     <ProjectReference Include="..\model\model.csproj">
       <Project>{1283684F-CC5F-4647-BD97-9D833D20110E}</Project>
       <Name>model</Name>

@@ -51,17 +51,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assembly.cs" />
-    <Compile Include="BatchSqlParser.cs" />
+    <Compile Include="DatabaseDiff.cs" />
+    <Compile Include="SqlAssembly.cs" />
     <Compile Include="Column.cs" />
     <Compile Include="ColumnList.cs" />
-    <Compile Include="ConfigHelper.cs" />
     <Compile Include="Constraint.cs" />
     <Compile Include="Database.cs" />
-    <Compile Include="DBHelper.cs" />
     <Compile Include="DbProperty.cs" />
     <Compile Include="Default.cs" />
-    <Compile Include="Exceptions.cs" />
     <Compile Include="ForeignKey.cs" />
     <Compile Include="Identity.cs" />
     <Compile Include="Interfaces.cs" />
@@ -70,6 +67,13 @@
     <Compile Include="SqlUser.cs" />
     <Compile Include="Synonym.cs" />
     <Compile Include="Table.cs" />
+    <Compile Include="TableDiff.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\helpers\helpers.csproj">
+      <Project>{3d95baa1-0d7d-450e-8d02-8c27247c6e62}</Project>
+      <Name>helpers</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

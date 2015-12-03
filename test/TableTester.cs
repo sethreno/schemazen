@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using NUnit.Framework;
+using SchemaZen.helpers;
 using SchemaZen.model;
 
 namespace SchemaZen.test {
