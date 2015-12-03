@@ -55,52 +55,14 @@ namespace SchemaZen.model {
 		}
 
 		public TableDiff Compare(Table t) {
-			var diff = new TableDiff();
-			diff.Owner = t.Owner;
-			diff.Name = t.Name;
-
-			//get additions and compare mutual columns
-			foreach (var c in Columns.Items) {
-				var c2 = t.Columns.Find(c.Name);
-				if (c2 == null) {
-					diff.ColumnsAdded.Add(c);
-				} else {
-					//compare mutual columns
-					var cDiff = c.Compare(c2);
-					if (cDiff.IsDiff) {
-						diff.ColumnsDiff.Add(cDiff);
-					}
-				}
-			}
-
-			//get deletions
-			foreach (var c in t.Columns.Items.Where(c => Columns.Find(c.Name) == null)) {
-				diff.ColumnsDropped.Add(c);
-			}
-
-			//get added and compare mutual constraints
-			foreach (var c in Constraints) {
-				var c2 = t.FindConstraint(c.Name);
-				if (c2 == null) {
-					diff.ConstraintsAdded.Add(c);
-				} else {
-					if (c.ScriptCreate() != c2.ScriptCreate()) {
-						diff.ConstraintsChanged.Add(c);
-					}
-				}
-			}
-			//get deleted constraints
-			foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
-				diff.ConstraintsDeleted.Add(c);
-			}
-
-			return diff;
+			return new TableDiff(this, t);
 		}
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE",
+			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(", Owner, Name, IsType ? "TYPE" : "TABLE",
 				IsType ? "AS TABLE " : string.Empty);
+			text.AppendLine();
 			text.Append(Columns.Script());
 			if (Constraints.Count > 0) text.AppendLine();
 			foreach (var c in Constraints.Where(c => c.Type != "INDEX")) {
@@ -132,7 +94,7 @@ namespace SchemaZen.model {
 			sql.Remove(sql.Length - 1, 1);
 			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
 			if (!string.IsNullOrEmpty(tableHint))
-				sql.AppendFormat(" WITH ({0})", tableHint);
+				sql.AppendFormat(" with ({0})", tableHint);
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
@@ -169,7 +131,7 @@ namespace SchemaZen.model {
 			}
 
 			var linenumber = 0;
-			var batch_rows = 0;
+			var batchRows = 0;
 			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock)) {
 				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 					bulk.ColumnMappings.Add(colName, colName);
@@ -178,19 +140,19 @@ namespace SchemaZen.model {
 				using (var file = new StreamReader(filename)) {
 					var line = new List<char>();
 					while (file.Peek() >= 0) {
-						var rowsep_cnt = 0;
+						var rowsepCnt = 0;
 						line.Clear();
 
 						while (file.Peek() >= 0) {
 							var ch = (char)file.Read();
 							line.Add(ch);
 
-							if (ch == rowSeparator[rowsep_cnt])
-								rowsep_cnt++;
+							if (ch == rowSeparator[rowsepCnt])
+								rowsepCnt++;
 							else
-								rowsep_cnt = 0;
+								rowsepCnt = 0;
 
-							if (rowsep_cnt == rowSeparator.Length) {
+							if (rowsepCnt == rowSeparator.Length) {
 								// Remove rowseparator from line
 								line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
 								break;
@@ -202,7 +164,7 @@ namespace SchemaZen.model {
 						if (line.Count == 0)
 							continue;
 
-						batch_rows ++;
+						batchRows ++;
 
 						var row = dt.NewRow();
 						var fields = (new String(line.ToArray())).Split(new[] {
@@ -220,8 +182,8 @@ namespace SchemaZen.model {
 						}
 						dt.Rows.Add(row);
 
-						if (batch_rows == rowsInBatch) {
-							batch_rows = 0;
+						if (batchRows == rowsInBatch) {
+							batchRows = 0;
 							bulk.WriteToServer(dt);
 							dt.Clear();
 						}
@@ -256,52 +218,6 @@ namespace SchemaZen.model {
 				default:
 					return val;
 			}
-		}
-	}
-
-	public class TableDiff {
-		public List<Column> ColumnsAdded = new List<Column>();
-		public List<ColumnDiff> ColumnsDiff = new List<ColumnDiff>();
-		public List<Column> ColumnsDropped = new List<Column>();
-
-		public List<Constraint> ConstraintsAdded = new List<Constraint>();
-		public List<Constraint> ConstraintsChanged = new List<Constraint>();
-		public List<Constraint> ConstraintsDeleted = new List<Constraint>();
-		public string Name;
-		public string Owner;
-
-		public bool IsDiff {
-			get {
-				return ColumnsAdded.Count + ColumnsDropped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
-			}
-		}
-
-		public string Script() {
-			var text = new StringBuilder();
-
-			foreach (var c in ColumnsAdded) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n", Owner, Name, c.ScriptCreate());
-			}
-
-			foreach (var c in ColumnsDropped) {
-				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP COLUMN [{2}]\r\n", Owner, Name, c.Name);
-			}
-
-			foreach (var c in ColumnsDiff) {
-				if (c.DefaultIsDiff) {
-					if (c.Source.Default != null) {
-						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Source.Default.ScriptDrop());
-					}
-					if (c.Target.Default != null) {
-						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Target.Default.ScriptCreate(c.Target));
-					}
-				}
-				if (!c.OnlyDefaultIsDiff) {
-					text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Target.ScriptAlter());
-				}
-			}
-			return text.ToString();
 		}
 	}
 }

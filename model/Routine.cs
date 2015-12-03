@@ -59,9 +59,9 @@ namespace SchemaZen.model {
 			return script;
 		}
 
-		private string ScriptBase(Database db, string definition) {
-			var before = ScriptQuotedIdAndAnsiNulls(db, false);
-			var after = ScriptQuotedIdAndAnsiNulls(db, true);
+		private string ScriptBase(string definition) {
+			var before = ScriptQuotedIdAndAnsiNulls(Db, false);
+			var after = ScriptQuotedIdAndAnsiNulls(Db, true);
 			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
@@ -77,7 +77,7 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptCreate() {
-			return ScriptBase(Db, Text);
+			return ScriptBase(Text);
 		}
 
 		public string GetSQLTypeForRegEx() {
@@ -99,13 +99,13 @@ namespace SchemaZen.model {
 		}
 
 
-		public string ScriptAlter(Database db) {
+		public string ScriptAlter() {
 			if (RoutineType != RoutineKind.XmlSchemaCollection) {
 				var regex = new Regex(SqlCreateRegex, RegexOptions.IgnoreCase);
 				var match = regex.Match(Text);
 				var group = match.Groups[1];
 				if (group.Success) {
-					return ScriptBase(db, Text.Substring(0, group.Index) + "ALTER" + Text.Substring(group.Index + group.Length));
+					return ScriptBase(Text.Substring(0, group.Index) + "ALTER" + Text.Substring(group.Index + group.Length));
 				}
 			}
 			throw new Exception(string.Format("Unable to script routine {0} {1}.{2} as ALTER", RoutineType, Owner, Name));

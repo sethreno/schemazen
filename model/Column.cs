@@ -175,9 +175,5 @@ namespace SchemaZen.model {
 		public bool OnlyDefaultIsDiff {
 			get { return DefaultIsDiff && !IsDiffBase; }
 		}
-
-		/*public string Script() {
-			return Target.Script();
-		}*/
 	}
 }
