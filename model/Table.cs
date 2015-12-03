@@ -8,7 +8,7 @@ using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
 namespace SchemaZen.model {
-	public class Schema : INameable, IHasOwner, IScriptable {
+	public class Schema : INameable, IHasOwner { 
 		public string Name { get; set; }
 		public string Owner { get; set; }
 
@@ -18,16 +18,16 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptCreate() {
-			return String.Format(@"
-if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
-	and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
-	exec sp_executesql N'create schema [{0}] authorization [{1}]'
-end
-", Name, Owner);
+			return string.Format(@"
+				if not exists(select s.schema_id from sys.schemas s where s.name = '{0}') 
+					and exists(select p.principal_id from sys.database_principals p where p.name = '{1}') begin
+					exec sp_executesql N'create schema [{0}] authorization [{1}]'
+				end
+				", Name, Owner);
 		}
 	}
 
-	public class Table : INameable, IHasOwner, IScriptable {
+	public class Table : INameable, IHasOwner {
 		private const string fieldSeparator = "\t";
 		private const string escapeFieldSeparator = "--SchemaZenFieldSeparator--";
 		private const string rowSeparator = "\r\n";
@@ -209,13 +209,13 @@ end
 																				  fieldSeparator
 																			  }, StringSplitOptions.None);
 						if (fields.Length != dt.Columns.Count) {
-							throw new DataException("Incorrect number of columns", linenumber);
+							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
 						for (var j = 0; j < fields.Length; j++) {
 							try {
 								row[j] = ConvertType(cols[j].Type, fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
 							} catch (FormatException ex) {
-								throw new DataException(string.Format("{0} Column number: {1} Column name: {2} Column type: {3} Value: {4}", ex.Message, j + 1, cols[j].Name, cols[j].Type, fields[j]), linenumber);
+								throw new DataFileException(string.Format("{0} Column number: {1} Column name: {2} Column type: {3} Value: {4}", ex.Message, j + 1, cols[j].Name, cols[j].Type, fields[j]), filename, linenumber);
 							}
 						}
 						dt.Rows.Add(row);

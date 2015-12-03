@@ -1,6 +1,6 @@
-using System;
 using System.Diagnostics;
 using System.IO;
+using SchemaZen.helpers;
 using SchemaZen.model;
 
 namespace SchemaZen.console {

@@ -3,7 +3,7 @@ using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.model {
-	public class SqlAssembly : INameable, IScriptable {
+	public class SqlAssembly : INameable {
 		public List<KeyValuePair<string, byte[]>> Files = new List<KeyValuePair<string, byte[]>>();
 		public string Name { get; set; }
 		public string PermissionSet;

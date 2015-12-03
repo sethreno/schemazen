@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using SchemaZen.helpers;
 
 namespace SchemaZen.model {
 	public class Database {
@@ -893,74 +894,6 @@ where name = @dbname
 			return diff;
 		}
 
-		public string ScriptCreate() {
-			var text = new StringBuilder();
-
-			text.AppendFormat("CREATE DATABASE {0}", Name);
-			text.AppendLine();
-			text.AppendLine("GO");
-			text.AppendFormat("USE {0}", Name);
-			text.AppendLine();
-			text.AppendLine("GO");
-			text.AppendLine();
-
-			if (Props.Count > 0) {
-				text.Append(ScriptPropList(Props));
-				text.AppendLine("GO");
-				text.AppendLine();
-			}
-
-			foreach (var schema in Schemas) {
-				text.AppendLine(schema.ScriptCreate());
-				text.AppendLine("GO");
-				text.AppendLine();
-			}
-
-			foreach (var t in Tables.Concat(TableTypes)) {
-				text.AppendLine(t.ScriptCreate());
-			}
-			text.AppendLine();
-			text.AppendLine("GO");
-
-			foreach (var fk in ForeignKeys) {
-				text.AppendLine(fk.ScriptCreate());
-			}
-			text.AppendLine();
-			text.AppendLine("GO");
-
-			foreach (var r in Routines) {
-				text.AppendLine(r.ScriptCreate());
-				text.AppendLine();
-				text.AppendLine("GO");
-			}
-
-			foreach (var a in Assemblies) {
-				text.AppendLine(a.ScriptCreate());
-				text.AppendLine();
-				text.AppendLine("GO");
-			}
-
-			foreach (var u in Users) {
-				text.AppendLine(u.ScriptCreate());
-				text.AppendLine();
-				text.AppendLine("GO");
-			}
-
-			foreach (var c in ViewIndexes) {
-				text.AppendLine(c.ScriptCreate());
-				text.AppendLine();
-				text.AppendLine("GO");
-			}
-
-			foreach (var s in Synonyms) {
-				text.AppendLine(s.ScriptCreate());
-				text.AppendLine();
-				text.AppendLine("GO");
-			}
-
-			return text.ToString();
-		}
-
 		#region Script
 
 		public void ScriptToDir(Action<TraceLevel, string> log, string tableHint = null) {
@@ -1120,8 +1053,6 @@ where name = @dbname
 				try {
 					log(TraceLevel.Verbose, string.Format("Importing data for table {0}.{1}...", schema, table));
 					t.ImportData(Connection, fi.FullName);
-				} catch (DataException ex) {
-					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (Exception ex) {
@@ -1237,21 +1168,6 @@ where name = @dbname
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;
-		}
-
-		public void ExecCreate(bool dropIfExists) {
-			var conStr = new SqlConnectionStringBuilder(Connection);
-			var dbName = conStr.InitialCatalog;
-			conStr.InitialCatalog = "master";
-			if (DBHelper.DbExists(Connection)) {
-				if (dropIfExists) {
-					DBHelper.DropDb(Connection);
-				} else {
-					throw new ApplicationException(string.Format("Database {0} {1} already exists.",
-						conStr.DataSource, dbName));
-				}
-			}
-			DBHelper.ExecBatchSql(conStr.ToString(), ScriptCreate());
 		}
 
 		#endregion

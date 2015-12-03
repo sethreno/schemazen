@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 
 namespace SchemaZen.model {
-	public class ForeignKey : INameable, IScriptable {
+	public class ForeignKey : INameable {
 		public bool Check;
 		public List<string> Columns = new List<string>();
 		public string Name { get; set; }

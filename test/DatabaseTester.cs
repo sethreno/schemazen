@@ -3,10 +3,112 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using NUnit.Framework;
+using SchemaZen.helpers;
 using SchemaZen.model;
 
 namespace SchemaZen.test {
+	public static class DBExtensions {
+		public static string ScriptCreate(this Database db)
+		{
+			var text = new StringBuilder();
+
+			text.AppendFormat("CREATE DATABASE {0}", db.Name);
+			text.AppendLine();
+			text.AppendLine("GO");
+			text.AppendFormat("USE {0}", db.Name);
+			text.AppendLine();
+			text.AppendLine("GO");
+			text.AppendLine();
+
+			if (db.Props.Count > 0)
+			{
+				text.Append(Database.ScriptPropList(db.Props));
+				text.AppendLine("GO");
+				text.AppendLine();
+			}
+
+			foreach (var schema in db.Schemas)
+			{
+				text.AppendLine(schema.ScriptCreate());
+				text.AppendLine("GO");
+				text.AppendLine();
+			}
+
+			foreach (var t in db.Tables.Concat(db.TableTypes))
+			{
+				text.AppendLine(t.ScriptCreate());
+			}
+			text.AppendLine();
+			text.AppendLine("GO");
+
+			foreach (var fk in db.ForeignKeys)
+			{
+				text.AppendLine(fk.ScriptCreate());
+			}
+			text.AppendLine();
+			text.AppendLine("GO");
+
+			foreach (var r in db.Routines)
+			{
+				text.AppendLine(r.ScriptCreate());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var a in db.Assemblies)
+			{
+				text.AppendLine(a.ScriptCreate());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var u in db.Users)
+			{
+				text.AppendLine(u.ScriptCreate());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var c in db.ViewIndexes)
+			{
+				text.AppendLine(c.ScriptCreate());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			foreach (var s in db.Synonyms)
+			{
+				text.AppendLine(s.ScriptCreate());
+				text.AppendLine();
+				text.AppendLine("GO");
+			}
+
+			return text.ToString();
+		}
+
+		public static void ExecCreate(this Database db, bool dropIfExists)
+		{
+			var conStr = new SqlConnectionStringBuilder(db.Connection);
+			var dbName = conStr.InitialCatalog;
+			conStr.InitialCatalog = "master";
+			if (DBHelper.DbExists(db.Connection))
+			{
+				if (dropIfExists)
+				{
+					DBHelper.DropDb(db.Connection);
+				}
+				else {
+					throw new ApplicationException(string.Format("Database {0} {1} already exists.",
+						conStr.DataSource, dbName));
+				}
+			}
+			DBHelper.ExecBatchSql(conStr.ToString(), db.ScriptCreate());
+		}
+
+	}
+
 	[TestFixture]
 	public class DatabaseTester {
 		public static void TestCopySchema(string pathToSchemaScript) {
