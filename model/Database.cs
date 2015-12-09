@@ -417,6 +417,9 @@ order by fk.name, fkc.constraint_column_id
 						union
 						select object_id, name, schema_id, 'V' as baseType
 						from   sys.views
+						union
+						select type_table_object_id, name, schema_id, 'TVT' as baseType
+						from   sys.table_types
 						) t
 						inner join sys.indexes i on i.object_id = t.object_id
 						inner join sys.index_columns ic on ic.object_id = t.object_id
@@ -430,7 +433,7 @@ order by fk.name, fkc.constraint_column_id
 				while (dr.Read()) {
 					var t = (string) dr["baseType"] == "V"
 						? new Table((string) dr["schemaName"], (string) dr["tableName"])
-						: FindTable((string) dr["tableName"], (string) dr["schemaName"]);
+						: FindTable((string) dr["tableName"], (string) dr["schemaName"], ((string) dr["baseType"]) == "TVT");
 					var c = t.FindConstraint((string) dr["indexName"]);
 					if (c == null) {
 						c = new Constraint((string) dr["indexName"], "", "");
