@@ -41,7 +41,7 @@ namespace SchemaZen.model {
 		private void AssertArgNotNull(object arg, string argName) {
 			if (arg == null) {
 				throw new ArgumentNullException(string.Format(
-					"Unable to Script FK {0}. {1} must not be null.", Name, argName));
+					"Unable to Script FK {0} on table {1}.{2}. {3} must not be null.", Name, Table.Owner, Table.Name, argName));
 			}
 		}
 

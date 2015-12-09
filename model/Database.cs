@@ -88,8 +88,8 @@ namespace SchemaZen.model {
 			return Tables.SelectMany(t => t.Constraints).FirstOrDefault(c => c.Name == name);
 		}
 
-		public ForeignKey FindForeignKey(string name) {
-			return ForeignKeys.FirstOrDefault(fk => fk.Name == name);
+		public ForeignKey FindForeignKey(string name, string owner) {
+			return ForeignKeys.FirstOrDefault(fk => fk.Name == name && fk.Table.Owner == owner);
 		}
 
 		public Routine FindRoutine(string name, string schema) {
@@ -349,6 +349,7 @@ namespace SchemaZen.model {
 			cm.CommandText = @"
 					select 
 						CONSTRAINT_NAME, 
+	                    OBJECT_SCHEMA_NAME(fk.parent_object_id) as TABLE_SCHEMA,
 						UPDATE_RULE, 
 						DELETE_RULE,
 						fk.is_disabled
@@ -356,7 +357,7 @@ namespace SchemaZen.model {
 						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
+					var fk = FindForeignKey((string) dr["CONSTRAINT_NAME"], (string)dr["TABLE_SCHEMA"]);
 					fk.OnUpdate = (string) dr["UPDATE_RULE"];
 					fk.OnDelete = (string) dr["DELETE_RULE"];
 					fk.Check = !(bool) dr["is_disabled"];
@@ -367,6 +368,7 @@ namespace SchemaZen.model {
 			cm.CommandText = @"
 select
 	fk.name as CONSTRAINT_NAME,
+	OBJECT_SCHEMA_NAME(fk.parent_object_id) as TABLE_SCHEMA,
 	c1.name as COLUMN_NAME,
 	OBJECT_SCHEMA_NAME(fk.referenced_object_id) as REF_TABLE_SCHEMA,
 	OBJECT_NAME(fk.referenced_object_id) as REF_TABLE_NAME,
@@ -384,7 +386,7 @@ order by fk.name, fkc.constraint_column_id
 ";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var fk = FindForeignKey((string) dr["CONSTRAINT_NAME"]);
+					var fk = FindForeignKey((string) dr["CONSTRAINT_NAME"], (string)dr["TABLE_SCHEMA"]);
 					if (fk == null) {
 						continue;
 					}
@@ -809,7 +811,7 @@ where name = @dbname
 
 			//get added and compare mutual foreign keys
 			foreach (var fk in ForeignKeys) {
-				var fk2 = db.FindForeignKey(fk.Name);
+				var fk2 = db.FindForeignKey(fk.Name, fk.Table.Owner);
 				if (fk2 == null) {
 					diff.ForeignKeysAdded.Add(fk);
 				} else {
@@ -819,7 +821,7 @@ where name = @dbname
 				}
 			}
 			//get deleted foreign keys
-			foreach (var fk in db.ForeignKeys.Where(fk => FindForeignKey(fk.Name) == null)) {
+			foreach (var fk in db.ForeignKeys.Where(fk => FindForeignKey(fk.Name, fk.Table.Owner) == null)) {
 				diff.ForeignKeysDeleted.Add(fk);
 			}
 
