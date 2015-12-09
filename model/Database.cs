@@ -977,7 +977,8 @@ where name = @dbname
 			WritePropsScript();
 			WriteSchemaScript();
 			WriteScriptDir("tables", Tables.ToArray());
-			WriteScriptDir("foreign_keys", ForeignKeys.ToArray());
+            WriteScriptDir("table_types", TableTypes.ToArray());
+            WriteScriptDir("foreign_keys", ForeignKeys.ToArray());
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
 				WriteScriptDir(dir, routineType.ToArray());
