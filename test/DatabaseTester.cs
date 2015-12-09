@@ -180,6 +180,36 @@ namespace SchemaZen.test {
 			}
 		}
 
+        [Test]
+        public void TestScriptTableType()
+        {
+            var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[ID] [nvarchar](250) NULL
+)
+
+";
+
+            var db = new Database("TestScriptTableType");
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL1);
+
+            db.Dir = db.Name;
+            db.Load();
+
+            db.ScriptToDir();
+
+            Assert.AreEqual(1, db.TableTypes.Count());
+            Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
+            Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+            Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+
+        }
+
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
