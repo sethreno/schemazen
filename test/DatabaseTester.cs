@@ -181,6 +181,58 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
+        public void TestScriptFKSameName()
+        {
+            var setupSQL = @"
+CREATE SCHEMA [s2] AUTHORIZATION [dbo]
+
+CREATE TABLE [dbo].[t1a]
+(
+    a INT NOT NULL, 
+    CONSTRAINT [PK_1a] PRIMARY KEY (a)
+)
+
+CREATE TABLE [dbo].[t1b]
+(
+    a INT NOT NULL,
+    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [dbo].[t1a] ([a])
+)
+
+CREATE TABLE [s2].[t2a]
+(
+    a INT NOT NULL, 
+    CONSTRAINT [PK_2a] PRIMARY KEY (a)
+)
+
+CREATE TABLE [s2].[t2b]
+(
+    a INT NOT NULL,
+    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a])
+)
+
+";
+
+            var db = new Database("TestScriptFKSameName");
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL);
+
+            db.Dir = db.Name;
+            db.Load();
+
+            // Required in order to expose the exception
+            db.ScriptToDir();
+
+            Assert.AreEqual(2, db.ForeignKeys.Count());
+            Assert.AreEqual(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
+            Assert.AreNotEqual(db.ForeignKeys[0].Table.Owner, db.ForeignKeys[1].Table.Owner);
+
+        }
+
+		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
 			source.Routines.Add(new Routine("dbo", "test", null));
