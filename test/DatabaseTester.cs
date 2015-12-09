@@ -210,6 +210,46 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
         }
 
+
+        [Test]
+        public void TestScriptTableTypePrimaryKey()
+        {
+            var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[ID] [int] NOT NULL,
+	[Value] [varchar](50) NOT NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[ID] ASC
+)
+)
+
+";
+
+            var db = new Database("TestScriptTableTypePrimaryKey");
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL1);
+
+            db.Dir = db.Name;
+            db.Load();
+
+            db.ScriptToDir();
+
+            Assert.AreEqual(1, db.TableTypes.Count());
+            Assert.AreEqual(1, db.TableTypes[0].PrimaryKey.Columns.Count);
+            Assert.AreEqual("ID", db.TableTypes[0].PrimaryKey.Columns[0]);
+            Assert.AreEqual(50, db.TableTypes[0].Columns.Items[1].Length);
+            Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+            Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+
+            Assert.IsTrue(File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql").Contains("PRIMARY KEY"));
+
+        }
+
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
