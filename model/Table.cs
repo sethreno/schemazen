@@ -214,7 +214,7 @@ end
 						var fields = (new String(line.ToArray())).Split(new[] { fieldSeparator }, StringSplitOptions.None);
 						if (fields.Length != dt.Columns.Count)
 						{
-							throw new DataException("Incorrect number of columns", linenumber);
+							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
 						for (var j = 0; j < fields.Length; j++)
 						{
@@ -225,7 +225,7 @@ end
 							}
 							catch (FormatException ex)
 							{
-								throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), linenumber);
+								throw new DataFileException(string.Format("{0} at column {1}", ex.Message, j + 1), filename, linenumber);
 							}
 						}
 						dt.Rows.Add(row);
