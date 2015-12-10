@@ -148,7 +148,7 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
-		public void TestLargeAmountOfDataImport()
+		public void TestLargeAmountOfRowsImportAndExport()
 		{
 			var t = new Table("dbo", "TestData");
 			t.Columns.Add(new Column("test_field", "int", false, null));
@@ -176,7 +176,7 @@ namespace SchemaZen.test {
 			writer.Close();
 
 			var dataIn = sb.ToString();
-			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just check that the file and the string are the same, to make the next test meaningful!
+			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 			
 			try
 			{
