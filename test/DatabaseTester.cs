@@ -231,23 +231,22 @@ CREATE TABLE [s2].[t2b]
 
 		}
 
-        public void TestScriptViewInsteadOfTrigger()
-        {
-            var setupSQL1 = @"
+		public void TestScriptViewInsteadOfTrigger() {
+			var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
 (
     a INT NOT NULL, 
     CONSTRAINT [PK] PRIMARY KEY (a)
 )
 ";
-            var setupSQL2 = @"
+			var setupSQL2 = @"
 
 CREATE VIEW [dbo].[v1] AS
 
     SELECT * FROM t1
 
 ";
-            var setupSQL3 = @"
+			var setupSQL3 = @"
 
 CREATE TRIGGER [dbo].[TR_v1] ON [dbo].[v1] INSTEAD OF DELETE AS
 
@@ -255,29 +254,29 @@ CREATE TRIGGER [dbo].[TR_v1] ON [dbo].[v1] INSTEAD OF DELETE AS
 
 ";
 
-            var db = new Database("TestScriptViewInsteadOfTrigger");
+			var db = new Database("TestScriptViewInsteadOfTrigger");
 
-            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 
-            db.ExecCreate(true);
+			db.ExecCreate(true);
 
-            DBHelper.ExecSql(db.Connection, setupSQL1);
-            DBHelper.ExecSql(db.Connection, setupSQL2);
-            DBHelper.ExecSql(db.Connection, setupSQL3);
+			DBHelper.ExecSql(db.Connection, setupSQL1);
+			DBHelper.ExecSql(db.Connection, setupSQL2);
+			DBHelper.ExecSql(db.Connection, setupSQL3);
 
-            db.Dir = db.Name;
-            db.Load();
+			db.Dir = db.Name;
+			db.Load();
 
-            // Required in order to expose the exception
-            db.ScriptToDir();
+			// Required in order to expose the exception
+			db.ScriptToDir();
 
-            var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger).ToList();
+			var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger).ToList();
 
-            Assert.AreEqual(1, triggers.Count());
-            Assert.AreEqual("TR_v1", triggers[0].Name);
-            Assert.IsTrue(File.Exists(db.Name + "\\triggers\\TR_v1.sql"));
+			Assert.AreEqual(1, triggers.Count());
+			Assert.AreEqual("TR_v1", triggers[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\triggers\\TR_v1.sql"));
 
-        }
+		}
 
 		[Test]
 		public void TestScriptDeletedProc() {
