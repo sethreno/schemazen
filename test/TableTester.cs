@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
+using System.Text;
 using NUnit.Framework;
 using SchemaZen.model;
 
@@ -138,6 +139,51 @@ namespace SchemaZen.test {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
+				Assert.AreEqual(dataIn, sw.ToString());
+			}
+			finally
+			{
+				File.Delete(filename);
+			}
+		}
+
+		[Test]
+		public void TestLargeAmountOfDataImport()
+		{
+			var t = new Table("dbo", "TestData");
+			t.Columns.Add(new Column("test_field", "int", false, null));
+			t.Constraints.Add(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
+			t.Constraints.Add(new Constraint("IX_TestData_PK", "INDEX", "test_field") { Clustered = true, Table = t, Unique = true }); // clustered index is required to ensure the row order is the same as what we import
+
+			var conn = TestHelper.GetConnString("TESTDB");
+			DBHelper.DropDb(conn);
+			DBHelper.CreateDb(conn);
+			SqlConnection.ClearAllPools();
+			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+
+			var filename = Path.GetTempFileName();
+
+			var writer = File.CreateText(filename);
+			StringBuilder sb = new StringBuilder();
+
+			for (var i = 0; i < Table.rowsInBatch * 4.2; i++)
+			{
+				sb.AppendLine(i.ToString());
+				writer.WriteLine(i.ToString());
+			}
+
+			writer.Flush();
+			writer.Close();
+
+			var dataIn = sb.ToString();
+			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just check that the file and the string are the same, to make the next test meaningful!
+			
+			try
+			{
+				t.ImportData(conn, filename);
+				var sw = new StringWriter();
+				t.ExportData(conn, sw);
+
 				Assert.AreEqual(dataIn, sw.ToString());
 			}
 			finally

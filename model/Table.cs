@@ -33,7 +33,7 @@ end
 		private const string rowSeparator = "\r\n";
 		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string nullValue = "--SchemaZenNull--";
-		private const int rowsInBatch = 15000;
+		public const int rowsInBatch = 15000;
 
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
