@@ -25,10 +25,10 @@ namespace SchemaZen.test {
 			db.ExecCreate(true);
 			db.Load();
 
-			Assert.AreEqual("c3", db.FindForeignKey("fk_test").Columns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test").Columns[1]);
-			Assert.AreEqual("c1", db.FindForeignKey("fk_test").RefColumns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test").RefColumns[1]);
+			Assert.AreEqual("c3", db.FindForeignKey("fk_test", "dbo").Columns[0]);
+			Assert.AreEqual("c2", db.FindForeignKey("fk_test", "dbo").Columns[1]);
+			Assert.AreEqual("c1", db.FindForeignKey("fk_test", "dbo").RefColumns[0]);
+			Assert.AreEqual("c2", db.FindForeignKey("fk_test", "dbo").RefColumns[1]);
 
 			db.ExecCreate(true);
 		}
