@@ -261,6 +261,7 @@ end
 					return int.Parse(val);
 				case "uniqueidentifier":
 					return new Guid(val);
+				case "binary":
 				case "varbinary":
 				case "image":
 					return SoapHexBinary.Parse(val).Value;
