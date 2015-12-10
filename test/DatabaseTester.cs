@@ -180,41 +180,39 @@ namespace SchemaZen.test {
 			}
 		}
 
-        [Test]
-        public void TestScriptTableType()
-        {
-            var setupSQL1 = @"
+		[Test]
+		public void TestScriptTableType() {
+			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	[ID] [nvarchar](250) NULL
 )
 
 ";
 
-            var db = new Database("TestScriptTableType");
+			var db = new Database("TestScriptTableType");
 
-            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 
-            db.ExecCreate(true);
+			db.ExecCreate(true);
 
-            DBHelper.ExecSql(db.Connection, setupSQL1);
+			DBHelper.ExecSql(db.Connection, setupSQL1);
 
-            db.Dir = db.Name;
-            db.Load();
+			db.Dir = db.Name;
+			db.Load();
 
-            db.ScriptToDir();
+			db.ScriptToDir();
 
-            Assert.AreEqual(1, db.TableTypes.Count());
-            Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
-            Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
-            Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+			Assert.AreEqual(1, db.TableTypes.Count());
+			Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
+			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 
-        }
+		}
 
 
-        [Test]
-        public void TestScriptTableTypePrimaryKey()
-        {
-            var setupSQL1 = @"
+		[Test]
+		public void TestScriptTableTypePrimaryKey() {
+			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	[ID] [int] NOT NULL,
 	[Value] [varchar](50) NOT NULL,
@@ -226,29 +224,29 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 ";
 
-            var db = new Database("TestScriptTableTypePrimaryKey");
+			var db = new Database("TestScriptTableTypePrimaryKey");
 
-            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 
-            db.ExecCreate(true);
+			db.ExecCreate(true);
 
-            DBHelper.ExecSql(db.Connection, setupSQL1);
+			DBHelper.ExecSql(db.Connection, setupSQL1);
 
-            db.Dir = db.Name;
-            db.Load();
+			db.Dir = db.Name;
+			db.Load();
 
-            db.ScriptToDir();
+			db.ScriptToDir();
 
-            Assert.AreEqual(1, db.TableTypes.Count());
-            Assert.AreEqual(1, db.TableTypes[0].PrimaryKey.Columns.Count);
-            Assert.AreEqual("ID", db.TableTypes[0].PrimaryKey.Columns[0]);
-            Assert.AreEqual(50, db.TableTypes[0].Columns.Items[1].Length);
-            Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
-            Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+			Assert.AreEqual(1, db.TableTypes.Count());
+			Assert.AreEqual(1, db.TableTypes[0].PrimaryKey.Columns.Count);
+			Assert.AreEqual("ID", db.TableTypes[0].PrimaryKey.Columns[0]);
+			Assert.AreEqual(50, db.TableTypes[0].Columns.Items[1].Length);
+			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 
-            Assert.IsTrue(File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql").Contains("PRIMARY KEY"));
+			Assert.IsTrue(File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql").Contains("PRIMARY KEY"));
 
-        }
+		}
 
 		[Test]
 		public void TestScriptFKSameName() {
