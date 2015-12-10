@@ -181,9 +181,8 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
-        public void TestScriptFKSameName()
-        {
-            var setupSQL = @"
+		public void TestScriptFKSameName() {
+			var setupSQL = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
 
 CREATE TABLE [dbo].[t1a]
@@ -212,25 +211,25 @@ CREATE TABLE [s2].[t2b]
 
 ";
 
-            var db = new Database("TestScriptFKSameName");
+			var db = new Database("TestScriptFKSameName");
 
-            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
 
-            db.ExecCreate(true);
+			db.ExecCreate(true);
 
-            DBHelper.ExecSql(db.Connection, setupSQL);
+			DBHelper.ExecSql(db.Connection, setupSQL);
 
-            db.Dir = db.Name;
-            db.Load();
+			db.Dir = db.Name;
+			db.Load();
 
-            // Required in order to expose the exception
-            db.ScriptToDir();
+			// Required in order to expose the exception
+			db.ScriptToDir();
 
-            Assert.AreEqual(2, db.ForeignKeys.Count());
-            Assert.AreEqual(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
-            Assert.AreNotEqual(db.ForeignKeys[0].Table.Owner, db.ForeignKeys[1].Table.Owner);
+			Assert.AreEqual(2, db.ForeignKeys.Count());
+			Assert.AreEqual(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
+			Assert.AreNotEqual(db.ForeignKeys[0].Table.Owner, db.ForeignKeys[1].Table.Owner);
 
-        }
+		}
 
 		[Test]
 		public void TestScriptDeletedProc() {

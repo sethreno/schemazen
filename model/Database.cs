@@ -349,7 +349,7 @@ namespace SchemaZen.model {
 			cm.CommandText = @"
 					select 
 						CONSTRAINT_NAME, 
-	                    OBJECT_SCHEMA_NAME(fk.parent_object_id) as TABLE_SCHEMA,
+						OBJECT_SCHEMA_NAME(fk.parent_object_id) as TABLE_SCHEMA,
 						UPDATE_RULE, 
 						DELETE_RULE,
 						fk.is_disabled
