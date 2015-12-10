@@ -231,6 +231,54 @@ CREATE TABLE [s2].[t2b]
 
 		}
 
+        public void TestScriptViewInsteadOfTrigger()
+        {
+            var setupSQL1 = @"
+CREATE TABLE [dbo].[t1]
+(
+    a INT NOT NULL, 
+    CONSTRAINT [PK] PRIMARY KEY (a)
+)
+";
+            var setupSQL2 = @"
+
+CREATE VIEW [dbo].[v1] AS
+
+    SELECT * FROM t1
+
+";
+            var setupSQL3 = @"
+
+CREATE TRIGGER [dbo].[TR_v1] ON [dbo].[v1] INSTEAD OF DELETE AS
+
+    DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[t1].a
+
+";
+
+            var db = new Database("TestScriptViewInsteadOfTrigger");
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL1);
+            DBHelper.ExecSql(db.Connection, setupSQL2);
+            DBHelper.ExecSql(db.Connection, setupSQL3);
+
+            db.Dir = db.Name;
+            db.Load();
+
+            // Required in order to expose the exception
+            db.ScriptToDir();
+
+            var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger).ToList();
+
+            Assert.AreEqual(1, triggers.Count());
+            Assert.AreEqual("TR_v1", triggers[0].Name);
+            Assert.IsTrue(File.Exists(db.Name + "\\triggers\\TR_v1.sql"));
+
+        }
+
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
