@@ -104,8 +104,7 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
-		public void TestImportAndExportIgnoringComputedData()
-		{
+		public void TestImportAndExportIgnoringComputedData() {
 			var t = new Table("dbo", "Status");
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
@@ -134,22 +133,18 @@ namespace SchemaZen.test {
 			writer.Flush();
 			writer.Close();
 
-			try
-			{
+			try {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
-			}
-			finally
-			{
+			} finally {
 				File.Delete(filename);
 			}
 		}
 
 		[Test]
-		public void TestImportAndExportNonDefaultSchema()
-		{
+		public void TestImportAndExportNonDefaultSchema() {
 			var s = new Schema("example", "dbo");
 			var t = new Table(s.Name, "Example");
 			t.Columns.Add(new Column("id", "int", false, null));
@@ -177,22 +172,18 @@ namespace SchemaZen.test {
 			writer.Flush();
 			writer.Close();
 
-			try
-			{
+			try {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
-			}
-			finally
-			{
+			} finally {
 				File.Delete(filename);
 			}
 		}
 
 		[Test]
-		public void TestLargeAmountOfRowsImportAndExport()
-		{
+		public void TestLargeAmountOfRowsImportAndExport() {
 			var t = new Table("dbo", "TestData");
 			t.Columns.Add(new Column("test_field", "int", false, null));
 			t.Constraints.Add(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
@@ -209,8 +200,7 @@ namespace SchemaZen.test {
 			var writer = File.CreateText(filename);
 			StringBuilder sb = new StringBuilder();
 
-			for (var i = 0; i < Table.rowsInBatch * 4.2; i++)
-			{
+			for (var i = 0; i < Table.rowsInBatch * 4.2; i++) {
 				sb.AppendLine(i.ToString());
 				writer.WriteLine(i.ToString());
 			}
@@ -220,17 +210,14 @@ namespace SchemaZen.test {
 
 			var dataIn = sb.ToString();
 			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
-			
-			try
-			{
+
+			try {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 
 				Assert.AreEqual(dataIn, sw.ToString());
-			}
-			finally
-			{
+			} finally {
 				File.Delete(filename);
 			}
 		}
@@ -275,7 +262,7 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
-		[ExpectedException(typeof (NotSupportedException))]
+		[ExpectedException(typeof(NotSupportedException))]
 		public void TestScriptNonSupportedColumn() {
 			var t = new Table("dbo", "bla");
 			t.Columns.Add(new Column("a", "madeuptype", true, null));

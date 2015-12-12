@@ -143,7 +143,7 @@ end
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
-									data.Write(new SoapHexBinary((byte[]) dr[c.Name]).ToString());
+									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
 								else
 									data.Write(dr[c.Name].ToString()
 										.Replace(fieldSeparator, escapeFieldSeparator)
@@ -164,29 +164,24 @@ end
 
 			var dt = new DataTable();
 			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
-			foreach (var c in cols)
-			{
+			foreach (var c in cols) {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 
 			var linenumber = 0;
 			var batch_rows = 0;
-			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock))
-			{
+			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock)) {
 				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 					bulk.ColumnMappings.Add(colName, colName);
 				bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
 
-				using (var file = new StreamReader(filename))
-				{
+				using (var file = new StreamReader(filename)) {
 					var line = new List<char>();
-					while (file.Peek() >= 0)
-					{
+					while (file.Peek() >= 0) {
 						var rowsep_cnt = 0;
 						line.Clear();
 
-						while (file.Peek() >= 0)
-						{
+						while (file.Peek() >= 0) {
 							var ch = (char)file.Read();
 							line.Add(ch);
 
@@ -195,8 +190,7 @@ end
 							else
 								rowsep_cnt = 0;
 
-							if (rowsep_cnt == rowSeparator.Length)
-							{
+							if (rowsep_cnt == rowSeparator.Length) {
 								// Remove rowseparator from line
 								line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
 								break;
@@ -212,26 +206,20 @@ end
 
 						var row = dt.NewRow();
 						var fields = (new String(line.ToArray())).Split(new[] { fieldSeparator }, StringSplitOptions.None);
-						if (fields.Length != dt.Columns.Count)
-						{
+						if (fields.Length != dt.Columns.Count) {
 							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
-						for (var j = 0; j < fields.Length; j++)
-						{
-							try
-							{
+						for (var j = 0; j < fields.Length; j++) {
+							try {
 								row[j] = ConvertType(cols[j].Type,
 									fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
-							}
-							catch (FormatException ex)
-							{
+							} catch (FormatException ex) {
 								throw new DataFileException(string.Format("{0} at column {1}", ex.Message, j + 1), filename, linenumber);
 							}
 						}
 						dt.Rows.Add(row);
 
-						if (batch_rows == rowsInBatch)
-						{
+						if (batch_rows == rowsInBatch) {
 							batch_rows = 0;
 							bulk.WriteToServer(dt);
 							dt.Clear();
@@ -285,7 +273,7 @@ end
 		public bool IsDiff {
 			get {
 				return ColumnsAdded.Count + ColumnsDropped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-				       ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+					   ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
 			}
 		}
 
