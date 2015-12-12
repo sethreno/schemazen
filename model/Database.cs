@@ -1104,8 +1104,6 @@ where name = @dbname
 				}
 				try {
 					t.ImportData(Connection, fi.FullName);
-				} catch (DataException ex) {
-					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (Exception ex) {

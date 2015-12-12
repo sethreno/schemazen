@@ -33,7 +33,7 @@ end
 		private const string rowSeparator = "\r\n";
 		private const string escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string nullValue = "--SchemaZenNull--";
-		private const int rowsInBatch = 15000;
+		public const int rowsInBatch = 15000;
 
 		public ColumnList Columns = new ColumnList();
 		public List<Constraint> Constraints = new List<Constraint>();
@@ -125,7 +125,8 @@ end
 
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
+			foreach (var c in cols) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
 			sql.Remove(sql.Length - 1, 1);
@@ -138,7 +139,7 @@ end
 					cm.CommandText = sql.ToString();
 					using (var dr = cm.ExecuteReader()) {
 						while (dr.Read()) {
-							foreach (var c in Columns.Items) {
+							foreach (var c in cols) {
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
@@ -147,7 +148,7 @@ end
 									data.Write(dr[c.Name].ToString()
 										.Replace(fieldSeparator, escapeFieldSeparator)
 										.Replace(rowSeparator, escapeRowSeparator));
-								if (c != Columns.Items.Last())
+								if (c != cols.Last())
 									data.Write(fieldSeparator);
 							}
 							data.WriteLine();
@@ -162,75 +163,85 @@ end
 				throw new InvalidOperationException();
 
 			var dt = new DataTable();
-			foreach (var c in Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))) {
+			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
+			foreach (var c in cols)
+			{
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 
 			var linenumber = 0;
 			var batch_rows = 0;
-			SqlBulkCopy bulk;
+			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock))
+			{
+				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
+					bulk.ColumnMappings.Add(colName, colName);
+				bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
 
-			using (var file = new StreamReader(filename)) {
-				var line = new List<char>();
-				while (file.Peek() >= 0) {
-					var rowsep_cnt = 0;
-					line.Clear();
+				using (var file = new StreamReader(filename))
+				{
+					var line = new List<char>();
+					while (file.Peek() >= 0)
+					{
+						var rowsep_cnt = 0;
+						line.Clear();
 
-					while (file.Peek() >= 0) {
-						var ch = (char) file.Read();
-						line.Add(ch);
+						while (file.Peek() >= 0)
+						{
+							var ch = (char)file.Read();
+							line.Add(ch);
 
-						if (ch == rowSeparator[rowsep_cnt])
-							rowsep_cnt++;
-						else
-							rowsep_cnt = 0;
+							if (ch == rowSeparator[rowsep_cnt])
+								rowsep_cnt++;
+							else
+								rowsep_cnt = 0;
 
-						if (rowsep_cnt == rowSeparator.Length) {
-							// Remove rowseparator from line
-							line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
-							break;
+							if (rowsep_cnt == rowSeparator.Length)
+							{
+								// Remove rowseparator from line
+								line.RemoveRange(line.Count - rowSeparator.Length, rowSeparator.Length);
+								break;
+							}
 						}
-					}
-					linenumber++;
+						linenumber++;
 
-					// Skip empty lines
-					if (line.Count == 0)
-						continue;
+						// Skip empty lines
+						if (line.Count == 0)
+							continue;
 
-					batch_rows ++;
+						batch_rows++;
 
-					var row = dt.NewRow();
-					var fields = (new String(line.ToArray())).Split(new[] {fieldSeparator}, StringSplitOptions.None);
-					if (fields.Length != dt.Columns.Count) {
-						throw new DataException("Incorrect number of columns", linenumber);
-					}
-					for (var j = 0; j < fields.Length; j++) {
-						try {
-							row[j] = ConvertType(Columns.Items[j].Type,
-								fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
-						} catch (FormatException ex) {
-							throw new DataException(string.Format("{0} at column {1}", ex.Message, j + 1), linenumber);
+						var row = dt.NewRow();
+						var fields = (new String(line.ToArray())).Split(new[] { fieldSeparator }, StringSplitOptions.None);
+						if (fields.Length != dt.Columns.Count)
+						{
+							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
-					}
-					dt.Rows.Add(row);
+						for (var j = 0; j < fields.Length; j++)
+						{
+							try
+							{
+								row[j] = ConvertType(cols[j].Type,
+									fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
+							}
+							catch (FormatException ex)
+							{
+								throw new DataFileException(string.Format("{0} at column {1}", ex.Message, j + 1), filename, linenumber);
+							}
+						}
+						dt.Rows.Add(row);
 
-					if (batch_rows == rowsInBatch) {
-						batch_rows = 0;
-						bulk = new SqlBulkCopy(conn,
-							SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-						bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
-						bulk.WriteToServer(dt);
-						bulk.Close();
-						dt.Clear();
+						if (batch_rows == rowsInBatch)
+						{
+							batch_rows = 0;
+							bulk.WriteToServer(dt);
+							dt.Clear();
+						}
 					}
 				}
-			}
 
-			bulk = new SqlBulkCopy(conn,
-				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock);
-			bulk.DestinationTableName = string.Format("[{0}].[{1}]", Owner, Name);
-			bulk.WriteToServer(dt);
-			bulk.Close();
+				bulk.WriteToServer(dt);
+				bulk.Close();
+			}
 		}
 
 		public static object ConvertType(string sqlType, string val) {
@@ -250,6 +261,7 @@ end
 					return int.Parse(val);
 				case "uniqueidentifier":
 					return new Guid(val);
+				case "binary":
 				case "varbinary":
 				case "image":
 					return SoapHexBinary.Parse(val).Value;

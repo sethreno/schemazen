@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
+using System.Text;
 using NUnit.Framework;
 using SchemaZen.model;
 
@@ -100,6 +101,138 @@ namespace SchemaZen.test {
 			Assert.AreEqual(dataIn, sw.ToString());
 
 			File.Delete(filename);
+		}
+
+		[Test]
+		public void TestImportAndExportIgnoringComputedData()
+		{
+			var t = new Table("dbo", "Status");
+			t.Columns.Add(new Column("id", "int", false, null));
+			t.Columns.Add(new Column("code", "char", 1, false, null));
+			t.Columns.Add(new Column("description", "varchar", 20, false, null));
+			var computedCol = new Column("computed", "varchar", false, null);
+			computedCol.ComputedDefinition = "code + ' : ' + description";
+			t.Columns.Add(computedCol);
+			t.Columns.Find("id").Identity = new Identity(1, 1);
+			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
+
+			var conn = TestHelper.GetConnString("TESTDB");
+			DBHelper.DropDb(conn);
+			DBHelper.CreateDb(conn);
+			SqlConnection.ClearAllPools();
+			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+
+			var dataIn =
+				@"1	R	Ready
+2	P	Processing
+3	F	Frozen
+";
+			var filename = Path.GetTempFileName();
+
+			var writer = File.AppendText(filename);
+			writer.Write(dataIn);
+			writer.Flush();
+			writer.Close();
+
+			try
+			{
+				t.ImportData(conn, filename);
+				var sw = new StringWriter();
+				t.ExportData(conn, sw);
+				Assert.AreEqual(dataIn, sw.ToString());
+			}
+			finally
+			{
+				File.Delete(filename);
+			}
+		}
+
+		[Test]
+		public void TestImportAndExportNonDefaultSchema()
+		{
+			var s = new Schema("example", "dbo");
+			var t = new Table(s.Name, "Example");
+			t.Columns.Add(new Column("id", "int", false, null));
+			t.Columns.Add(new Column("code", "char", 1, false, null));
+			t.Columns.Add(new Column("description", "varchar", 20, false, null));
+			t.Columns.Find("id").Identity = new Identity(1, 1);
+			t.Constraints.Add(new Constraint("PK_Example", "PRIMARY KEY", "id"));
+
+			var conn = TestHelper.GetConnString("TESTDB");
+			DBHelper.DropDb(conn);
+			DBHelper.CreateDb(conn);
+			SqlConnection.ClearAllPools();
+			DBHelper.ExecBatchSql(conn, s.ScriptCreate());
+			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+
+			var dataIn =
+				@"1	R	Ready
+2	P	Processing
+3	F	Frozen
+";
+			var filename = Path.GetTempFileName();
+
+			var writer = File.AppendText(filename);
+			writer.Write(dataIn);
+			writer.Flush();
+			writer.Close();
+
+			try
+			{
+				t.ImportData(conn, filename);
+				var sw = new StringWriter();
+				t.ExportData(conn, sw);
+				Assert.AreEqual(dataIn, sw.ToString());
+			}
+			finally
+			{
+				File.Delete(filename);
+			}
+		}
+
+		[Test]
+		public void TestLargeAmountOfRowsImportAndExport()
+		{
+			var t = new Table("dbo", "TestData");
+			t.Columns.Add(new Column("test_field", "int", false, null));
+			t.Constraints.Add(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
+			t.Constraints.Add(new Constraint("IX_TestData_PK", "INDEX", "test_field") { Clustered = true, Table = t, Unique = true }); // clustered index is required to ensure the row order is the same as what we import
+
+			var conn = TestHelper.GetConnString("TESTDB");
+			DBHelper.DropDb(conn);
+			DBHelper.CreateDb(conn);
+			SqlConnection.ClearAllPools();
+			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+
+			var filename = Path.GetTempFileName();
+
+			var writer = File.CreateText(filename);
+			StringBuilder sb = new StringBuilder();
+
+			for (var i = 0; i < Table.rowsInBatch * 4.2; i++)
+			{
+				sb.AppendLine(i.ToString());
+				writer.WriteLine(i.ToString());
+			}
+
+			writer.Flush();
+			writer.Close();
+
+			var dataIn = sb.ToString();
+			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
+			
+			try
+			{
+				t.ImportData(conn, filename);
+				var sw = new StringWriter();
+				t.ExportData(conn, sw);
+
+				Assert.AreEqual(dataIn, sw.ToString());
+			}
+			finally
+			{
+				File.Delete(filename);
+			}
 		}
 
 		[Test]
