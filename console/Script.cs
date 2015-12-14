@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using SchemaZen.model;
@@ -28,7 +29,13 @@ namespace SchemaZen.console {
 
 		public override int Run(string[] args) {
 			var db = CreateDatabase();
+			if (!Overwrite && Directory.Exists(db.Dir)) {
+				if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", db.Dir)))
+					return 1;
+			}
+			Log(TraceLevel.Verbose, "Loading database schema...");
 			db.Load();
+			Log(TraceLevel.Verbose, "Database schema loaded.");
 
 			if (!string.IsNullOrEmpty(DataTables)) {
 				HandleDataTables(db, DataTables);
@@ -40,27 +47,22 @@ namespace SchemaZen.console {
 				}
 			}
 
-			if (!Overwrite && Directory.Exists(db.Dir)) {
-				if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", db.Dir)))
-					return 1;
-			}
+			db.ScriptToDir(TableHint, Log);
 
-			db.ScriptToDir(TableHint);
-
-			Console.WriteLine("Snapshot successfully created at " + db.Dir);
+			Log(TraceLevel.Info, Environment.NewLine + "Snapshot successfully created at " + db.Dir);
 			var routinesWithWarnings = db.Routines.Select(r => new {
 				Routine = r,
 				Warnings = r.Warnings().ToList()
 			}).Where(r => r.Warnings.Any()).ToList();
 			if (routinesWithWarnings.Any()) {
-				Console.WriteLine("With the following warnings:");
+				Log(TraceLevel.Info, "With the following warnings:");
 				foreach (
 					var warning in
 						routinesWithWarnings.SelectMany(
 							r =>
 								r.Warnings.Select(
 									w => string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Owner, r.Routine.Name, w)))) {
-					Console.WriteLine(warning);
+					Log(TraceLevel.Warning, warning);
 				}
 			}
 			return 0;

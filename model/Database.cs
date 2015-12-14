@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -969,36 +970,42 @@ where name = @dbname
 
 		#region Script
 
-		public void ScriptToDir(string tableHint = null) {
+		public void ScriptToDir(string tableHint = null, Action<TraceLevel, string> log = null) {
+			if (log == null) log = (tl, s) => { };
+
 			if (Directory.Exists(Dir)) {
 				// delete the existing script files
+				log(TraceLevel.Verbose, "Deleting existing files...");
+
 				var files = dirs.Select(dir => Path.Combine(Dir, dir))
 					.Where(Directory.Exists).SelectMany(Directory.GetFiles);
 				foreach (var f in files) {
 					File.Delete(f);
 				}
+				log(TraceLevel.Verbose, "Existing files deleted.");
 			} else {
 				Directory.CreateDirectory(Dir);
 			}
 
-			WritePropsScript();
-			WriteSchemaScript();
-			WriteScriptDir("tables", Tables.ToArray());
-			WriteScriptDir("table_types", TableTypes.ToArray());
-			WriteScriptDir("foreign_keys", ForeignKeys.ToArray());
+			WritePropsScript(log);
+			WriteSchemaScript(log);
+			WriteScriptDir("tables", Tables.ToArray(), log);
+			WriteScriptDir("table_types", TableTypes.ToArray(), log);
+			WriteScriptDir("foreign_keys", ForeignKeys.ToArray(), log);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
-				WriteScriptDir(dir, routineType.ToArray());
+				WriteScriptDir(dir, routineType.ToArray(), log);
 			}
-			WriteScriptDir("views", ViewIndexes.ToArray());
-			WriteScriptDir("assemblies", Assemblies.ToArray());
-			WriteScriptDir("users", Users.ToArray());
-			WriteScriptDir("synonyms", Synonyms.ToArray());
+			WriteScriptDir("views", ViewIndexes.ToArray(), log);
+			WriteScriptDir("assemblies", Assemblies.ToArray(), log);
+			WriteScriptDir("users", Users.ToArray(), log);
+			WriteScriptDir("synonyms", Synonyms.ToArray(), log);
 
-			ExportData(tableHint);
+			ExportData(tableHint, log);
 		}
 
-		private void WritePropsScript() {
+		private void WritePropsScript(Action<TraceLevel, string> log) {
+			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
 			text.Append(ScriptPropList(Props));
 			text.AppendLine("GO");
@@ -1006,7 +1013,8 @@ where name = @dbname
 			File.WriteAllText(string.Format("{0}/props.sql", Dir), text.ToString());
 		}
 
-		private void WriteSchemaScript() {
+		private void WriteSchemaScript(Action<TraceLevel, string> log) {
+			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
 			foreach (var schema in Schemas) {
 				text.Append(schema.ScriptCreate());
@@ -1016,11 +1024,13 @@ where name = @dbname
 			File.WriteAllText(string.Format("{0}/schemas.sql", Dir), text.ToString());
 		}
 
-		private void WriteScriptDir(string name, IEnumerable<IScriptable> objects) {
+		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log) {
 			if (!objects.Any()) return;
 			var dir = Path.Combine(Dir, name);
 			Directory.CreateDirectory(dir);
+			var index = 0;
 			foreach (var o in objects) {
+				log(TraceLevel.Verbose, string.Format("Scripting {0} {1} of {2}...{3}", name, ++index, objects.Count, index < objects.Count ? "\r" : string.Empty));
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
 				var script = o.ScriptCreate() + "\r\nGO\r\n";
 				File.AppendAllText(filePath, script);
@@ -1056,12 +1066,17 @@ where name = @dbname
 			return fileName;
 		}
 
-		public void ExportData(string tableHint = null) {
+		public void ExportData(string tableHint = null, Action<TraceLevel, string> log = null) {
 			var dataDir = Dir + "/data";
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
 			}
+			if (log != null)
+				log(TraceLevel.Info, "Exporting data...");
+			var index = 0;
 			foreach (var t in DataTables) {
+				if (log != null)
+					log(TraceLevel.Verbose, string.Format("Exporting data from {0} (table {1} of {2})...", t.Owner + "." + t.Name, ++index, DataTables.Count));
 				var sw = File.CreateText(dataDir + "/" + MakeFileName(t) + ".tsv");
 				t.ExportData(Connection, sw, tableHint);
 				sw.Flush();
@@ -1084,11 +1099,18 @@ where name = @dbname
 
 		#region Create
 
-		public void ImportData() {
+		public void ImportData(Action<TraceLevel, string> log = null) {
 			var dataDir = Dir + "\\data";
 			if (!Directory.Exists(dataDir)) {
 				return;
 			}
+
+			if (log == null) log = (tl, s) => { };
+
+			log(TraceLevel.Verbose, "Loading database schema...");
+			Load(); // load the schema first so we can import data
+			log(TraceLevel.Verbose, "Database schema loaded.");
+			log(TraceLevel.Info, "Importing data...");
 
 			foreach (var f in Directory.GetFiles(dataDir)) {
 				var fi = new FileInfo(f);
@@ -1100,9 +1122,11 @@ where name = @dbname
 				}
 				var t = FindTable(table, schema);
 				if (t == null) {
+					log(TraceLevel.Warning, string.Format("Warning: found data file '{0}', but no corresponding table in database...", fi.Name));
 					continue;
 				}
 				try {
+					log(TraceLevel.Verbose, string.Format("Importing data for table {0}.{1}...", schema, table));
 					t.ImportData(Connection, fi.FullName);
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
@@ -1110,19 +1134,25 @@ where name = @dbname
 					throw new DataFileException(ex.Message, fi.FullName, -1);
 				}
 			}
+			log(TraceLevel.Info, "Data imported successfully.");
 		}
 
-		public void CreateFromDir(bool overwrite) {
+		public void CreateFromDir(bool overwrite, Action<TraceLevel, string> log = null) {
+			if (log == null) log = (tl, s) => { };
+
 			if (DBHelper.DbExists(Connection)) {
+				log(TraceLevel.Verbose, "Dropping existing database...");
 				DBHelper.DropDb(Connection);
+				log(TraceLevel.Verbose, "Existing database dropped.");
 			}
 
-			Console.WriteLine("Creating database...");
+			log(TraceLevel.Info, "Creating database...");
 			//create database
 			DBHelper.CreateDb(Connection);
 
 			//run scripts
 			if (File.Exists(Dir + "/props.sql")) {
+				log(TraceLevel.Verbose, "Setting database properties...");
 				try {
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
 				} catch (SqlBatchException ex) {
@@ -1135,6 +1165,7 @@ where name = @dbname
 			}
 
 			if (File.Exists(Dir + "/schemas.sql")) {
+				log(TraceLevel.Verbose, "Creating database schemas...");
 				try {
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
 				} catch (SqlBatchException ex) {
@@ -1142,7 +1173,7 @@ where name = @dbname
 				}
 			}
 
-			Console.WriteLine("Creating database objects...");
+			log(TraceLevel.Info, "Creating database objects...");
 			// create db objects
 
 			// resolve dependencies by trying over and over
@@ -1153,11 +1184,14 @@ where name = @dbname
 			while (scripts.Count > 0 && (prevCount == -1 || errors.Count < prevCount)) {
 				if (errors.Count > 0) {
 					prevCount = errors.Count;
-					Console.WriteLine(
-						"{0} errors occurred, retrying...", errors.Count);
+					log(TraceLevel.Info, string.Format(
+						"{0} errors occurred, retrying...", errors.Count));
 				}
 				errors.Clear();
+				var index = 0;
+				var total = scripts.Count;
 				foreach (var f in scripts.ToArray()) {
+					log(TraceLevel.Verbose, string.Format("Executing script {0} of {1}...{2}", ++index, total, index < total ? "\r" : string.Empty));
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
 						scripts.Remove(f);
@@ -1167,16 +1201,14 @@ where name = @dbname
 					}
 				}
 			}
-			if (!errors.Any() && prevCount > 0)
-				Console.WriteLine("All errors resolved, were probably dependency issues...");
-			Console.WriteLine();
+			if (prevCount > 0)
+				log(TraceLevel.Info, errors.Any() ? string.Format("{0} errors unresolved. Details will follow later.", prevCount) : "All errors resolved, were probably dependency issues...");
+			log(TraceLevel.Info, string.Empty);
 
-			Load(); // load the schema first so we can import data
-			Console.WriteLine("Importing data...");
-			ImportData(); // load data
+			ImportData(log); // load data
 
-			Console.WriteLine("Data imported successfully.");
 			if (Directory.Exists(Dir + "/after_data")) {
+				log(TraceLevel.Verbose, "Executing after-data scripts...");
 				foreach (var f in Directory.GetFiles(Dir + "/after_data", "*.sql")) {
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
@@ -1186,9 +1218,9 @@ where name = @dbname
 				}
 			}
 
-			Console.WriteLine("Adding foreign key constraints...");
 			// foreign keys
 			if (Directory.Exists(Dir + "/foreign_keys")) {
+				log(TraceLevel.Info, "Adding foreign key constraints...");
 				foreach (var f in Directory.GetFiles(Dir + "/foreign_keys", "*.sql")) {
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
