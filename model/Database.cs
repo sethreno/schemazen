@@ -1067,6 +1067,8 @@ where name = @dbname
 		}
 
 		public void ExportData(string tableHint = null, Action<TraceLevel, string> log = null) {
+			if (!DataTables.Any())
+				return;
 			var dataDir = Dir + "/data";
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
@@ -1100,12 +1102,13 @@ where name = @dbname
 		#region Create
 
 		public void ImportData(Action<TraceLevel, string> log = null) {
+			if (log == null) log = (tl, s) => { };
+
 			var dataDir = Dir + "\\data";
 			if (!Directory.Exists(dataDir)) {
+				log(TraceLevel.Verbose, "No data to import.");
 				return;
 			}
-
-			if (log == null) log = (tl, s) => { };
 
 			log(TraceLevel.Verbose, "Loading database schema...");
 			Load(); // load the schema first so we can import data
