@@ -130,7 +130,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>$(SolutionDir)\packages\ilmerge.2.13.0307\ilmerge /target:exe /out:SchemaZen.exe console.exe model.dll ManyConsole.dll NDesk.Options.dll
+    <PostBuildEvent>"$(SolutionDir)\packages\ilmerge.2.13.0307\ilmerge" /target:exe /out:SchemaZen.exe console.exe model.dll ManyConsole.dll NDesk.Options.dll
 </PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />
