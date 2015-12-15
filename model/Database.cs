@@ -142,6 +142,7 @@ namespace SchemaZen.model {
 			Tables.Clear();
 			Routines.Clear();
 			ForeignKeys.Clear();
+			DataTables.Clear();
 			ViewIndexes.Clear();
 			Assemblies.Clear();
 			Users.Clear();
