@@ -484,6 +484,11 @@ select * from Table1
 			db.Dir = db.Name;
 			db.Load();
 
+			if (Directory.Exists(db.Dir)) // if the directory exists, delete it to make it a fair test
+			{
+				Directory.Delete(db.Dir, true);
+			}
+
 			db.ScriptToDir();
 
 			Assert.AreEqual(0, db.Assemblies.Count);
