@@ -1,17 +1,23 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 
 namespace SchemaZen.test {
 	public class ConfigHelper {
 		public static string TestDB {
-			get { return ConfigurationManager.AppSettings["testdb"]; }
+			get { return GetSetting("testdb"); }
 		}
 
 		public static string TestSchemaDir {
-			get { return ConfigurationManager.AppSettings["test_schema_dir"]; }
+			get { return GetSetting("test_schema_dir"); }
 		}
 
 		public static string SqlDbDiffPath {
-			get { return ConfigurationManager.AppSettings["SqlDbDiffPath"]; }
+			get { return GetSetting("SqlDbDiffPath"); }
+		}
+
+		private static string GetSetting(string key) {
+			var val = Environment.GetEnvironmentVariable(key);
+			return val ?? ConfigurationManager.AppSettings[key];
 		}
 	}
 }
