@@ -411,7 +411,7 @@ select * from Table1
 			db.Tables.Add(loc);
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
-			db.FindProp("COMPATIBILITY_LEVEL").Value = "120";
+			db.FindProp("COMPATIBILITY_LEVEL").Value = "110";
 			db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
 			db.FindProp("AUTO_CLOSE").Value = "OFF";
 			db.FindProp("AUTO_SHRINK").Value = "ON";
