@@ -471,5 +471,53 @@ select * from Table1
 			copy.Load();
 			TestCompare(db, copy);
 		}
+
+		[Test]
+		public void TestScriptToDirOnlyCreatesNecessaryFolders()
+		{
+			var db = new Database("TestEmptyDB");
+
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+			db.ExecCreate(true);
+
+			db.Dir = db.Name;
+			db.Load();
+
+			if (Directory.Exists(db.Dir)) // if the directory exists, delete it to make it a fair test
+			{
+				Directory.Delete(db.Dir, true);
+			}
+
+			db.ScriptToDir();
+
+			Assert.AreEqual(0, db.Assemblies.Count);
+			Assert.AreEqual(0, db.DataTables.Count);
+			Assert.AreEqual(0, db.ForeignKeys.Count);
+			Assert.AreEqual(0, db.Routines.Count);
+			Assert.AreEqual(0, db.Schemas.Count);
+			Assert.AreEqual(0, db.Synonyms.Count);
+			Assert.AreEqual(0, db.Tables.Count);
+			Assert.AreEqual(0, db.TableTypes.Count);
+			Assert.AreEqual(0, db.Users.Count);
+			Assert.AreEqual(0, db.ViewIndexes.Count);
+
+			Assert.IsTrue(Directory.Exists(db.Name));
+			Assert.IsTrue(File.Exists(db.Name + "\\props.sql"));
+			//Assert.IsFalse(File.Exists(db.Name + "\\schemas.sql"));
+
+			Assert.IsFalse(Directory.Exists(db.Name + "\\assemblies"));
+			Assert.IsFalse(Directory.Exists(db.Name + "\\data"));
+			Assert.IsFalse(Directory.Exists(db.Name + "\\foreign_keys"));
+			foreach (var routineType in Enum.GetNames(typeof(Routine.RoutineKind)))
+			{
+				var dir = routineType.ToLower() + "s";
+				Assert.IsFalse(Directory.Exists(db.Name + "\\" + dir));
+			}
+			Assert.IsFalse(Directory.Exists(db.Name + "\\synonyms"));
+			Assert.IsFalse(Directory.Exists(db.Name + "\\tables"));
+			Assert.IsFalse(Directory.Exists(db.Name + "\\table_types"));
+			Assert.IsFalse(Directory.Exists(db.Name + "\\users"));
+		}
 	}
 }
