@@ -184,7 +184,8 @@ namespace SchemaZen.test {
 		public void TestScriptTableType() {
 			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
-	[ID] [nvarchar](250) NULL
+	[ID] [nvarchar](250) NULL,
+	[Value] [numeric](5, 1) NULL
 )
 
 ";
@@ -204,6 +205,8 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 			Assert.AreEqual(1, db.TableTypes.Count());
 			Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
+			Assert.AreEqual(1, db.TableTypes[0].Columns.Items[1].Scale);
+			Assert.AreEqual(5, db.TableTypes[0].Columns.Items[1].Precision);
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 
