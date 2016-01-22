@@ -36,7 +36,7 @@ end
 		public const int rowsInBatch = 15000;
 
 		public ColumnList Columns = new ColumnList();
-		public List<Constraint> Constraints = new List<Constraint>();
+		private List<Constraint> _Constraints = new List<Constraint>();
 		public string Name { get; set; }
 		public string Owner { get; set; }
 		public bool IsType;
@@ -47,11 +47,24 @@ end
 		}
 
 		public Constraint PrimaryKey {
-			get { return Constraints.FirstOrDefault(c => c.Type == "PRIMARY KEY"); }
+			get { return _Constraints.FirstOrDefault(c => c.Type == "PRIMARY KEY"); }
 		}
 
 		public Constraint FindConstraint(string name) {
-			return Constraints.FirstOrDefault(c => c.Name == name);
+			return _Constraints.FirstOrDefault(c => c.Name == name);
+		}
+
+		public IEnumerable<Constraint> Constraints { get { return _Constraints.AsEnumerable(); } }
+
+		public void AddConstraint(Constraint constraint)
+		{
+			constraint.Table = this;
+			_Constraints.Add(constraint);
+		}
+
+		public void RemoveContraint(Constraint constraint)
+		{
+			_Constraints.Remove(constraint);
 		}
 
 		public TableDiff Compare(Table t) {
@@ -78,20 +91,25 @@ end
 				diff.ColumnsDropped.Add(c);
 			}
 
-			//get added and compare mutual constraints
-			foreach (var c in Constraints) {
-				var c2 = t.FindConstraint(c.Name);
-				if (c2 == null) {
-					diff.ConstraintsAdded.Add(c);
-				} else {
-					if (c.ScriptCreate() != c2.ScriptCreate()) {
-						diff.ConstraintsChanged.Add(c);
+			if (!t.IsType) {
+				//get added and compare mutual constraints
+				foreach (var c in Constraints) {
+					var c2 = t.FindConstraint(c.Name);
+					if (c2 == null) {
+						diff.ConstraintsAdded.Add(c);
+					} else {
+						if (c.ScriptCreate() != c2.ScriptCreate()) {
+							diff.ConstraintsChanged.Add(c);
+						}
 					}
 				}
-			}
-			//get deleted constraints
-			foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
-				diff.ConstraintsDeleted.Add(c);
+				//get deleted constraints
+				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)){
+					diff.ConstraintsDeleted.Add(c);
+				}
+			} else {
+				// TODO: compare constraints on table types, which can't be named in the script, but have names in the DB
+
 			}
 
 			return diff;
@@ -102,13 +120,13 @@ end
 			text.AppendFormat("CREATE {2} [{0}].[{1}] {3}(\r\n", Owner, Name, IsType ? "TYPE" : "TABLE",
 				IsType ? "AS TABLE " : string.Empty);
 			text.Append(Columns.Script());
-			if (Constraints.Count > 0) text.AppendLine();
-			foreach (var c in Constraints.Where(c => c.Type != "INDEX")) {
+			if (_Constraints.Count > 0) text.AppendLine();
+			foreach (var c in _Constraints.Where(c => c.Type != "INDEX")) {
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
 			text.AppendLine(")");
 			text.AppendLine();
-			foreach (var c in Constraints.Where(c => c.Type == "INDEX")) {
+			foreach (var c in _Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
 			}
 			return text.ToString();

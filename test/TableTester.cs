@@ -34,8 +34,8 @@ namespace SchemaZen.test {
 			//test equal
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
 			t2.Columns.Add(new Column("first", "varchar", 30, false, null));
-			t1.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
-			t2.Constraints.Add(new Constraint("PK_Test", "PRIMARY KEY", "first"));
+			t1.AddConstraint(new Constraint("PK_Test", "PRIMARY KEY", "first"));
+			t2.AddConstraint(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 
 			diff = t1.Compare(t2);
 			Assert.IsNotNull(diff);
@@ -75,7 +75,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("code", "char", 1, false, null));
 			t.Columns.Add(new Column("description", "varchar", 20, false, null));
 			t.Columns.Find("id").Identity = new Identity(1, 1);
-			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
+			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
 			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
@@ -113,7 +113,7 @@ namespace SchemaZen.test {
 			computedCol.ComputedDefinition = "code + ' : ' + description";
 			t.Columns.Add(computedCol);
 			t.Columns.Find("id").Identity = new Identity(1, 1);
-			t.Constraints.Add(new Constraint("PK_Status", "PRIMARY KEY", "id"));
+			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
 			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
@@ -151,7 +151,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("code", "char", 1, false, null));
 			t.Columns.Add(new Column("description", "varchar", 20, false, null));
 			t.Columns.Find("id").Identity = new Identity(1, 1);
-			t.Constraints.Add(new Constraint("PK_Example", "PRIMARY KEY", "id"));
+			t.AddConstraint(new Constraint("PK_Example", "PRIMARY KEY", "id"));
 
 			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
@@ -186,8 +186,8 @@ namespace SchemaZen.test {
 		public void TestLargeAmountOfRowsImportAndExport() {
 			var t = new Table("dbo", "TestData");
 			t.Columns.Add(new Column("test_field", "int", false, null));
-			t.Constraints.Add(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
-			t.Constraints.Add(new Constraint("IX_TestData_PK", "INDEX", "test_field") { Clustered = true, Table = t, Unique = true }); // clustered index is required to ensure the row order is the same as what we import
+			t.AddConstraint(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
+			t.AddConstraint(new Constraint("IX_TestData_PK", "INDEX", "test_field") { Clustered = true, Table = t, Unique = true }); // clustered index is required to ensure the row order is the same as what we import
 
 			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
