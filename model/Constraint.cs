@@ -23,7 +23,7 @@ namespace SchemaZen.model {
 		}
 
 		public string UniqueText {
-			get { return !Unique ? "" : "UNIQUE"; }
+			get { return Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE"; }
 		}
 
 		public string ScriptCreate() {

@@ -385,7 +385,7 @@ select * from Table1
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null) {Position = 1});
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
-			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true });
+			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
 			
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;

@@ -108,8 +108,25 @@ end
 					diff.ConstraintsDeleted.Add(c);
 				}
 			} else {
-				// TODO: compare constraints on table types, which can't be named in the script, but have names in the DB
+				// compare constraints on table types, which can't be named in the script, but have names in the DB
+				var dest = Constraints.ToList();
+				var src = t.Constraints.ToList();
 
+				var j = from c1 in dest
+						join c2 in src on c1.ScriptCreate() equals c2.ScriptCreate() into match //new { c1.Type, c1.Unique, c1.Clustered, Columns = string.Join(",", c1.Columns.ToArray()), IncludedColumns = string.Join(",", c1.IncludedColumns.ToArray()) } equals new { c2.Type, c2.Unique, c2.Clustered, Columns = string.Join(",", c2.Columns.ToArray()), IncludedColumns = string.Join(",", c2.IncludedColumns.ToArray()) } into match
+						from m in match.DefaultIfEmpty()
+						select new { c1, m };
+
+				foreach (var c in j) {
+					if (c.m == null) {
+						diff.ConstraintsAdded.Add(c.c1);
+					} else {
+						src.Remove(c.m);
+					}
+				}
+				foreach (var c in src) {
+					diff.ConstraintsDeleted.Add(c);
+				}
 			}
 
 			return diff;

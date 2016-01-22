@@ -140,6 +140,7 @@ namespace SchemaZen.model {
 
 		public void Load() {
 			Tables.Clear();
+			TableTypes.Clear();
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
