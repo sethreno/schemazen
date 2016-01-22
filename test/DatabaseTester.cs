@@ -408,10 +408,17 @@ select * from Table1
 			fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
 
+			var tt_codedesc = new Table("dbo", "CodeDesc");
+			tt_codedesc.IsType = true;
+			tt_codedesc.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
+			tt_codedesc.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
+			tt_codedesc.Constraints.Add(new Constraint("PK_CodeDesc", "PRIMARY KEY", "code"));
+
 			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
 			db.Tables.Add(loc);
+			db.TableTypes.Add(tt_codedesc);
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
 			db.FindProp("COMPATIBILITY_LEVEL").Value = "110";
@@ -451,6 +458,10 @@ select * from Table1
 
 			db.DataTables.Add(formType);
 			db.Dir = db.Name;
+
+			if (Directory.Exists(db.Dir))
+				Directory.Delete(db.Dir, true);
+
 			db.ScriptToDir();
 			Assert.IsTrue(Directory.Exists(db.Name));
 			Assert.IsTrue(Directory.Exists(db.Name + "\\data"));
@@ -462,6 +473,9 @@ select * from Table1
 			}
 			foreach (var t in db.Tables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
+			}
+			foreach (var t in db.TableTypes) {
+				Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_" + t.Name + ".sql"));
 			}
 			foreach (var expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
