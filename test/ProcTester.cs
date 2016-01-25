@@ -13,7 +13,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("city", "varchar", 50, false, null));
 			t.Columns.Add(new Column("state", "char", 2, false, null));
 			t.Columns.Add(new Column("zip", "char", 5, false, null));
-			t.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
+			t.AddConstraint(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
 			var getAddress = new Routine("dbo", "GetAddress", null);
 			getAddress.Text = @"

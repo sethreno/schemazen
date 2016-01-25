@@ -8,7 +8,7 @@ namespace SchemaZen.test {
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
 			t1.Columns.Add(new Column("c1", "int", false, null));
-			t1.Constraints.Add(new Constraint("pk_t1", "PRIMARY KEY", "c1,c2"));
+			t1.AddConstraint(new Constraint("pk_t1", "PRIMARY KEY", "c1,c2"));
 
 			var t2 = new Table("dbo", "t2");
 			t2.Columns.Add(new Column("c1", "int", false, null));
@@ -39,7 +39,7 @@ namespace SchemaZen.test {
 			person.Columns.Add(new Column("id", "int", false, null));
 			person.Columns.Add(new Column("name", "varchar", 50, false, null));
 			person.Columns.Find("id").Identity = new Identity(1, 1);
-			person.Constraints.Add(new Constraint("PK_Person", "PRIMARY KEY", "id"));
+			person.AddConstraint(new Constraint("PK_Person", "PRIMARY KEY", "id"));
 
 			var address = new Table("dbo", "Address");
 			address.Columns.Add(new Column("id", "int", false, null));
@@ -49,7 +49,7 @@ namespace SchemaZen.test {
 			address.Columns.Add(new Column("state", "char", 2, false, null));
 			address.Columns.Add(new Column("zip", "varchar", 5, false, null));
 			address.Columns.Find("id").Identity = new Identity(1, 1);
-			address.Constraints.Add(new Constraint("PK_Address", "PRIMARY KEY", "id"));
+			address.AddConstraint(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
 			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
 

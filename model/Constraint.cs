@@ -23,7 +23,7 @@ namespace SchemaZen.model {
 		}
 
 		public string UniqueText {
-			get { return !Unique ? "" : "UNIQUE"; }
+			get { return Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE"; }
 		}
 
 		public string ScriptCreate() {
@@ -36,8 +36,8 @@ namespace SchemaZen.model {
 				}
 				return sql;
 			}
-			return string.Format("CONSTRAINT [{0}] {1} {2} ([{3}])", Name, Type, ClusteredText,
-				string.Join("], [", Columns.ToArray()));
+			return (Table.IsType ? string.Empty : string.Format("CONSTRAINT [{0}] ", Name)) +
+				string.Format("{0} {1} ([{2}])", Type, ClusteredText, string.Join("], [", Columns.ToArray()));
 		}
 	}
 }

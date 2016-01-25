@@ -121,7 +121,7 @@ namespace SchemaZen.model {
 
 		private static readonly string[] dirs = {
 			"tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "users", "synonyms"
+			"views", "xmlschemacollections", "data", "users", "synonyms", "table_types"
 		};
 
 		private void SetPropOnOff(string propName, object dbVal) {
@@ -140,6 +140,7 @@ namespace SchemaZen.model {
 
 		public void Load() {
 			Tables.Clear();
+			TableTypes.Clear();
 			Routines.Clear();
 			ForeignKeys.Clear();
 			DataTables.Clear();
@@ -442,8 +443,7 @@ order by fk.name, fkc.constraint_column_id
 					var c = t.FindConstraint((string) dr["indexName"]);
 					if (c == null) {
 						c = new Constraint((string) dr["indexName"], "", "");
-						t.Constraints.Add(c);
-						c.Table = t;
+						t.AddConstraint(c);
 
 						if ((string) dr["baseType"] == "V")
 							ViewIndexes.Add(c);
