@@ -336,6 +336,23 @@ end
 					text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Target.ScriptAlter());
 				}
 			}
+
+			foreach (var c in ConstraintsAdded.Where(c => c.Type == "CHECK")) {
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n",
+					Owner, Name, c.ScriptCreate());
+			}
+
+			foreach (var c in ConstraintsChanged.Where(c => c.Type == "CHECK")) {
+				text.AppendFormat("-- Check constraint {0} changed\r\n", c.Name);
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT {2}\r\n", Owner, Name, c.Name);
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] ADD {2}\r\n",
+					Owner, Name, c.ScriptCreate());
+			}
+
+			foreach (var c in ConstraintsDeleted.Where(c => c.Type == "CHECK")) {
+				text.AppendFormat("ALTER TABLE [{0}].[{1}] DROP CONSTRAINT {2}\r\n", Owner, Name, c.Name);
+			}
+
 			return text.ToString();
 		}
 	}

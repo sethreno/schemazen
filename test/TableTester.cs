@@ -26,6 +26,26 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
+		public void CompareConstraints() {
+
+			var t1 = new Table("dbo", "Test");
+			var t2 = new Table("dbo", "Test");
+			var diff = default(TableDiff);
+
+			//test equal
+			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
+			t2.Columns.Add(new Column("first", "varchar", 30, false, null));
+			t1.AddConstraint(Constraint.CreateCheckedConstraint("IsTomorrow", true, "fnTomorrow()"));
+			t2.AddConstraint(Constraint.CreateCheckedConstraint("IsTomorrow", false, "Tomorrow <> 1"));
+
+			diff = t1.Compare(t2);
+			Assert.AreEqual(1, diff.ConstraintsChanged.Count);
+			Assert.IsNotNull(diff);
+			Assert.IsTrue(diff.IsDiff);
+
+		}
+
+		[Test]
 		public void TestCompare() {
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");

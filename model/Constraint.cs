@@ -9,6 +9,8 @@ namespace SchemaZen.model {
 		public Table Table;
 		public string Type;
 		public bool Unique;
+		private bool IsNotForReplication;
+		private string CheckConstraintExpression;
 
 		public Constraint(string name, string type, string columns) {
 			Name = name;
@@ -16,6 +18,14 @@ namespace SchemaZen.model {
 			if (!string.IsNullOrEmpty(columns)) {
 				Columns = new List<string>(columns.Split(','));
 			}
+		}
+
+		public static Constraint CreateCheckedConstraint(string name, bool isNotForReplication, string checkConstraintExpression) {
+			var constraint = new Constraint(name, "CHECK", "") {
+				IsNotForReplication = isNotForReplication,
+				CheckConstraintExpression = checkConstraintExpression
+			};
+			return constraint;
 		}
 
 		public string ClusteredText {
@@ -27,6 +37,10 @@ namespace SchemaZen.model {
 		}
 
 		public string ScriptCreate() {
+			if (Type == "CHECK") {
+				return $"CONSTRAINT [{Name}] CHECK {CheckConstraintExpression}";
+			}
+
 			if (Type == "INDEX") {
 				var sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])", UniqueText, ClusteredText, Name,
 					Table.Owner, Table.Name,
