@@ -160,6 +160,7 @@ namespace SchemaZen.model {
 					LoadColumnDefaults(cm);
 					LoadColumnComputes(cm);
 					LoadConstraintsAndIndexes(cm);
+					LoadCheckConstraints(cm);
 					LoadForeignKeys(cm);
 					LoadRoutines(cm);
 					LoadXmlSchemas(cm);
@@ -331,6 +332,46 @@ namespace SchemaZen.model {
 			}
 		}
 
+		private void LoadCheckConstraints(SqlCommand cm) {
+
+			cm.CommandText = @"
+
+				WITH SysObjectCheckConstraints AS
+				(
+					SELECT OBJECT_NAME(OBJECT_ID) AS ConstraintName
+						,SCHEMA_NAME(schema_id) AS SchemaName
+						,OBJECT_NAME(parent_object_id) AS TableName
+						,objectproperty(object_id, 'CnstIsNotRepl') AS NotForReplication
+					FROM sys.objects
+					WHERE type_desc = 'CHECK_CONSTRAINT'
+				)
+
+				SELECT CONSTRAINT_CATALOG AS TABLE_CATALOG, CONSTRAINT_SCHEMA AS TABLE_SCHEMA, 
+						NotForReplication,
+						TableName AS TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE 
+				FROM INFORMATION_SCHEMA.CHECK_CONSTRAINTS
+				INNER JOIN SysObjectCheckConstraints ON 
+				SysObjectCheckConstraints.SchemaName = CHECK_CONSTRAINTS.CONSTRAINT_SCHEMA AND
+				SysObjectCheckConstraints.ConstraintName = CHECK_CONSTRAINTS.CONSTRAINT_NAME 
+
+ 
+			";
+
+			using (var dr = cm.ExecuteReader())
+			{
+				while (dr.Read())
+				{
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
+					var constraint = Constraint.CreateCheckedConstraint(
+						(string) dr["CONSTRAINT_NAME"],
+						Convert.ToBoolean(dr["NotForReplication"]),
+						(string) dr["CHECK_CLAUSE"]
+						);
+
+					t.AddConstraint(constraint);
+				}
+			}
+		}
 		private void LoadForeignKeys(SqlCommand cm) {
 			//get foreign keys
 			cm.CommandText = @"
@@ -726,7 +767,7 @@ where name = @dbname
 					SetPropOnOff("AUTO_SHRINK", dr["is_auto_shrink_on"]);
 					if (dr["snapshot_isolation_state"] != DBNull.Value) {
 						FindProp("ALLOW_SNAPSHOT_ISOLATION").Value = (byte) dr["snapshot_isolation_state"] == 0 ||
-						                                             (byte) dr["snapshot_isolation_state"] == 2
+																	 (byte) dr["snapshot_isolation_state"] == 2
 							? "OFF"
 							: "ON";
 					}
@@ -765,7 +806,7 @@ where name = @dbname
 			var diff = new DatabaseDiff();
 			diff.Db = db;
 
-			//compare database properties           
+			//compare database properties		   
 			foreach (var p in from p in Props
 				let p2 = db.FindProp(p.Name)
 				where p.Script() != p2.Script()
@@ -1297,35 +1338,35 @@ where name = @dbname
 		public bool IsDiff {
 			get {
 				return PropsChanged.Count > 0
-				       || TablesAdded.Count > 0
-				       || TablesDiff.Count > 0
-				       || TableTypesDiff.Count > 0
-				       || TablesDeleted.Count > 0
-				       || RoutinesAdded.Count > 0
-				       || RoutinesDiff.Count > 0
-				       || RoutinesDeleted.Count > 0
-				       || ForeignKeysAdded.Count > 0
-				       || ForeignKeysDiff.Count > 0
-				       || ForeignKeysDeleted.Count > 0
-				       || AssembliesAdded.Count > 0
-				       || AssembliesDiff.Count > 0
-				       || AssembliesDeleted.Count > 0
-				       || UsersAdded.Count > 0
-				       || UsersDiff.Count > 0
-				       || UsersDeleted.Count > 0
-				       || ViewIndexesAdded.Count > 0
-				       || ViewIndexesDiff.Count > 0
-				       || ViewIndexesDeleted.Count > 0
-				       || SynonymsAdded.Count > 0
-				       || SynonymsDiff.Count > 0
-				       || SynonymsDeleted.Count > 0;
+					   || TablesAdded.Count > 0
+					   || TablesDiff.Count > 0
+					   || TableTypesDiff.Count > 0
+					   || TablesDeleted.Count > 0
+					   || RoutinesAdded.Count > 0
+					   || RoutinesDiff.Count > 0
+					   || RoutinesDeleted.Count > 0
+					   || ForeignKeysAdded.Count > 0
+					   || ForeignKeysDiff.Count > 0
+					   || ForeignKeysDeleted.Count > 0
+					   || AssembliesAdded.Count > 0
+					   || AssembliesDiff.Count > 0
+					   || AssembliesDeleted.Count > 0
+					   || UsersAdded.Count > 0
+					   || UsersDiff.Count > 0
+					   || UsersDeleted.Count > 0
+					   || ViewIndexesAdded.Count > 0
+					   || ViewIndexesDiff.Count > 0
+					   || ViewIndexesDeleted.Count > 0
+					   || SynonymsAdded.Count > 0
+					   || SynonymsDiff.Count > 0
+					   || SynonymsDeleted.Count > 0;
 			}
 		}
 
 		private static string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
 			return changes.Count + "x " + caption +
-			       (includeNames ? ("\r\n\t" + string.Join("\r\n\t", changes.ToArray())) : string.Empty) + "\r\n";
+				   (includeNames ? ("\r\n\t" + string.Join("\r\n\t", changes.ToArray())) : string.Empty) + "\r\n";
 		}
 
 		public string SummarizeChanges(bool includeNames) {
