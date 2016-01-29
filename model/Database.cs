@@ -341,12 +341,14 @@ namespace SchemaZen.model {
 					SELECT OBJECT_NAME(OBJECT_ID) AS ConstraintName
 						,SCHEMA_NAME(schema_id) AS SchemaName
 						,OBJECT_NAME(parent_object_id) AS TableName
+						,objectproperty(object_id, 'CnstIsNotRepl') AS NotForReplication
 					FROM sys.objects
 					WHERE type_desc = 'CHECK_CONSTRAINT'
 				)
 
 				SELECT CONSTRAINT_CATALOG AS TABLE_CATALOG, CONSTRAINT_SCHEMA AS TABLE_SCHEMA, 
-					   TableName AS TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE 
+						NotForReplication,
+						TableName AS TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE 
 				FROM INFORMATION_SCHEMA.CHECK_CONSTRAINTS
 				INNER JOIN SysObjectCheckConstraints ON 
 				SysObjectCheckConstraints.SchemaName = CHECK_CONSTRAINTS.CONSTRAINT_SCHEMA AND
@@ -362,7 +364,7 @@ namespace SchemaZen.model {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 					var constraint = Constraint.CreateCheckedConstraint(
 						(string) dr["CONSTRAINT_NAME"],
-						false,
+						Convert.ToBoolean(dr["NotForReplication"]),
 						(string) dr["CHECK_CLAUSE"]
 						);
 

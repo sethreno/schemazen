@@ -38,7 +38,8 @@ namespace SchemaZen.model {
 
 		public string ScriptCreate() {
 			if (Type == "CHECK") {
-				return $"CONSTRAINT [{Name}] CHECK {CheckConstraintExpression}";
+				var notForReplicationOption = IsNotForReplication ? "NOT FOR REPLICATION" : "";
+				return $"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {CheckConstraintExpression}";
 			}
 
 			if (Type == "INDEX") {
