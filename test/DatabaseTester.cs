@@ -16,6 +16,7 @@ namespace SchemaZen.test {
 			//create the db from sql script
 			TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
 			TestHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), "TEST_SOURCE");
+			SqlConnection.ClearAllPools();
 
 			//load the model from newly created db and create a copy
 			var copy = new Database("TEST_COPY");
@@ -70,6 +71,7 @@ namespace SchemaZen.test {
 			//create the db from sql script
 			TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
 			TestHelper.ExecBatchSql(File.ReadAllText(pathToSchema), "TEST_SOURCE");
+			SqlConnection.ClearAllPools();
 
 			//load the model from newly created db and check collation
 			var copy = new Database("TEST_COPY");
