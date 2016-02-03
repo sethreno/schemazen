@@ -612,7 +612,7 @@ order by fk.name, fkc.constraint_column_id
 					t.name as DATA_TYPE,
 					c.column_id as ORDINAL_POSITION,
 					CASE WHEN c.is_nullable = 1 THEN 'YES' ELSE 'NO' END as IS_NULLABLE,
-					CASE WHEN t.name = 'nvarchar' THEN CAST(c.max_length as int)/2 ELSE CAST(c.max_length as int) END as CHARACTER_MAXIMUM_LENGTH,
+					CASE WHEN t.name = 'nvarchar' and c.max_length > 0 THEN CAST(c.max_length as int)/2 ELSE CAST(c.max_length as int) END as CHARACTER_MAXIMUM_LENGTH,
 					c.precision as NUMERIC_PRECISION,
 					CAST(c.scale as int) as NUMERIC_SCALE,
 					CASE WHEN c.is_rowguidcol = 1 THEN 'YES' ELSE 'NO' END as IS_ROW_GUID_COL
