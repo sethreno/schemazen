@@ -275,6 +275,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'")));
 			t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 			t.Columns.Add(new Column("cc", "xml", true, null));
+			t.Columns.Add(new Column("dd", "hierarchyid", false, null));
 
 			Console.WriteLine(t.ScriptCreate());
 			TestHelper.ExecSql(t.ScriptCreate(), "");

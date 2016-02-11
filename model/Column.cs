@@ -73,6 +73,7 @@ namespace SchemaZen.model {
 					case "datetime2":
 					case "datetimeoffset":
 					case "float":
+					case "hierarchyid":
 					case "image":
 					case "int":
 					case "money":
