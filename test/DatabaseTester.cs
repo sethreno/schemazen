@@ -187,7 +187,8 @@ namespace SchemaZen.test {
 			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	[ID] [nvarchar](250) NULL,
-	[Value] [numeric](5, 1) NULL
+	[Value] [numeric](5, 1) NULL,
+	[LongNVarchar] [nvarchar](max) NULL
 )
 
 ";
@@ -209,6 +210,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 			Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
 			Assert.AreEqual(1, db.TableTypes[0].Columns.Items[1].Scale);
 			Assert.AreEqual(5, db.TableTypes[0].Columns.Items[1].Precision);
+			Assert.AreEqual(-1, db.TableTypes[0].Columns.Items[2].Length); //nvarchar(max) is encoded as -1
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 
