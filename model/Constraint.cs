@@ -11,6 +11,10 @@ namespace SchemaZen.model {
 		public bool Unique;
 		private bool IsNotForReplication;
 		private string CheckConstraintExpression;
+        
+        // Filtered indexes used starting from SQL Server 2008, Compatibility level >= 100
+        public bool HasFilter = false;
+        public string FilterDefinition;
 
 		public Constraint(string name, string type, string columns) {
 			Name = name;
@@ -49,6 +53,10 @@ namespace SchemaZen.model {
 				if (IncludedColumns.Count > 0) {
 					sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
 				}
+                // Generate Filter condition
+                if (this.HasFilter)
+                    sql += string.Format(" WHERE ({0})", this.FilterDefinition);
+
 				return sql;
 			}
 			return (Table.IsType ? string.Empty : string.Format("CONSTRAINT [{0}] ", Name)) +

@@ -457,6 +457,7 @@ order by fk.name, fkc.constraint_column_id
 						i.is_unique_constraint,
 						i.is_unique, 
 						i.type_desc,
+                        @filteredIndexCols@
 						isnull(ic.is_included_column, 0) as is_included_column
 					from (
 						select object_id, name, schema_id, 'T' as baseType
@@ -476,6 +477,13 @@ order by fk.name, fkc.constraint_column_id
 						inner join sys.schemas s on s.schema_id = t.schema_id
 					where i.type_desc != 'HEAP'
 					order by s.name, t.name, i.name, ic.key_ordinal, ic.index_column_id";
+
+            // Add filtered index columns information
+            if (Int32.Parse(this.FindProp("COMPATIBILITY_LEVEL").Value) >= 100)
+                cm.CommandText = cm.CommandText.Replace("@filteredIndexCols@", "i.has_filter, i.filter_definition, ");
+            else
+                cm.CommandText = cm.CommandText.Replace("@filteredIndexCols@", "");
+
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = (string) dr["baseType"] == "V"
@@ -502,7 +510,15 @@ order by fk.name, fkc.constraint_column_id
 						c.Type = "PRIMARY KEY";
 					if ((bool) dr["is_unique_constraint"])
 						c.Type = "UNIQUE";
-				}
+
+                    // Add filtered index columns information
+                    if (Int32.Parse(this.FindProp("COMPATIBILITY_LEVEL").Value) >= 100)
+                    {
+                        c.HasFilter = (bool) dr["has_filter"];                        
+                        c.FilterDefinition = (dr["filter_definition"] == DBNull.Value)? "" : (string)dr["filter_definition"];
+                    }
+
+                }
 			}
 		}
 
