@@ -11,8 +11,9 @@ namespace SchemaZen.console {
 			IsCommand(command, oneLineDescription);
 			Options = new OptionSet();
 			SkipsCommandSummaryBeforeRunning();
-			HasRequiredOption("s|server=", "server", o => Server = o);
-			HasRequiredOption("b|database=", "database", o => DbName = o);
+			HasOption("s|server=", "server", o => Server = o);
+			HasOption("b|database=", "database", o => DbName = o);
+			HasOption("c|connectionString=", "connection string", o => ConnectionString = o);
 			HasOption("u|user=", "user", o => User = o);
 			HasOption("p|pass=", "pass", o => Pass = o);
 			HasRequiredOption(
@@ -31,6 +32,7 @@ namespace SchemaZen.console {
 
 		protected string Server { get; set; }
 		protected string DbName { get; set; }
+		protected string ConnectionString { get; set; }
 		protected string User { get; set; }
 		protected string Pass { get; set; }
 		protected string ScriptDir { get; set; }
@@ -38,6 +40,22 @@ namespace SchemaZen.console {
 		protected bool Verbose { get; set; }
 
 		protected Database CreateDatabase() {
+			if (!string.IsNullOrEmpty(ConnectionString)) {
+				if (!string.IsNullOrEmpty(Server) ||
+			        !string.IsNullOrEmpty(DbName) ||
+					!string.IsNullOrEmpty(User) ||
+					!string.IsNullOrEmpty(Pass)) {
+					throw new ConsoleHelpAsException("You must not provide both a connection string and a server/db/user/password");
+				}
+				return new Database {
+					Connection = ConnectionString,
+					Dir = ScriptDir
+				};
+			}
+			if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName)) {
+				throw new ConsoleHelpAsException("You must provide a connection string, or a server and database name");
+			}
+
 			var builder = new SqlConnectionStringBuilder {
 				DataSource = Server,
 				InitialCatalog = DbName,
