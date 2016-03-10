@@ -39,13 +39,16 @@ namespace SchemaZen.model {
 
 		public static void DropDb(string conn) {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
-			var dbName = cnBuilder.InitialCatalog;
-			if (DbExists(cnBuilder.ToString())) {
+			var initialCatalog = cnBuilder.InitialCatalog;
+
+		    var dbName = "[" + initialCatalog + "]";
+
+		    if (DbExists(cnBuilder.ToString())) {
 				cnBuilder.InitialCatalog = "master";
 				ExecSql(cnBuilder.ToString(), "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
 				ExecSql(cnBuilder.ToString(), "drop database " + dbName);
 
-				cnBuilder.InitialCatalog = dbName;
+				cnBuilder.InitialCatalog = initialCatalog;
 				ClearPool(cnBuilder.ToString());
 			}
 		}
@@ -54,7 +57,7 @@ namespace SchemaZen.model {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
 			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
-			ExecSql(cnBuilder.ToString(), "CREATE DATABASE " + dbName);
+			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]");
 		}
 
 		public static bool DbExists(string conn) {
