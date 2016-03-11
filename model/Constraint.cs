@@ -1,9 +1,10 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace SchemaZen.model {
 	public class Constraint : INameable, IScriptable {
 		public bool Clustered;
-		public List<string> Columns = new List<string>();
+		public List<ConstraintColumn> Columns = new List<ConstraintColumn>();
 		public List<string> IncludedColumns = new List<string>();
 		public string Name { get; set; }
 		public Table Table;
@@ -16,7 +17,7 @@ namespace SchemaZen.model {
 			Name = name;
 			Type = type;
 			if (!string.IsNullOrEmpty(columns)) {
-				Columns = new List<string>(columns.Split(','));
+				Columns = new List<ConstraintColumn>(columns.Split(',').Select(x => new ConstraintColumn(x, false)));
 			}
 		}
 
@@ -43,16 +44,16 @@ namespace SchemaZen.model {
 			}
 
 			if (Type == "INDEX") {
-				var sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ([{5}])", UniqueText, ClusteredText, Name,
+				var sql = string.Format("CREATE {0} {1} INDEX [{2}] ON [{3}].[{4}] ({5})", UniqueText, ClusteredText, Name,
 					Table.Owner, Table.Name,
-					string.Join("], [", Columns.ToArray()));
+					string.Join(", ", Columns.Select(c => c.Script()).ToArray()));
 				if (IncludedColumns.Count > 0) {
 					sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
 				}
 				return sql;
 			}
 			return (Table.IsType ? string.Empty : string.Format("CONSTRAINT [{0}] ", Name)) +
-				string.Format("{0} {1} ([{2}])", Type, ClusteredText, string.Join("], [", Columns.ToArray()));
+				string.Format("{0} {1} ({2})", Type, ClusteredText, string.Join(", ", Columns.Select(c => c.Script()).ToArray()));
 		}
 	}
 }

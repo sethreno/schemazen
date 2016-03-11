@@ -63,6 +63,23 @@ namespace SchemaZen.test {
 			TestCopySchema(ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL");
 		}
 
+	    [Test]
+	    public void TestDescIndex() {
+	        TestHelper.DropDb("test");
+            TestHelper.ExecSql("create database test", "");
+
+            TestHelper.ExecSql(@"create table MyTable (Id int)", "test");
+            TestHelper.ExecSql(@"create nonclustered index MyIndex on MyTable (Id desc)", "test");
+            var db = new Database("test") {
+	            Connection = TestHelper.GetConnString("test")
+	        };
+            db.Load();
+	        var result = db.ScriptCreate();
+            Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)"));
+
+	        TestHelper.DropDb("test");
+	    }
+
 		[Test]
 		public void TestCollate() {
 			var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
@@ -246,7 +263,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 			Assert.AreEqual(1, db.TableTypes.Count());
 			Assert.AreEqual(1, db.TableTypes[0].PrimaryKey.Columns.Count);
-			Assert.AreEqual("ID", db.TableTypes[0].PrimaryKey.Columns[0]);
+			Assert.AreEqual("ID", db.TableTypes[0].PrimaryKey.Columns[0].ColumnName);
 			Assert.AreEqual(50, db.TableTypes[0].Columns.Items[1].Length);
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
