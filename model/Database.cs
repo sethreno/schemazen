@@ -457,7 +457,8 @@ order by fk.name, fkc.constraint_column_id
 						i.is_unique_constraint,
 						i.is_unique, 
 						i.type_desc,
-						isnull(ic.is_included_column, 0) as is_included_column
+						isnull(ic.is_included_column, 0) as is_included_column,
+                        ic.is_descending_key
 					from (
 						select object_id, name, schema_id, 'T' as baseType
 						from   sys.tables
@@ -494,7 +495,7 @@ order by fk.name, fkc.constraint_column_id
 					if ((bool) dr["is_included_column"]) {
 						c.IncludedColumns.Add((string) dr["columnName"]);
 					} else {
-						c.Columns.Add((string) dr["columnName"]);
+						c.Columns.Add(new ConstraintColumn((string) dr["columnName"], (bool)dr["is_descending_key"]));
 					}
 
 					c.Type = "INDEX";

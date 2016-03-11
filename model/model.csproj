@@ -57,6 +57,7 @@
     <Compile Include="ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
     <Compile Include="Constraint.cs" />
+    <Compile Include="ConstraintColumn.cs" />
     <Compile Include="Database.cs" />
     <Compile Include="DBHelper.cs" />
     <Compile Include="DbProperty.cs" />
