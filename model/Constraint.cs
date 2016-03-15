@@ -8,6 +8,7 @@ namespace SchemaZen.model {
 		public string Name { get; set; }
 		public Table Table;
 		public string Type;
+		public string Filter;
 		public bool Unique;
 		private bool IsNotForReplication;
 		private string CheckConstraintExpression;
@@ -48,6 +49,10 @@ namespace SchemaZen.model {
 					string.Join("], [", Columns.ToArray()));
 				if (IncludedColumns.Count > 0) {
 					sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
+				}
+				if (!string.IsNullOrEmpty(Filter))
+				{
+				sql += string.Format(" WHERE {0}", Filter);
 				}
 				return sql;
 			}
