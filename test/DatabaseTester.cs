@@ -107,6 +107,24 @@ namespace SchemaZen.test {
 		}
 
 		[Test]
+		public void TestTableIndexesWithFilter() {
+			TestHelper.DropDb("TEST");
+			TestHelper.ExecSql("CREATE DATABASE TEST","");
+
+			TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, EndDate datetime)", "TEST");
+			TestHelper.ExecSql(@"CREATE NONCLUSTERED INDEX MyIndex ON MyTable (Id) WHERE (EndDate) IS NULL","TEST");
+
+			var db = new Database("TEST") {
+				Connection = TestHelper.GetConnString("TEST")
+			};
+			db.Load();
+			var result = db.ScriptCreate();
+			TestHelper.DropDb("TEST");
+
+			Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
+		}
+
+		[Test]
 		[Ignore("test won't work without license key for sqldbdiff")]
 		public void TestDiffScript() {
 			TestHelper.DropDb("TEST_SOURCE");
