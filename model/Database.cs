@@ -492,9 +492,9 @@ order by fk.name, fkc.constraint_column_id
 					}
 					c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 					c.Unique = (bool) dr["is_unique"];
-                    var filter = dr["filter_definition"].ToString();
-				    c.Filter = filter;
-                    if ((bool) dr["is_included_column"]) {
+					var filter = dr["filter_definition"].ToString();
+					c.Filter = filter;
+					if ((bool) dr["is_included_column"]) {
 						c.IncludedColumns.Add((string) dr["columnName"]);
 					} else {
 						c.Columns.Add((string) dr["columnName"]);
@@ -505,7 +505,7 @@ order by fk.name, fkc.constraint_column_id
 						c.Type = "PRIMARY KEY";
 					if ((bool) dr["is_unique_constraint"])
 						c.Type = "UNIQUE";
-                }
+				}
 			}
 		}
 

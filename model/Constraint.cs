@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 
 namespace SchemaZen.model {
 	public class Constraint : INameable, IScriptable {
@@ -9,8 +8,8 @@ namespace SchemaZen.model {
 		public string Name { get; set; }
 		public Table Table;
 		public string Type;
-        public string Filter;
-        public bool Unique;
+		public string Filter;
+		public bool Unique;
 		private bool IsNotForReplication;
 		private string CheckConstraintExpression;
 
@@ -38,7 +37,7 @@ namespace SchemaZen.model {
 			get { return Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE"; }
 		}
 
-        public string ScriptCreate() {
+		public string ScriptCreate() {
 			if (Type == "CHECK") {
 				var notForReplicationOption = IsNotForReplication ? "NOT FOR REPLICATION" : "";
 				return $"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {CheckConstraintExpression}";
@@ -50,12 +49,12 @@ namespace SchemaZen.model {
 					string.Join("], [", Columns.ToArray()));
 				if (IncludedColumns.Count > 0) {
 					sql += string.Format(" INCLUDE ([{0}])", string.Join("], [", IncludedColumns.ToArray()));
+				}
+				if (!string.IsNullOrEmpty(Filter))
+				{
+                sql += string.Format(" WHERE {0}", Filter);
                 }
-                if (!string.IsNullOrEmpty(Filter))
-                {
-                    sql += string.Format(" WHERE {0}", Filter);
-                }
-                return sql;
+				return sql;
 			}
 			return (Table.IsType ? string.Empty : string.Format("CONSTRAINT [{0}] ", Name)) +
 				string.Format("{0} {1} ([{2}])", Type, ClusteredText, string.Join("], [", Columns.ToArray()));
