@@ -52,8 +52,8 @@ namespace SchemaZen.model {
 				}
 				if (!string.IsNullOrEmpty(Filter))
 				{
-                sql += string.Format(" WHERE {0}", Filter);
-                }
+				sql += string.Format(" WHERE {0}", Filter);
+				}
 				return sql;
 			}
 			return (Table.IsType ? string.Empty : string.Format("CONSTRAINT [{0}] ", Name)) +
