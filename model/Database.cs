@@ -194,6 +194,7 @@ namespace SchemaZen.model {
 		}
 
         private void LoadRoles(SqlCommand cm) {
+            //Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
             cm.CommandText = @"
 create table #ScriptedRoles (
 	name nvarchar(255) not null
