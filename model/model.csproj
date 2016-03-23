@@ -41,6 +41,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -67,6 +68,7 @@
     <Compile Include="Identity.cs" />
     <Compile Include="Interfaces.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Role.cs" />
     <Compile Include="Routine.cs" />
     <Compile Include="SqlUser.cs" />
     <Compile Include="Synonym.cs" />
