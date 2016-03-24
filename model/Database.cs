@@ -122,7 +122,7 @@ namespace SchemaZen.model {
 
 		private static readonly string[] dirs = {
 			"tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "users", "synonyms", "table_types", "roles"
+			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
 		};
 
 		private void SetPropOnOff(string propName, object dbVal) {
