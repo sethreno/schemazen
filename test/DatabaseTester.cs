@@ -426,6 +426,10 @@ select * from Table1
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
 			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
 			
+            var emptyTable = new Table("dbo", "EmptyTable");
+            emptyTable.Columns.Add(new Column("code", "tinyint", false, null) {Position = 1});
+            emptyTable.AddConstraint(new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") {Clustered = true, Unique = true});
+
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;
 			fk_policy_formType.Columns.Add("form");
@@ -451,6 +455,7 @@ select * from Table1
 			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
+            db.Tables.Add(emptyTable);
 			db.Tables.Add(loc);
 			db.TableTypes.Add(tt_codedesc);
 			db.ForeignKeys.Add(fk_policy_formType);
@@ -491,6 +496,7 @@ select * from Table1
 				+ "insert into formType ([code], [desc]) values (3, 'DP-3')");
 
 			db.DataTables.Add(formType);
+            db.DataTables.Add(emptyTable);
 			db.Dir = db.Name;
 
 			if (Directory.Exists(db.Dir))
@@ -503,7 +509,11 @@ select * from Table1
 			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
 
 			foreach (var t in db.DataTables) {
-				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+			    if (t.Name == "EmptyTable") {
+			        Assert.IsFalse(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+			    } else {
+                    Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+                }
 			}
 			foreach (var t in db.Tables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
