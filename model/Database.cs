@@ -1245,10 +1245,19 @@ where name = @dbname
 			foreach (var t in DataTables) {
 				if (log != null)
 					log(TraceLevel.Verbose, string.Format("Exporting data from {0} (table {1} of {2})...", t.Owner + "." + t.Name, ++index, DataTables.Count));
-				var sw = File.CreateText(dataDir + "/" + MakeFileName(t) + ".tsv");
+			    var filePathAndName = dataDir + "/" + MakeFileName(t) + ".tsv";
+			    var sw = File.CreateText(filePathAndName);
 				t.ExportData(Connection, sw, tableHint);
-				sw.Flush();
-				sw.Close();
+
+                sw.Flush();
+			    if (sw.BaseStream.Length == 0) {
+                    if (log != null)
+                        log(TraceLevel.Verbose, string.Format("          No data to export for {0}, deleting file...", t.Owner + "." + t.Name));
+                    sw.Close();
+                    File.Delete(filePathAndName);
+                } else {
+                    sw.Close();
+			    }
 			}
 		}
 
