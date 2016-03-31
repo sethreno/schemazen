@@ -600,17 +600,33 @@ order by fk.name, fkc.constraint_column_id
 					order by s.name, t.name, i.name, ic.key_ordinal, ic.index_column_id";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = (string) dr["baseType"] == "V"
-						? new Table((string) dr["schemaName"], (string) dr["tableName"])
-						: FindTable((string) dr["tableName"], (string) dr["schemaName"], ((string) dr["baseType"]) == "TVT");
-					var c = t.FindConstraint((string) dr["indexName"]);
-					if (c == null) {
-						c = new Constraint((string) dr["indexName"], "", "");
-						t.AddConstraint(c);
+				    var schemaName = (string) dr["schemaName"];
+				    var tableName = (string) dr["tableName"];
+				    var indexName = (string) dr["indexName"];
+				    var isView = (string) dr["baseType"] == "V";
 
-						if ((string) dr["baseType"] == "V")
-							ViewIndexes.Add(c);
-					}
+				    var t = isView
+						? new Table(schemaName, tableName)
+						: FindTable(tableName, schemaName, (string) dr["baseType"] == "TVT");
+				    var c = t.FindConstraint( indexName);
+                    
+                    if (c == null)
+                    {
+                        c = new Constraint(indexName, "", "");
+                        t.AddConstraint(c);
+                    }
+
+                    if (isView)
+                    {
+                        if (ViewIndexes.Any(v => v.Name == indexName))
+                        {
+                            c = ViewIndexes.First(v => v.Name == indexName);
+                        }
+                        else
+                        {
+                            ViewIndexes.Add(c);
+                        }
+                    }
 					c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 					c.Unique = (bool) dr["is_unique"];
 					var filter = dr["filter_definition"].ToString(); //can be null
