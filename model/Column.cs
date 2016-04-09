@@ -88,6 +88,7 @@ namespace SchemaZen.model {
 					case "timestamp":
 					case "tinyint":
 					case "uniqueidentifier":
+					case "geography":
 					case "xml":
 
 						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText,
