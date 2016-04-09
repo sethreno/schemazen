@@ -457,7 +457,6 @@ order by fk.name, fkc.constraint_column_id
 						i.is_unique_constraint,
 						i.is_unique, 
 						i.type_desc,
-						i.filter_definition,
 						isnull(ic.is_included_column, 0) as is_included_column,
                         ic.is_descending_key
 					from (
@@ -493,8 +492,6 @@ order by fk.name, fkc.constraint_column_id
 					}
 					c.Clustered = (string) dr["type_desc"] == "CLUSTERED";
 					c.Unique = (bool) dr["is_unique"];
-					var filter = dr["filter_definition"].ToString(); //can be null
-					c.Filter = filter;
 					if ((bool) dr["is_included_column"]) {
 						c.IncludedColumns.Add((string) dr["columnName"]);
 					} else {
