@@ -121,10 +121,31 @@ namespace SchemaZen.test {
 			var result = db.ScriptCreate();
 			TestHelper.DropDb("TEST");
 
-			Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
+			Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] ASC) WHERE ([EndDate] IS NULL)"));
 		}
 
-		[Test]
+        [Test]
+        public void TestViewIndexes()
+        {
+            TestHelper.DropDb("TEST");
+            TestHelper.ExecSql("CREATE DATABASE TEST", "");
+
+            TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)", "TEST");
+            TestHelper.ExecSql(@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t", "TEST");
+            TestHelper.ExecSql(@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)", "TEST");
+
+            var db = new Database("TEST")
+            {
+                Connection = TestHelper.GetConnString("TEST")
+            };
+            db.Load();
+            var result = db.ScriptCreate();
+            TestHelper.DropDb("TEST");
+
+            Assert.That(result, Is.StringContaining("CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id] ASC, [Name] ASC)"));
+        }
+
+        [Test]
 		[Ignore("test won't work without license key for sqldbdiff")]
 		public void TestDiffScript() {
 			TestHelper.DropDb("TEST_SOURCE");
