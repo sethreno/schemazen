@@ -407,6 +407,7 @@ select * from Table1
 			formType.Columns.Add(new Column("code", "tinyint", false, null) {Position = 1});
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
 			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
+            formType.AddConstraint(Constraint.CreateCheckedConstraint("CK_FormType", false, "([code]<(5))"));
 			
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;
@@ -488,8 +489,23 @@ select * from Table1
 				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
 			}
 			foreach (var t in db.Tables) {
-				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
-			}
+                var tblFile = db.Name + "\\tables\\" + t.Name + ".sql";
+                Assert.IsTrue(File.Exists(tblFile));
+
+                // Test that the constraints are ordered in the file
+                string script = File.ReadAllText(tblFile);
+                int cindex = -1;
+
+                foreach (var ckobject in t.Constraints.OrderBy(x => x.Name))
+                {
+                    var thisindex = script.IndexOf(ckobject.ScriptCreate());
+                    Assert.Greater(thisindex, cindex, "Constraints are not ordered.");
+
+                    cindex = thisindex;
+                }
+
+
+            }
 			foreach (var t in db.TableTypes) {
 				Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_" + t.Name + ".sql"));
 			}
