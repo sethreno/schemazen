@@ -400,6 +400,7 @@ select * from Table1
 			loc.Columns.Add(new Column("id", "int", false, null) {Position = 1});
 			loc.Columns.Add(new Column("policyId", "int", false, null) {Position = 2});
 			loc.Columns.Add(new Column("storage", "bit", false, null) {Position = 3});
+            loc.Columns.Add(new Column("category", "int", false, null) { Position = 4 });
 			loc.AddConstraint(new Constraint("PK_Location", "PRIMARY KEY", "id") { Clustered = true, Unique = true });
 			loc.Columns.Items[0].Identity = new Identity(1, 1);
 
@@ -408,6 +409,12 @@ select * from Table1
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
 			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
 			
+
+            var categoryType = new Table("dbo", "CategoryType");
+            categoryType.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
+            categoryType.Columns.Add(new Column("Category", "varchar", 10, false, null) { Position = 2 });
+            categoryType.AddConstraint(new Constraint("PK_CategoryType", "PRIMARY KEY", "id") { Clustered = true, Unique = true });
+
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;
 			fk_policy_formType.Columns.Add("form");
@@ -424,6 +431,14 @@ select * from Table1
 			fk_location_policy.OnUpdate = "NO ACTION";
 			fk_location_policy.OnDelete = "CASCADE";
 
+            var fk_location_category = new ForeignKey("FK_Location_category");
+            fk_location_category.Table = loc;
+            fk_location_category.Columns.Add("category");
+            fk_location_category.RefTable = categoryType;
+            fk_location_category.RefColumns.Add("id");
+            fk_location_category.OnUpdate = "NO ACTION";
+            fk_location_category.OnDelete = "CASCADE";
+
 			var tt_codedesc = new Table("dbo", "CodeDesc");
 			tt_codedesc.IsType = true;
 			tt_codedesc.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
@@ -433,10 +448,12 @@ select * from Table1
 			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
+            db.Tables.Add(categoryType);
 			db.Tables.Add(loc);
 			db.TableTypes.Add(tt_codedesc);
 			db.ForeignKeys.Add(fk_policy_formType);
 			db.ForeignKeys.Add(fk_location_policy);
+            db.ForeignKeys.Add(fk_location_category);
 			db.FindProp("COMPATIBILITY_LEVEL").Value = "110";
 			db.FindProp("COLLATE").Value = "SQL_Latin1_General_CP1_CI_AS";
 			db.FindProp("AUTO_CLOSE").Value = "OFF";
@@ -496,6 +513,28 @@ select * from Table1
 			foreach (var expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
+
+
+            // Test that the foreign keys are ordered in the file
+            foreach (var t in db.Tables)
+            {
+                var fksFile = db.Name + "\\foreign_keys\\" + t.Name + ".sql";
+
+                if (File.Exists(fksFile))
+                {
+                    string script = File.ReadAllText(fksFile);
+                    int fkindex = -1;
+
+                    foreach (var fkobject in db.ForeignKeys.Where(x => x.Table == t).OrderBy(x => x.Name))
+                    {
+                        var thisindex = script.IndexOf(fkobject.ScriptCreate());
+                        Assert.Greater(thisindex, fkindex, "Foreign keys are not ordered.");
+
+                        fkindex = thisindex;
+                    }
+                }
+                
+            }
 
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
