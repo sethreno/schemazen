@@ -286,7 +286,7 @@ CREATE TABLE [dbo].[t1a]
 CREATE TABLE [dbo].[t1b]
 (
     a INT NOT NULL,
-    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [dbo].[t1a] ([a])
+    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [dbo].[t1a] ([a]) ON UPDATE CASCADE
 )
 
 CREATE TABLE [s2].[t2a]
@@ -298,7 +298,7 @@ CREATE TABLE [s2].[t2a]
 CREATE TABLE [s2].[t2b]
 (
     a INT NOT NULL,
-    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a])
+    CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASCADE
 )
 
 ";
@@ -321,6 +321,11 @@ CREATE TABLE [s2].[t2b]
 			Assert.AreEqual(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
 			Assert.AreNotEqual(db.ForeignKeys[0].Table.Owner, db.ForeignKeys[1].Table.Owner);
 
+            Assert.AreEqual("CASCADE", db.FindForeignKey("FKName", "dbo").OnUpdate);
+            Assert.AreEqual("NO ACTION", db.FindForeignKey("FKName", "s2").OnUpdate);
+
+            Assert.AreEqual("NO ACTION", db.FindForeignKey("FKName", "dbo").OnDelete);
+            Assert.AreEqual("CASCADE", db.FindForeignKey("FKName", "s2").OnDelete);
 		}
 
 		public void TestScriptViewInsteadOfTrigger() {
