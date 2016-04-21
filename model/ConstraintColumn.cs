@@ -11,7 +11,7 @@
         }
 
         public string Script() {
-            return "[" + ColumnName + "]" + (Desc ? " DESC" : " ASC");
+            return "[" + ColumnName + "]" + (Desc ? " DESC" : "");
         }
     }
 }
