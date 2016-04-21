@@ -399,7 +399,7 @@ namespace SchemaZen.model {
 						DELETE_RULE,
 						fk.is_disabled
 					from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
-						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name";
+						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name and rc.CONSTRAINT_SCHEMA = OBJECT_SCHEMA_NAME(fk.parent_object_id)";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var fk = FindForeignKey((string) dr["CONSTRAINT_NAME"], (string)dr["TABLE_SCHEMA"]);
@@ -1036,7 +1036,7 @@ where name = @dbname
 			WriteSchemaScript(log);
 			WriteScriptDir("tables", Tables.ToArray(), log);
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
-			WriteScriptDir("foreign_keys", ForeignKeys.ToArray(), log);
+			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x.Name).ToArray(), log);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
 				WriteScriptDir(dir, routineType.ToArray(), log);
