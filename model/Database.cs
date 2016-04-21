@@ -103,7 +103,7 @@ namespace SchemaZen.model {
 		}
 
 		public SqlUser FindUser(string name) {
-			return Users.FirstOrDefault(u => u.Name == name);
+			return Users.FirstOrDefault(u => string.Equals(u.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
 		public Constraint FindViewIndex(string name) {
