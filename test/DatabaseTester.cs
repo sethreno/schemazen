@@ -121,10 +121,31 @@ namespace SchemaZen.test {
 			var result = db.ScriptCreate();
 			TestHelper.DropDb("TEST");
 
-			Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
+			Assert.That(result, Is.StringContaining("CREATE  NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] ASC) WHERE ([EndDate] IS NULL)"));
 		}
 
-		[Test]
+        [Test]
+        public void TestViewIndexes()
+        {
+            TestHelper.DropDb("TEST");
+            TestHelper.ExecSql("CREATE DATABASE TEST", "");
+
+            TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)", "TEST");
+            TestHelper.ExecSql(@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t", "TEST");
+            TestHelper.ExecSql(@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)", "TEST");
+
+            var db = new Database("TEST")
+            {
+                Connection = TestHelper.GetConnString("TEST")
+            };
+            db.Load();
+            var result = db.ScriptCreate();
+            TestHelper.DropDb("TEST");
+
+            Assert.That(result, Is.StringContaining("CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id] ASC, [Name] ASC)"));
+        }
+
+        [Test]
 		[Ignore("test won't work without license key for sqldbdiff")]
 		public void TestDiffScript() {
 			TestHelper.DropDb("TEST_SOURCE");
@@ -426,6 +447,10 @@ select * from Table1
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) {Position = 2});
 			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
 			
+            var emptyTable = new Table("dbo", "EmptyTable");
+            emptyTable.Columns.Add(new Column("code", "tinyint", false, null) {Position = 1});
+            emptyTable.AddConstraint(new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") {Clustered = true, Unique = true});
+
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;
 			fk_policy_formType.Columns.Add("form");
@@ -451,6 +476,7 @@ select * from Table1
 			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);
 			db.Tables.Add(formType);
+            db.Tables.Add(emptyTable);
 			db.Tables.Add(loc);
 			db.TableTypes.Add(tt_codedesc);
 			db.ForeignKeys.Add(fk_policy_formType);
@@ -491,6 +517,7 @@ select * from Table1
 				+ "insert into formType ([code], [desc]) values (3, 'DP-3')");
 
 			db.DataTables.Add(formType);
+            db.DataTables.Add(emptyTable);
 			db.Dir = db.Name;
 
 			if (Directory.Exists(db.Dir))
@@ -503,7 +530,11 @@ select * from Table1
 			Assert.IsTrue(Directory.Exists(db.Name + "\\foreign_keys"));
 
 			foreach (var t in db.DataTables) {
-				Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+			    if (t.Name == "EmptyTable") {
+			        Assert.IsFalse(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+			    } else {
+                    Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
+                }
 			}
 			foreach (var t in db.Tables) {
 				Assert.IsTrue(File.Exists(db.Name + "\\tables\\" + t.Name + ".sql"));
