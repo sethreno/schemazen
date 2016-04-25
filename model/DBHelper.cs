@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Diagnostics;
+using System.IO;
 
 namespace SchemaZen.model {
 	public class DBHelper {
@@ -53,11 +55,21 @@ namespace SchemaZen.model {
 			}
 		}
 
-		public static void CreateDb(string conn) {
-			var cnBuilder = new SqlConnectionStringBuilder(conn);
+		public static void CreateDb(string connection, string databaseFilesPath = null) {
+			var cnBuilder = new SqlConnectionStringBuilder(connection);
 			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
-			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]");
+		    var files = string.Empty;
+		    if (databaseFilesPath != null) {
+		        Directory.CreateDirectory(databaseFilesPath);
+		        files = string.Format(@"ON 
+(NAME = {0},
+    FILENAME = '{1}\{2}.mdf')
+LOG ON
+(NAME = {0}_log,
+    FILENAME =  '{1}\{2}.ldf')", dbName, databaseFilesPath, dbName + Guid.NewGuid() );
+		    }
+		    ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]" + files);
 		}
 
 		public static bool DbExists(string conn) {

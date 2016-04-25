@@ -28,7 +28,11 @@ namespace SchemaZen.console {
 				"v|verbose=",
 				"Enable verbose log messages.",
 				o => Verbose = o != null);
-		}
+            HasOption(
+                "f|databaseFilesPath=",
+                "Path to database data and log files.",
+                o => DatabaseFilesPath = o);
+        }
 
 		protected string Server { get; set; }
 		protected string DbName { get; set; }
@@ -38,8 +42,10 @@ namespace SchemaZen.console {
 		protected string ScriptDir { get; set; }
 		protected bool Overwrite { get; set; }
 		protected bool Verbose { get; set; }
+        protected string DatabaseFilesPath { get; set; }
 
-		protected Database CreateDatabase() {
+
+	    protected Database CreateDatabase() {
 			if (!string.IsNullOrEmpty(ConnectionString)) {
 				if (!string.IsNullOrEmpty(Server) ||
 			        !string.IsNullOrEmpty(DbName) ||

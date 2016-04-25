@@ -28,7 +28,7 @@ namespace SchemaZen.console {
 			}
 
 			try {
-				db.CreateFromDir(Overwrite, Log);
+				db.CreateFromDir(Overwrite, DatabaseFilesPath, Log);
 				Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
 			} catch (BatchSqlFileException ex) {
 				Log(TraceLevel.Info, Environment.NewLine + "Create completed with the following errors:");
