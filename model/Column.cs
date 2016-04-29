@@ -90,7 +90,7 @@ namespace SchemaZen.model {
 					case "uniqueidentifier":
 					case "geography":
 					case "xml":
-
+                    case "sysname":
 						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText,
 							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText);
 					case "binary":
@@ -110,7 +110,7 @@ namespace SchemaZen.model {
 						return string.Format("[{0}] [{1}]({2},{3}) {4} {5}", Name, Type, Precision, Scale, IsNullableText,
 							includeDefaultConstraint ? DefaultText : string.Empty);
 					default:
-						throw new NotSupportedException("SQL data type " + Type + " is not supported.");
+						throw new NotSupportedException("Error scripting column " + Name + ". SQL data type " + Type + " is not supported.");
 				}
 			}
 			return string.Format("[{0}] AS {1}", Name, ComputedDefinition);
