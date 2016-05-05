@@ -12,7 +12,7 @@ namespace SchemaZen.model {
 	public class Database {
 		#region " Constructors "
 
-		public Database() {
+		public Database(IList<string> filteredTypes = null) {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -39,10 +39,16 @@ namespace SchemaZen.model {
 			Props.Add(new DbProp("DB_CHAINING", ""));
 			Props.Add(new DbProp("PARAMETERIZATION", ""));
 			Props.Add(new DbProp("DATE_CORRELATION_OPTIMIZATION", ""));
-		}
 
-		public Database(string name)
-			: this() {
+            filteredTypes = filteredTypes ?? new List<string>();
+            foreach (var filteredType in filteredTypes)
+            {
+                _dirs.Remove(filteredType);
+            }
+        }
+
+		public Database(string name, IList<string> filteredTypes = null)
+			: this(filteredTypes) {
 			Name = name;
 		}
 
@@ -118,14 +124,24 @@ namespace SchemaZen.model {
 			return Tables.Where(t => Regex.Match(t.Name, pattern).Success).ToList();
 		}
 
-		#endregion
+        #endregion
 
-		private static readonly string[] dirs = {
-			"tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
-		};
+        private static HashSet<string> _dirs = new HashSet<string> {
+            "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
+            "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
+        };
 
-		private void SetPropOnOff(string propName, object dbVal) {
+        public static HashSet<string> Dirs
+        {
+            get { return _dirs; }
+        }
+
+        public static string ValidTypes
+        {
+            get { return Dirs.Aggregate((x, y) => x + ", " + y); }
+        }
+
+        private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
 				FindProp(propName).Value = (bool) dbVal ? "ON" : "OFF";
 			}
@@ -162,7 +178,7 @@ namespace SchemaZen.model {
 					LoadColumnDefaults(cm);
 					LoadColumnComputes(cm);
 					LoadConstraintsAndIndexes(cm);
-					LoadCheckConstraints(cm);
+                    LoadCheckConstraints(cm);
 					LoadForeignKeys(cm);
 					LoadRoutines(cm);
 					LoadXmlSchemas(cm);
@@ -1158,7 +1174,7 @@ where name = @dbname
 				// delete the existing script files
 				log(TraceLevel.Verbose, "Deleting existing files...");
 
-				var files = dirs.Select(dir => Path.Combine(Dir, dir))
+				var files = _dirs.Select(dir => Path.Combine(Dir, dir))
 					.Where(Directory.Exists).SelectMany(Directory.GetFiles);
 				foreach (var f in files) {
 					File.Delete(f);
@@ -1208,7 +1224,8 @@ where name = @dbname
 
 		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log) {
 			if (!objects.Any()) return;
-			var dir = Path.Combine(Dir, name);
+            if (!_dirs.Contains(name)) return;
+            var dir = Path.Combine(Dir, name);
 			Directory.CreateDirectory(dir);
 			var index = 0;
 			foreach (var o in objects) {
@@ -1434,7 +1451,7 @@ where name = @dbname
 		private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
-				var dirPath in dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
+				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;
