@@ -4,9 +4,9 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class TableTester {
 		private List<List<string>> TabDataToList(string data) {

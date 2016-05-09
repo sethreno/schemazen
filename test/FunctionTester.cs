@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class FunctionTester {
 		private const string ExampleFunc = @"

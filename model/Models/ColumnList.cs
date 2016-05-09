@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class ColumnList {
 		private readonly List<Column> mItems = new List<Column>();
 

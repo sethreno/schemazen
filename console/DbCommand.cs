@@ -4,7 +4,7 @@ using System.Data.SqlClient;
 using System.Diagnostics;
 using ManyConsole;
 using NDesk.Options;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
 namespace SchemaZen.console
 {

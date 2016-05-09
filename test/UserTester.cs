@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
     [TestFixture]
     class UserTester {
         [Test]

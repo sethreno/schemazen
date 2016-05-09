@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
 namespace SchemaZen.console
 {

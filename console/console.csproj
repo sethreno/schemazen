@@ -8,7 +8,7 @@
     <ProjectGuid>{95219FB8-6E54-4672-943B-3D2ECAED51A2}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SchemaZen.console</RootNamespace>
+    <RootNamespace>SchemaZen.Console</RootNamespace>
     <AssemblyName>console</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -110,9 +110,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\model\model.csproj">
+    <ProjectReference Include="..\model\library.csproj">
       <Project>{1283684F-CC5F-4647-BD97-9D833D20110E}</Project>
-      <Name>model</Name>
+      <Name>library</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
@@ -122,7 +122,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+  <!-- To modify your build process, add your task inside one of the targets below and uncomment it.
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
   </Target>
@@ -130,7 +130,7 @@
   </Target>
   -->
   <PropertyGroup>
-    <PostBuildEvent>"$(SolutionDir)\packages\ILMerge.2.14.1208\tools\ilmerge.exe" /target:exe /out:SchemaZen.exe console.exe model.dll ManyConsole.dll NDesk.Options.dll
+    <PostBuildEvent>"$(SolutionDir)\packages\ILMerge.2.14.1208\tools\ilmerge.exe" /target:exe /out:SchemaZen.exe console.exe SchemaZen.Library.dll ManyConsole.dll NDesk.Options.dll
 </PostBuildEvent>
   </PropertyGroup>
   <Import Project="$(SolutionDir)\.nuget\NuGet.targets" Condition="Exists('$(SolutionDir)\.nuget\NuGet.targets')" />

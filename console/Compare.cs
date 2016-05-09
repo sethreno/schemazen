@@ -2,7 +2,7 @@
 using System.IO;
 using ManyConsole;
 using NDesk.Options;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
 namespace SchemaZen.console {
 	internal class Compare : ConsoleCommand {

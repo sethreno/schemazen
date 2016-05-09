@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class Column {
 		public Default Default;
 		public Identity Identity;

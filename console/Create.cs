@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
 namespace SchemaZen.console {
 	public class Create : DbCommand {

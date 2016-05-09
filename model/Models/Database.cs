@@ -8,7 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class Database {
 		#region " Constructors "
 

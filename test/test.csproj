@@ -8,8 +8,8 @@
     <ProjectGuid>{73E24852-B1C6-476B-B5D9-ADB06D5870D2}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SchemaZen.test</RootNamespace>
-    <AssemblyName>test</AssemblyName>
+    <RootNamespace>SchemaZen.Tests</RootNamespace>
+    <AssemblyName>Tests</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
@@ -103,9 +103,9 @@
       <Project>{95219FB8-6E54-4672-943B-3D2ECAED51A2}</Project>
       <Name>console</Name>
     </ProjectReference>
-    <ProjectReference Include="..\model\model.csproj">
+    <ProjectReference Include="..\model\library.csproj">
       <Project>{1283684F-CC5F-4647-BD97-9D833D20110E}</Project>
-      <Name>model</Name>
+      <Name>library</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
