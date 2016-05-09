@@ -53,14 +53,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Assembly.cs" />
-    <Compile Include="Models\BatchSqlParser.cs" />
+    <Compile Include="BatchSqlParser.cs" />
     <Compile Include="Models\Column.cs" />
     <Compile Include="Models\ColumnList.cs" />
-    <Compile Include="Models\ConfigHelper.cs" />
+    <Compile Include="ConfigHelper.cs" />
     <Compile Include="Models\Constraint.cs" />
     <Compile Include="Models\ConstraintColumn.cs" />
     <Compile Include="Models\Database.cs" />
-    <Compile Include="Models\DBHelper.cs" />
+    <Compile Include="DBHelper.cs" />
     <Compile Include="Models\DbProperty.cs" />
     <Compile Include="Models\Default.cs" />
     <Compile Include="Models\Exceptions.cs" />

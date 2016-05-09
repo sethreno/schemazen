@@ -88,8 +88,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.cs" />
-    <Compile Include="console\CreateTester.cs" />
-    <Compile Include="console\ScriptTester.cs" />
+    <Compile Include="Console\CreateTester.cs" />
+    <Compile Include="Console\ScriptTester.cs" />
     <Compile Include="DatabaseTester.cs" />
     <Compile Include="BatchSqlParserTester.cs" />
     <Compile Include="ForeignKeyTester.cs" />
@@ -99,13 +99,13 @@
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\console\console.csproj">
+    <ProjectReference Include="..\console\Console.csproj">
       <Project>{95219FB8-6E54-4672-943B-3D2ECAED51A2}</Project>
-      <Name>console</Name>
+      <Name>Console</Name>
     </ProjectReference>
-    <ProjectReference Include="..\model\library.csproj">
+    <ProjectReference Include="..\model\Library.csproj">
       <Project>{1283684F-CC5F-4647-BD97-9D833D20110E}</Project>
-      <Name>library</Name>
+      <Name>Library</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
