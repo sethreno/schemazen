@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>Schemazen.Library</id>
+    <version>1.0</version>
+    <title>Script and create SQL Server objects quickly</title>
+    <authors>sethreno</authors>
+    <owners>sethreno</owners>
+    <licenseUrl>https://opensource.org/licenses/MIT</licenseUrl>
+    <projectUrl>https://github.com/sethreno/schemazen/blob/master/license.txt</projectUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Script and create SQL Server objects quickly</description>
+    <copyright>Copyright 2016</copyright>
+  </metadata>
+</package>

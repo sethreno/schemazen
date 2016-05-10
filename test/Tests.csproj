@@ -99,13 +99,13 @@
     <Compile Include="TestHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\console\Console.csproj">
+    <ProjectReference Include="..\console\Schemazen.Console.csproj">
       <Project>{95219FB8-6E54-4672-943B-3D2ECAED51A2}</Project>
-      <Name>Console</Name>
+      <Name>Schemazen.Console</Name>
     </ProjectReference>
-    <ProjectReference Include="..\model\Library.csproj">
+    <ProjectReference Include="..\model\Schemazen.Library.csproj">
       <Project>{1283684F-CC5F-4647-BD97-9D833D20110E}</Project>
-      <Name>Library</Name>
+      <Name>Schemazen.Library</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
