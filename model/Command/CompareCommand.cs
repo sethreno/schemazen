@@ -6,6 +6,7 @@ using System.Linq;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library.Command {
+    public class CompareCommand : BaseCommand {
         public string Source;
         public string Target;
         public bool Verbose;
