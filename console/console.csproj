@@ -69,10 +69,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BaseCommand.cs" />
     <Compile Include="Compare.cs" />
     <Compile Include="ConsoleQuestion.cs" />
     <Compile Include="Create.cs" />
-    <Compile Include="DbCommand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Script.cs" />

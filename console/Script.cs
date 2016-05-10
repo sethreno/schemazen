@@ -3,11 +3,14 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using ManyConsole;
+using SchemaZen.Library;
+using SchemaZen.Library.Command;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.console
 {
-    public class Script : DbCommand
+    public class Script : BaseCommand
     {
         public Script()
             : base(
@@ -31,59 +34,39 @@ namespace SchemaZen.console
                 o => FilterTypes = o);
         }
 
+        private Logger _logger;
         protected string DataTables { get; set; }
         protected string FilterTypes { get; set; }
         protected string DataTablesPattern { get; set; }
         protected string TableHint { get; set; }
 
-        public override int Run(string[] args)
-        {
-            var filteredTypes = HandleFilteredTypes();
+        public override int Run(string[] args) {
+            _logger = new Logger(Verbose);
 
-            var db = CreateDatabase(filteredTypes);
-            if (!Overwrite && Directory.Exists(db.Dir))
+            if (!Overwrite && Directory.Exists(ScriptDir))
             {
-                if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", db.Dir)))
+                if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", ScriptDir)))
                     return 1;
             }
-            Log(TraceLevel.Verbose, "Loading database schema...");
-            db.Load();
-            Log(TraceLevel.Verbose, "Database schema loaded.");
 
-            if (!string.IsNullOrEmpty(DataTables))
-            {
-                HandleDataTables(db, DataTables);
-            }
-            if (!string.IsNullOrEmpty(DataTablesPattern))
-            {
-                var tables = db.FindTablesRegEx(DataTablesPattern);
-                foreach (var t in tables.Where(t => !db.DataTables.Contains(t)))
-                {
-                    db.DataTables.Add(t);
-                }
-            }
+            var scriptCommand = new ScriptCommand {
+                ConnectionString = ConnectionString,
+                DbName = DbName,
+                Pass = Pass,
+                ScriptDir = ScriptDir,
+                Server = Server,
+                User = User,
+                Logger = _logger,
+                Overwrite = Overwrite
+            };
 
-            db.ScriptToDir(TableHint, Log);
+            var filteredTypes = HandleFilteredTypes();
+            var namesAndSchemas = HandleDataTables(DataTables);
 
-            Log(TraceLevel.Info, Environment.NewLine + "Snapshot successfully created at " + db.Dir);
-            var routinesWithWarnings = db.Routines.Select(r => new {
-                Routine = r,
-                Warnings = r.Warnings().ToList()
-            }).Where(r => r.Warnings.Any()).ToList();
-            if (routinesWithWarnings.Any())
-            {
-                Log(TraceLevel.Info, "With the following warnings:");
-                foreach (
-                    var warning in
-                        routinesWithWarnings.SelectMany(
-                            r =>
-                                r.Warnings.Select(
-                                    w =>
-                                        string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Owner,
-                                            r.Routine.Name, w))))
-                {
-                    Log(TraceLevel.Warning, warning);
-                }
+            try { 
+                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes);
+            } catch (Exception ex) {
+		        throw new ConsoleHelpAsException(ex.Message);
             }
             return 0;
         }
@@ -97,40 +80,37 @@ namespace SchemaZen.console
             {
                 if (!Database.Dirs.Contains(filterType))
                 {
-                    Log(TraceLevel.Warning, string.Format("{0} is not a valid type.", filterType));
+                    _logger.Log(TraceLevel.Warning, string.Format("{0} is not a valid type.", filterType));
                     anyInvalidType = true;
                 }
             }
 
             if (anyInvalidType)
             {
-                Log(TraceLevel.Warning, string.Format("Valid types: {0}", Database.ValidTypes));
+                _logger.Log(TraceLevel.Warning, string.Format("Valid types: {0}", Database.ValidTypes));
             }
 
             return filteredTypes;
         }
 
-        private static void HandleDataTables(Database db, string tableNames)
+        private Dictionary<string, string> HandleDataTables(string tableNames)
         {
-            foreach (var value in tableNames.Split(','))
-            {
-                var schema = "dbo";
-                var name = value;
-                if (value.Contains("."))
+            var dataTables = new Dictionary<string, string>();
+            if (!string.IsNullOrEmpty(tableNames)) {
+                foreach (var value in tableNames.Split(','))
                 {
-                    schema = value.Split('.')[0];
-                    name = value.Split('.')[1];
+                    var schema = "dbo";
+                    var name = value;
+                    if (value.Contains("."))
+                    {
+                        schema = value.Split('.')[0];
+                        name = value.Split('.')[1];
+                    }
+
+                    dataTables[name] = schema;
                 }
-                var t = db.FindTable(name, schema);
-                if (t == null)
-                {
-                    Console.WriteLine(
-                        "warning: could not find data table {0}.{1}",
-                        schema, name);
-                }
-                if (db.DataTables.Contains(t)) continue;
-                db.DataTables.Add(t);
             }
+            return dataTables;
         }
     }
 }

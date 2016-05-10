@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
+using SchemaZen.Library;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {

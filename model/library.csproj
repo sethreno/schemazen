@@ -52,6 +52,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Command\BaseCommand.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="Command\CreateCommand.cs" />
+    <Compile Include="Command\CompareCommand.cs" />
+    <Compile Include="Command\ScriptCommand.cs" />
+    <Compile Include="Logger.cs" />
     <Compile Include="Models\Assembly.cs" />
     <Compile Include="BatchSqlParser.cs" />
     <Compile Include="Models\Column.cs" />
@@ -73,6 +79,9 @@
     <Compile Include="Models\SqlUser.cs" />
     <Compile Include="Models\Synonym.cs" />
     <Compile Include="Models\Table.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
