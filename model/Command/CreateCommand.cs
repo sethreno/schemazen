@@ -1,9 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library.Command {
     public class CreateCommand : BaseCommand {

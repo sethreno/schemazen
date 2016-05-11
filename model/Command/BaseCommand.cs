@@ -42,7 +42,8 @@ namespace SchemaZen.Library.Command {
             {
                 DataSource = Server,
                 InitialCatalog = DbName,
-                IntegratedSecurity = string.IsNullOrEmpty(User)
+                IntegratedSecurity = string.IsNullOrEmpty(User),
+                Pooling = false
             };
             if (!builder.IntegratedSecurity)
             {

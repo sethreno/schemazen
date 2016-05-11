@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>Schemazen.Library</id>
-    <version>1.0</version>
+    <version>1.0.1</version>
     <title>Script and create SQL Server objects quickly</title>
     <authors>sethreno</authors>
     <owners>sethreno</owners>
