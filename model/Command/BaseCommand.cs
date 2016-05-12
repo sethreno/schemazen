@@ -43,6 +43,8 @@ namespace SchemaZen.Library.Command {
                 DataSource = Server,
                 InitialCatalog = DbName,
                 IntegratedSecurity = string.IsNullOrEmpty(User),
+                //setting up pooling false to avoid re-use of connection while using the library.
+                //http://www.c-sharpcorner.com/article/understanding-connection-pooling/
                 Pooling = false
             };
             if (!builder.IntegratedSecurity)
