@@ -1,8 +1,9 @@
 ﻿using System;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class BatchSqlParserTester {
 		[Test]

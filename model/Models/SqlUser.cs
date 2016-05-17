@@ -2,7 +2,7 @@
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class SqlUser : INameable, IHasOwner, IScriptable {
 		public List<string> DatabaseRoles = new List<string>();
 		public string Owner { get; set; }

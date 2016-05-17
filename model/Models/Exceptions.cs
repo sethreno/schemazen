@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class BatchSqlFileException : Exception {
 		public List<SqlFileException> Exceptions { get; set; }
 	}

@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.model {
+﻿namespace SchemaZen.Library.Models {
 	public class Default {
 		public string Name;
 		public string Value;

@@ -1,6 +1,6 @@
 ﻿using NUnit.Framework;
 
-namespace SchemaZen.test.console {
+namespace SchemaZen.Tests.console {
 	[TestFixture]
 	internal class CreateTester {
 		/*

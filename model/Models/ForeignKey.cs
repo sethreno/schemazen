@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class ForeignKey : INameable, IScriptable {
 		public bool Check;
 		public List<string> Columns = new List<string>();

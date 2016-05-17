@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Configuration;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	public class ConfigHelper {
 		public static string TestDB {
 			get { return GetSetting("testdb"); }
