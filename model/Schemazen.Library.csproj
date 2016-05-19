@@ -73,6 +73,7 @@
     <Compile Include="Models\ForeignKey.cs" />
     <Compile Include="Models\Identity.cs" />
     <Compile Include="Models\Interfaces.cs" />
+    <Compile Include="Models\UserDefinedType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Role.cs" />
     <Compile Include="Models\Routine.cs" />
