@@ -875,9 +875,9 @@ order by fk.name, fkc.constraint_column_id
             from sys.types t
             inner join sys.schemas s on s.schema_id = t.schema_id
             inner join sys.types tt on t.system_type_id = tt.user_type_id
-            where 1=1
-                and t.is_user_defined = 1
-                and t.is_table_type = 0";
+            where
+                t.is_user_defined = 1
+            and t.is_table_type = 0";
 
 	        using (var dr = cm.ExecuteReader()) {
 	            LoadUserDefinedTypesBase(dr, UserDefinedTypes);
