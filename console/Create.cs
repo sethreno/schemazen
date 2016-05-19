@@ -16,28 +16,6 @@ namespace SchemaZen.console {
 		public override int Run(string[] remainingArguments) {
             _logger = new Logger(Verbose);
 
-            if (!Directory.Exists(ScriptDir))
-            {
-                _logger.Log(TraceLevel.Error, string.Format("Snapshot dir {0} does not exist.", ScriptDir));
-                return 1;
-            }
-
-            if (!Overwrite)
-            {
-                _logger.Log(TraceLevel.Verbose, "Checking if database already exists...");
-                if (DBHelper.DbExists(ConnectionString))
-                {
-                    var question = string.Format("{0} {1} already exists - do you want to drop it",
-                        Server, DbName);
-                    if (!ConsoleQuestion.AskYN(question))
-                    {
-                        Console.WriteLine("Create command cancelled.");
-                        return 1;
-                    }
-                    Overwrite = true;
-                }
-            }
-
             var createCommand = new CreateCommand
             {
                 ConnectionString = ConnectionString,
