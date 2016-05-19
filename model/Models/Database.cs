@@ -130,9 +130,8 @@ namespace SchemaZen.Library.Models {
         #endregion
 
         private static HashSet<string> _dirs = new HashSet<string> {
-            "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-            "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types",
-            "user_defined_types"
+            "user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
+            "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
         };
 
         public static HashSet<string> Dirs
