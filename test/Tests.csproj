@@ -74,6 +74,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AssemblyTester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="UserTester.cs" />
   </ItemGroup>

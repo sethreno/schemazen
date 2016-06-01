@@ -1,7 +1,6 @@
 ﻿using System;
 using NUnit.Framework;
 using SchemaZen.Library;
-using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
 	[TestFixture]
