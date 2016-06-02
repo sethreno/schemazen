@@ -12,9 +12,12 @@ namespace SchemaZen.Library.Models {
 			PermissionSet = permissionSet;
 			Name = name;
 
-			if (PermissionSet == "SAFE_ACCESS")
-				PermissionSet = "SAFE";
-		}
+            if (PermissionSet == "SAFE_ACCESS")
+                PermissionSet = "SAFE";
+
+            if (PermissionSet == "UNSAFE_ACCESS")
+                PermissionSet = "UNSAFE";
+        }
 
 		public string ScriptCreate() {
 			var commands =
