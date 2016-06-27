@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class Constraint : INameable, IScriptable {
 		public bool Clustered;
 		public List<ConstraintColumn> Columns = new List<ConstraintColumn>();

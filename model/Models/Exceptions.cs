@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class BatchSqlFileException : Exception {
 		public List<SqlFileException> Exceptions { get; set; }
 	}
@@ -52,7 +52,7 @@ namespace SchemaZen.model {
 		}
 
 		public override string Message {
-			get { return _message; }
+			get { return _message + string.Format(" - in file named {0}:{1}", _fileName, _lineNumber); }
 		}
 
 		public string FileName {

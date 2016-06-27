@@ -1,7 +1,7 @@
 ﻿using NUnit.Framework;
 using SchemaZen.console;
 
-namespace SchemaZen.test.console {
+namespace SchemaZen.Tests.console {
 	[TestFixture]
 	internal class ScriptTester {
 		[Test]

@@ -4,9 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class DatabaseTester {
 		public static void TestCopySchema(string pathToSchemaScript) {

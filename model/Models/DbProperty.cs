@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.model {
+﻿namespace SchemaZen.Library.Models {
 	public class DbProp {
 		public DbProp(string name, string value) {
 			Name = name;

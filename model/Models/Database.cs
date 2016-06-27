@@ -7,12 +7,14 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Xml.Schema;
+using Microsoft.SqlServer.Server;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class Database {
 		#region " Constructors "
 
-		public Database() {
+		public Database(IList<string> filteredTypes = null) {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -39,10 +41,16 @@ namespace SchemaZen.model {
 			Props.Add(new DbProp("DB_CHAINING", ""));
 			Props.Add(new DbProp("PARAMETERIZATION", ""));
 			Props.Add(new DbProp("DATE_CORRELATION_OPTIMIZATION", ""));
-		}
 
-		public Database(string name)
-			: this() {
+            filteredTypes = filteredTypes ?? new List<string>();
+            foreach (var filteredType in filteredTypes)
+            {
+                _dirs.Remove(filteredType);
+            }
+        }
+
+		public Database(string name, IList<string> filteredTypes = null)
+			: this(filteredTypes) {
 			Name = name;
 		}
 
@@ -70,6 +78,7 @@ namespace SchemaZen.model {
 		public List<Synonym> Synonyms = new List<Synonym>();
 		public List<Table> TableTypes = new List<Table>();
 		public List<Table> Tables = new List<Table>();
+	    public List<UserDefinedType> UserDefinedTypes = new List<UserDefinedType>();
         public List<Role> Roles = new List<Role>();
         public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
@@ -118,14 +127,24 @@ namespace SchemaZen.model {
 			return Tables.Where(t => Regex.Match(t.Name, pattern).Success).ToList();
 		}
 
-		#endregion
+        #endregion
 
-		private static readonly string[] dirs = {
-			"tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
-		};
+        private static HashSet<string> _dirs = new HashSet<string> {
+            "user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
+            "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
+        };
 
-		private void SetPropOnOff(string propName, object dbVal) {
+        public static HashSet<string> Dirs
+        {
+            get { return _dirs; }
+        }
+
+        public static string ValidTypes
+        {
+            get { return Dirs.Aggregate((x, y) => x + ", " + y); }
+        }
+
+        private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
 				FindProp(propName).Value = (bool) dbVal ? "ON" : "OFF";
 			}
@@ -157,12 +176,13 @@ namespace SchemaZen.model {
 					LoadProps(cm);
 					LoadSchemas(cm);
 					LoadTables(cm);
+                    LoadUserDefinedTypes(cm);
 					LoadColumns(cm);
 					LoadColumnIdentities(cm);
 					LoadColumnDefaults(cm);
 					LoadColumnComputes(cm);
 					LoadConstraintsAndIndexes(cm);
-					LoadCheckConstraints(cm);
+                    LoadCheckConstraints(cm);
 					LoadForeignKeys(cm);
 					LoadRoutines(cm);
 					LoadXmlSchemas(cm);
@@ -841,7 +861,42 @@ order by fk.name, fkc.constraint_column_id
 			}
 		}
 
-		private static void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
+
+	    private void LoadUserDefinedTypes(SqlCommand cm) {
+	        //get types
+	        cm.CommandText = @"
+            select
+                s.name as 'Type_Schema',
+                t.name as 'Type_Name',
+                tt.name as 'Base_Type_Name',
+                t.max_length as 'Max_Length',
+                t.is_nullable as 'Nullable'	
+            from sys.types t
+            inner join sys.schemas s on s.schema_id = t.schema_id
+            inner join sys.types tt on t.system_type_id = tt.user_type_id
+            where
+                t.is_user_defined = 1
+            and t.is_table_type = 0";
+
+	        using (var dr = cm.ExecuteReader()) {
+	            LoadUserDefinedTypesBase(dr, UserDefinedTypes);
+	        }
+	    }
+
+	    private void LoadUserDefinedTypesBase(SqlDataReader dr, 
+                                              List<UserDefinedType> userDefinedTypes) {
+
+	        while (dr.Read()) {
+	            userDefinedTypes.Add(new UserDefinedType(owner: (string) dr["Type_Schema"], 
+                                                         name: (string) dr["Type_Name"], 
+                                                         baseTypeName: (string) dr["Base_Type_Name"], 
+                                                         maxLength: Convert.ToInt16(dr["Max_Length"]), 
+                                                         nullable: (bool) dr["Nullable"]));
+	        }
+
+	    }
+
+	    private static void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
 			while (dr.Read()) {
 				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes});
 			}
@@ -1158,7 +1213,7 @@ where name = @dbname
 				// delete the existing script files
 				log(TraceLevel.Verbose, "Deleting existing files...");
 
-				var files = dirs.Select(dir => Path.Combine(Dir, dir))
+				var files = _dirs.Select(dir => Path.Combine(Dir, dir))
 					.Where(Directory.Exists).SelectMany(Directory.GetFiles);
 				foreach (var f in files) {
 					File.Delete(f);
@@ -1172,6 +1227,7 @@ where name = @dbname
 			WriteSchemaScript(log);
 			WriteScriptDir("tables", Tables.ToArray(), log);
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
+			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
 			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x.Name).ToArray(), log);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
@@ -1208,7 +1264,8 @@ where name = @dbname
 
 		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log) {
 			if (!objects.Any()) return;
-			var dir = Path.Combine(Dir, name);
+            if (!_dirs.Contains(name)) return;
+            var dir = Path.Combine(Dir, name);
 			Directory.CreateDirectory(dir);
 			var index = 0;
 			foreach (var o in objects) {
@@ -1331,7 +1388,7 @@ where name = @dbname
 			log(TraceLevel.Info, "Data imported successfully.");
 		}
 
-		public void CreateFromDir(bool overwrite, Action<TraceLevel, string> log = null) {
+		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
 			if (DBHelper.DbExists(Connection)) {
@@ -1342,7 +1399,7 @@ where name = @dbname
 
 			log(TraceLevel.Info, "Creating database...");
 			//create database
-			DBHelper.CreateDb(Connection);
+			DBHelper.CreateDb(Connection, databaseFilesPath);
 
 			//run scripts
 			if (File.Exists(Dir + "/props.sql")) {
@@ -1434,7 +1491,7 @@ where name = @dbname
 		private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
-				var dirPath in dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
+				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;

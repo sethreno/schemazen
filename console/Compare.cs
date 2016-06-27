@@ -2,7 +2,7 @@
 using System.IO;
 using ManyConsole;
 using NDesk.Options;
-using SchemaZen.model;
+using SchemaZen.Library.Command;
 
 namespace SchemaZen.console {
 	internal class Compare : ConsoleCommand {
@@ -13,7 +13,7 @@ namespace SchemaZen.console {
 		private bool _verbose;
 
 		public Compare() {
-			IsCommand("Compare", "Compare two databases.");
+			IsCommand("Compare", "CreateDiff two databases.");
 			Options = new OptionSet();
 			SkipsCommandSummaryBeforeRunning();
 			HasRequiredOption(
@@ -39,30 +39,30 @@ namespace SchemaZen.console {
 		}
 
 		public override int Run(string[] remainingArguments) {
-			var sourceDb = new Database();
-			var targetDb = new Database();
-			sourceDb.Connection = _source;
-			targetDb.Connection = _target;
-			sourceDb.Load();
-			targetDb.Load();
-			var diff = sourceDb.Compare(targetDb);
-			if (diff.IsDiff) {
-				Console.WriteLine("Databases are different.");
-				Console.WriteLine(diff.SummarizeChanges(_verbose));
-				if (!string.IsNullOrEmpty(_outDiff)) {
-					Console.WriteLine();
-					if (!_overwrite && File.Exists(_outDiff)) {
-						if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", _outDiff))) {
-							return 1;
-						}
-					}
-					File.WriteAllText(_outDiff, diff.Script());
-					Console.WriteLine("Script to make the databases identical has been created at {0}", Path.GetFullPath(_outDiff));
-				}
-				return 1;
-			}
-			Console.WriteLine("Databases are identical.");
-			return 0;
+		    if (!string.IsNullOrEmpty(_outDiff))
+            {
+                Console.WriteLine();
+                if (!_overwrite && File.Exists(_outDiff)) {
+                    var question = string.Format("{0} already exists - do you want to replace it", _outDiff);
+                    if (!ConsoleQuestion.AskYN(question))
+                    {
+                        return 1;
+                    }
+                }
+            }
+
+		    var compareCommand = new CompareCommand {
+		        Source = _source,
+		        Target = _target,
+		        Verbose = _verbose,
+		        OutDiff = _outDiff
+		    };
+
+		    try {
+		        return compareCommand.Execute() ? 1 : 0;
+		    } catch (Exception ex) {
+		        throw new ConsoleHelpAsException(ex.Message);
+		    }
 		}
 	}
 }

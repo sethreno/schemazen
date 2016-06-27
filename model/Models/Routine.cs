@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class Routine : INameable, IHasOwner, IScriptable {
 		public enum RoutineKind {
 			Procedure,
