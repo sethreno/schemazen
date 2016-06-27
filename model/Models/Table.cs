@@ -138,7 +138,7 @@ end
 				IsType ? "AS TABLE " : string.Empty);
 			text.Append(Columns.Script());
 			if (_Constraints.Count > 0) text.AppendLine();
-			foreach (var c in _Constraints.Where(c => c.Type != "INDEX")) {
+			foreach (var c in _Constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
 			text.AppendLine(")");
