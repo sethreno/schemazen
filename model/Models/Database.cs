@@ -1,4 +1,5 @@
 using System;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -1247,6 +1248,7 @@ where name = @dbname
 		private void WritePropsScript(Action<TraceLevel, string> log) {
 			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
+		    text.AppendLine(AutoGenerateComment);
 			text.Append(ScriptPropList(Props));
 			text.AppendLine("GO");
 			text.AppendLine();
@@ -1256,6 +1258,7 @@ where name = @dbname
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
 			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
+		    text.AppendLine(AutoGenerateComment);
 			foreach (var schema in Schemas) {
 				text.Append(schema.ScriptCreate());
 			}
@@ -1273,7 +1276,7 @@ where name = @dbname
 			foreach (var o in objects) {
 				log(TraceLevel.Verbose, string.Format("Scripting {0} {1} of {2}...{3}", name, ++index, objects.Count, index < objects.Count ? "\r" : string.Empty));
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
-				var script = o.ScriptCreate() + "\r\nGO\r\n";
+				var script = AutoGenerateComment + o.ScriptCreate() + "\r\nGO\r\n";
 				File.AppendAllText(filePath, script);
 			}
 		}
