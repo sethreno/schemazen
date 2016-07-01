@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using NUnit.Framework;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
@@ -16,13 +12,22 @@ namespace SchemaZen.Tests
         {
             var setupTable = @"
 CREATE TABLE [dbo].[AbAdvancedMetrics] (
-   [VariantVersionId] [int] NOT NULL   ,
+   [VariantVersionId] [smallint] NOT NULL   ,
    [MetricTypeId] [smallint] NOT NULL   ,
    [RequestId] [bigint] NOT NULL   ,
    [ProfessionalId] [bigint] NOT NULL   ,
    [ZdAppointmentId] [bigint] NOT NULL   
 
-   ,CONSTRAINT [PK_AbAdvancedMetrics_VariantVersionId_MetricTypeId_RequestId] PRIMARY KEY CLUSTERED ([VariantVersionId], [MetricTypeId], [RequestId])
+   ,CONSTRAINT [PK_AbAdvancedMetrics_VariantVersionId_MetricTypeId_RequestId] PRIMARY KEY CLUSTERED ([VariantVersionId], [MetricTypeId], [RequestId]),
+     CONSTRAINT AK_Uni UNIQUE(MetricTypeId)
+)
+
+";
+
+            var setupOtherTable = @"
+CREATE TABLE [dbo].[OtherTestTable] (
+   [MetricTypeId] [smallint] NOT NULL   
+   CONSTRAINT AK_Metric UNIQUE(MetricTypeId)   
 )
 
 ";
@@ -35,11 +40,10 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 )
 
 ";
-
-//            var setupForeignKeys = @"
-//ALTER TABLE [dbo].[AbAdvancedMetrics] WITH CHECK ADD CONSTRAINT [FK_AbAdvancedMetrics_MetricTypeId]
-//   FOREIGN KEY([MetricTypeId]) REFERENCES [dbo].[AbAdvancedMetricType] ([MetricTypeId])
-//";
+            var setupForeignKeys = @"
+ALTER TABLE [dbo].[AbAdvancedMetrics]  
+  ADD CONSTRAINT FK_WOW
+  FOREIGN KEY([VariantVersionId]) REFERENCES [dbo].[OtherTestTable](MetricTypeId)";
 
             var setupFunctions = @"
 CREATE FUNCTION AccountingAuditorGetDatesFromBillItemDescription_fn
@@ -113,8 +117,9 @@ SELECT * FROM [dbo].[AbAdvancedMetrics]
             db.ExecCreate(true);
 
             DBHelper.ExecSql(db.Connection, setupTable);
+            DBHelper.ExecSql(db.Connection, setupOtherTable);
             DBHelper.ExecSql(db.Connection, setupTableType);
-//            DBHelper.ExecSql(db.Connection, setupForeignKeys);
+            DBHelper.ExecSql(db.Connection, setupForeignKeys);
             DBHelper.ExecSql(db.Connection, setupFunctions);
             DBHelper.ExecSql(db.Connection, setupRoles);
             DBHelper.ExecSql(db.Connection, setupTriggers);
