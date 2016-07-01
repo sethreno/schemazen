@@ -1,6 +1,6 @@
 ﻿namespace SchemaZen.Tests {
     public class TestUtils {
-        static public const string SetupTable0Script = @"
+        static public string SetupTable0Script = @"
 CREATE TABLE [dbo].[TestTable0] (
    [VariantVersionId] [smallint] NOT NULL   ,
    [MetricTypeId] [smallint] NOT NULL   ,
@@ -11,7 +11,7 @@ CREATE TABLE [dbo].[TestTable0] (
      CONSTRAINT AK_Uni UNIQUE(MetricTypeId)
 )";
 
-        static public const string SetupTable1Script = @"
+        static public string SetupTable1Script = @"
 CREATE TABLE [dbo].[TestTable1] (
    [MetricTypeId] [smallint] NOT NULL   
    CONSTRAINT AK_Metric UNIQUE(MetricTypeId)   
@@ -19,7 +19,7 @@ CREATE TABLE [dbo].[TestTable1] (
 
 ";
 
-        static public const string SetupTableTypeScript = @"
+        static public string SetupTableTypeScript = @"
 CREATE TYPE [dbo].[TestTableType] AS TABLE(
 	[ID] [nvarchar](250) NULL,
 	[Value] [numeric](5, 1) NULL,
@@ -27,12 +27,12 @@ CREATE TYPE [dbo].[TestTableType] AS TABLE(
 )
 
 ";
-        static public const string SetupFKScript = @"
+        static public string SetupFKScript = @"
 ALTER TABLE [dbo].[TestTable0]  
   ADD CONSTRAINT TestConstraint
   FOREIGN KEY([VariantVersionId]) REFERENCES [dbo].[TestTable1](MetricTypeId)";
 
-        static public const string SetupFuncScript = @"
+        static public string SetupFuncScript = @"
 CREATE FUNCTION TestFunc
 (@Description VARCHAR(50),@CreatedDate DateTime)
 RETURNS TABLE
@@ -58,7 +58,7 @@ AS
     From Substrings)
 ";
 
-        static public const string SetupProcScript = @"
+        static public string SetupProcScript = @"
 CREATE PROCEDURE TestProc
 (
 @dept_name varchar(20)
@@ -68,10 +68,10 @@ BEGIN
   SELECT * FROM [dbo].[TestTable0]
 END";
 
-        static public const string SetupRoleScript = @"
+        static public string SetupRoleScript = @"
 CREATE ROLE [TestRole]";
 
-        static public const string SetupTrigScript = @"
+        static public string SetupTrigScript = @"
 CREATE TRIGGER YourTriggerName ON 
 [dbo].[TestTable0]
 FOR INSERT
@@ -81,14 +81,14 @@ Begin
 End
 ";
 
-        static public const string SetupUserScript = @"
+        static public string SetupUserScript = @"
 CREATE USER [zocdoc] WITHOUT LOGIN WITH DEFAULT_SCHEMA = dbo
 /*ALTER ROLE db_owner ADD MEMBER zocdoc*/ exec sp_addrolemember 'db_owner', 'zocdoc'
 /*ALTER ROLE db_datareader ADD MEMBER zocdoc*/ exec sp_addrolemember 'db_datareader', 'zocdoc'
 /*ALTER ROLE db_datawriter ADD MEMBER zocdoc*/ exec sp_addrolemember 'db_datawriter', 'zocdoc'
 ";
 
-        static public const string SetupViewScript = @"
+        static public string SetupViewScript = @"
 CREATE VIEW test
 AS
 SELECT * FROM [dbo].[testTable0]
