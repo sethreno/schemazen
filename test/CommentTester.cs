@@ -1,40 +1,64 @@
 ﻿using System.IO;
-using System.Runtime.InteropServices;
 using NUnit.Framework;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests
 {
+    [TestFixture]
     class CommentTester {
-        private Database db;
+        private Database _db;
+        private string _comment;
 
         [SetUp]
         public void SetUp() {
-            db = new Database("TestScriptTableType");
-            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-            db.ExecCreate(true);
+            _db = new Database("TestScriptTableType");
+            _db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + _db.Name);
+            _db.ExecCreate(true);
+            _comment = Database.AutoGenerateComment;
 
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupTable0Script);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupTable1Script);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupTableTypeScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupFKScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupFuncScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupProcScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupRoleScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupTrigScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupUserScript);
-            DBHelper.ExecSql(db.Connection, TestStrings.SetupViewScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupTable0Script);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupTable1Script);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupTableTypeScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupFKScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupFuncScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupProcScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupRoleScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupTrigScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupUserScript);
+            DBHelper.ExecSql(_db.Connection, TestStrings.SetupViewScript);
         }
 
         [Test]
-        public void TestScriptTableType()
+        public void TestFilesContainComment()
         {
-            db.Dir = db.Name;
-            db.Load();
-            db.ScriptToDir();
+            _db.Dir = _db.Name;
+            _db.Load();
+            _db.ScriptToDir();
 
-            Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_TestTableType.sql"));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\table_types\\" + TestStrings.TableTypeFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\foreign_keys\\" + TestStrings.TestForeignKeyFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\functions\\" + TestStrings.TestFunctionFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\procedures\\" + TestStrings.TestProcedureFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\roles\\" + TestStrings.TestRoleFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\triggers\\" + TestStrings.TestTrigFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\tables\\" + TestStrings.TestTable0FileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\users\\" + TestStrings.TestUserFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
+                "\\views\\" + TestStrings.TestViewFileName, _comment));
+        }
+
+        bool validateFirstLineIncludesComment(string filePath, string matchingStr) {
+            string firstLine = File.ReadAllLines(filePath)[0];
+            return matchingStr.Contains(firstLine);
         }
     }
 }
