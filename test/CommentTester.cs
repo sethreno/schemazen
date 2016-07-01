@@ -15,16 +15,16 @@ namespace SchemaZen.Tests
             db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
             db.ExecCreate(true);
 
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupTable0Script);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupTable1Script);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupTableTypeScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupFKScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupFuncScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupProcScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupRoleScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupTrigScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupUserScript);
-            DBHelper.ExecSql(db.Connection, TestUtils.SetupViewScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupTable0Script);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupTable1Script);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupTableTypeScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupFKScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupFuncScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupProcScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupRoleScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupTrigScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupUserScript);
+            DBHelper.ExecSql(db.Connection, TestStrings.SetupViewScript);
         }
 
         [Test]
