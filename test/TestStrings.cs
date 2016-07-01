@@ -1,5 +1,5 @@
 ﻿namespace SchemaZen.Tests {
-    public class TestStrings {
+    internal class TestStrings {
         internal static string TestTable0FileName = "TestTable0.sql";
         internal static string TestTable1FileName = "TestTable1.sql";
         internal static string TableTypeFileName = "TYPE_TestTableType.sql";
