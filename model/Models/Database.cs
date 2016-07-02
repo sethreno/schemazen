@@ -1248,6 +1248,7 @@ where name = @dbname
 		private void WritePropsScript(Action<TraceLevel, string> log) {
 			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
+		    text.Append(AutoGenerateComment);
 			text.Append(ScriptPropList(Props));
 			text.AppendLine("GO");
 			text.AppendLine();
@@ -1257,6 +1258,7 @@ where name = @dbname
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
 			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
+		    text.Append(AutoGenerateComment);
 			foreach (var schema in Schemas) {
 				text.Append(schema.ScriptCreate());
 			}

@@ -54,6 +54,10 @@ namespace SchemaZen.Tests
                 "\\users\\" + TestStrings.TestUserFileName, _comment));
             Assert.IsTrue(validateFirstLineIncludesComment(_db.Name +
                 "\\views\\" + TestStrings.TestViewFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name + 
+                "\\" + TestStrings.PropsFileName, _comment));
+            Assert.IsTrue(validateFirstLineIncludesComment(_db.Name + 
+                "\\" + TestStrings.SchemasFileName, _comment));
         }
 
         bool validateFirstLineIncludesComment(string filePath, string matchingStr) {

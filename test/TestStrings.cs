@@ -10,6 +10,8 @@
         internal static string TestTrigFileName = "TestTrigger.sql";
         internal static string TestUserFileName = "TestUser.sql";
         internal static string TestViewFileName = "TestView.sql";
+        internal static string PropsFileName = "props.sql";
+        internal static string SchemasFileName = "schemas.sql";
 
         internal static string SetupTable0Script = @"
 CREATE TABLE [dbo].[TestTable0] (
