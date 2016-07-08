@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 using NUnit.Framework;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
@@ -50,6 +51,8 @@ namespace SchemaZen.Tests
         public void TearDown() {
             DBHelper.DropDb(_db.Connection);
             DBHelper.ClearPool(_db.Connection);
+            var currPath = ".\\TestAppendComment";
+            Directory.Delete(currPath, true);
         }
 
         bool ValidateFirstLineIncludesComment(string filePath, string matchingStr) {
