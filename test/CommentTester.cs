@@ -9,10 +9,10 @@ namespace SchemaZen.Tests
 {
     [TestFixture]
     class CommentTester {
-        private Database _db;
         private string _comment;
+        private Database _db;
 
-        [TestFixtureSetUp]
+        [SetUp]
         public void SetUp() {
             _db = new Database("TestScriptTableType");
             _db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + _db.Name);
@@ -39,6 +39,9 @@ namespace SchemaZen.Tests
             DBHelper.ExecSql(_db.Connection, TestStrings.SetupTrigScript);
             DBHelper.ExecSql(_db.Connection, TestStrings.SetupUserScript);
             DBHelper.ExecSql(_db.Connection, TestStrings.SetupViewScript);
+            _db.Dir = _db.Name;
+            _db.Load();
+            _db.ScriptToDir();
         }
 
         [TestCase("\\table_types\\", "TYPE_TestTableType.sql")]
@@ -53,10 +56,6 @@ namespace SchemaZen.Tests
         [TestCase("\\", "schemas.sql")]
         public void TestFilesContainComment(string directory, string fileName)
         {
-            _db.Dir = _db.Name;
-            _db.Load();
-            _db.ScriptToDir();
-
             Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
                 directory + fileName, _comment));
         }
@@ -64,24 +63,10 @@ namespace SchemaZen.Tests
         [TearDown]
         public void TearDown() {
             DBHelper.DropDb(_db.Connection);
-//            DropDb(_db.Name);
-            ClearPool();
-        }
-
-        private void DropDb(string dbName) {
-//            DBHelper.ExecSql(_db.Connection, "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
-            DBHelper.ExecSql(_db.Connection, "drop database " + dbName);
-        }
-
-        private void ClearPool() {
-            using (var cn = new SqlConnection(_db.Connection))
-            {
-                SqlConnection.ClearPool(cn);
-            }
         }
 
         bool ValidateFirstLineIncludesComment(string filePath, string matchingStr) {
-            string firstLine = File.ReadAllLines(filePath)[0];
+            var firstLine = File.ReadAllLines(filePath)[0];
             return matchingStr.Contains(firstLine);
         }
     }
