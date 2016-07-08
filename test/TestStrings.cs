@@ -1,19 +1,6 @@
 ﻿namespace SchemaZen.Tests {
-    internal class TestStrings {
-        const string TestTable0FileName = "TestTable0.sql";
-        internal static string TestTable1FileName = "TestTable1.sql";
-        const string TableTypeFileName = "TYPE_TestTableType.sql";
-        internal static string TestForeignKeyFileName = "TestTable0.sql";
-        internal static string TestFunctionFileName = "TestFunc.sql";
-        internal static string TestProcedureFileName= "TestProc.sql";
-        internal static string TestRoleFileName = "TestRole.sql";
-        internal static string TestTrigFileName = "TestTrigger.sql";
-        internal static string TestUserFileName = "TestUser.sql";
-        internal static string TestViewFileName = "TestView.sql";
-        internal static string PropsFileName = "props.sql";
-        internal static string SchemasFileName = "schemas.sql";
-
-        internal static string SetupTable0Script = @"
+    public class TestStrings {
+        public const string SetupTable0Script = @"
 CREATE TABLE [dbo].[TestTable0] (
    [VariantVersionId] [smallint] NOT NULL   ,
    [MetricTypeId] [smallint] NOT NULL   ,
@@ -24,7 +11,7 @@ CREATE TABLE [dbo].[TestTable0] (
      CONSTRAINT AK_Uni UNIQUE(MetricTypeId)
 )";
 
-        internal static string SetupTable1Script = @"
+        public const string SetupTable1Script = @"
 CREATE TABLE [dbo].[TestTable1] (
    [MetricTypeId] [smallint] NOT NULL   
    CONSTRAINT AK_Metric UNIQUE(MetricTypeId)   
@@ -32,7 +19,7 @@ CREATE TABLE [dbo].[TestTable1] (
 
 ";
 
-        internal static string SetupTableTypeScript = @"
+        public const string SetupTableTypeScript = @"
 CREATE TYPE [dbo].[TestTableType] AS TABLE(
 	[ID] [nvarchar](250) NULL,
 	[Value] [numeric](5, 1) NULL,
@@ -40,12 +27,12 @@ CREATE TYPE [dbo].[TestTableType] AS TABLE(
 )
 
 ";
-        internal static string SetupFKScript = @"
+        public const string SetupFKScript = @"
 ALTER TABLE [dbo].[TestTable0]  
   ADD CONSTRAINT TestConstraint
   FOREIGN KEY([VariantVersionId]) REFERENCES [dbo].[TestTable1](MetricTypeId)";
 
-        internal static string SetupFuncScript = @"
+        public const string SetupFuncScript = @"
 CREATE FUNCTION TestFunc
 (@Description VARCHAR(50),@CreatedDate DateTime)
 RETURNS TABLE
@@ -71,7 +58,7 @@ AS
     From Substrings)
 ";
 
-        internal static string SetupProcScript = @"
+        public const string SetupProcScript = @"
 CREATE PROCEDURE TestProc
 (
 @dept_name varchar(20)
@@ -81,10 +68,10 @@ BEGIN
   SELECT * FROM [dbo].[TestTable0]
 END";
 
-        internal static string SetupRoleScript = @"
+        public const string SetupRoleScript = @"
 CREATE ROLE [TestRole]";
 
-        internal static string SetupTrigScript = @"
+        public const string SetupTrigScript = @"
 CREATE TRIGGER TestTrigger ON 
 [dbo].[TestTable0]
 FOR INSERT
@@ -94,11 +81,11 @@ Begin
 End
 ";
 
-        internal static string SetupUserScript = @"
+        public const string SetupUserScript = @"
 CREATE USER [TestUser] WITHOUT LOGIN WITH DEFAULT_SCHEMA = dbo
 ";
 
-        internal static string SetupViewScript = @"
+        public const string SetupViewScript = @"
 CREATE VIEW TestView
 AS
 SELECT * FROM [dbo].[testTable0]
