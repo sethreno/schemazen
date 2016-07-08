@@ -9,8 +9,8 @@ namespace SchemaZen.Tests
 {
     [TestFixture]
     class CommentTester {
-        private Database _db { get; set; }
-        static public string _comment { get; set; }
+        private Database _db;
+        private string _comment;
 
         [TestFixtureSetUp]
         public void SetUp() {
@@ -63,12 +63,13 @@ namespace SchemaZen.Tests
 
         [TearDown]
         public void TearDown() {
+            DBHelper.DropDb(_db.Connection);
+//            DropDb(_db.Name);
             ClearPool();
-            DropDb(_db.Name);
         }
 
         private void DropDb(string dbName) {
-            DBHelper.ExecSql(_db.Connection, "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
+//            DBHelper.ExecSql(_db.Connection, "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
             DBHelper.ExecSql(_db.Connection, "drop database " + dbName);
         }
 
