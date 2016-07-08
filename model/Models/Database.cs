@@ -95,8 +95,6 @@ namespace SchemaZen.Library.Models {
         public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
 
-        private Dictionary<string, string> SeenPaths = new Dictionary<string, string>();
-
 		public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
@@ -147,6 +145,8 @@ namespace SchemaZen.Library.Models {
             "user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
             "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
         };
+
+        private Dictionary<string, string> _seenPaths = new Dictionary<string, string>();
 
         public static HashSet<string> Dirs
         {
@@ -1288,11 +1288,11 @@ where name = @dbname
 				log(TraceLevel.Verbose, string.Format("Scripting {0} {1} of {2}...{3}", name, ++index, objects.Count, index < objects.Count ? "\r" : string.Empty));
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
 			    var script = "";
-			    if (SeenPaths.ContainsKey(filePath)) {
+			    if (_seenPaths.ContainsKey(filePath)) {
 			        script += o.ScriptCreate() + "\r\nGO\r\n";
 			    } else {
 			        script += AutoGenerateComment + o.ScriptCreate() + "\r\nGO\r\n";
-                    SeenPaths.Add(filePath, "");
+                    _seenPaths.Add(filePath, "");
                 }
 				File.AppendAllText(filePath, script);
 			}
