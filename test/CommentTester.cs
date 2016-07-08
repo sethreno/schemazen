@@ -10,7 +10,7 @@ namespace SchemaZen.Tests
     [TestFixture]
     class CommentTester {
         private Database _db { get; set; }
-        private string _comment { get; set; }
+        static public string _comment { get; set; }
 
         [TestFixtureSetUp]
         public void SetUp() {
@@ -41,48 +41,38 @@ namespace SchemaZen.Tests
             DBHelper.ExecSql(_db.Connection, TestStrings.SetupViewScript);
         }
 
-        [Test]
-        public void TestFilesContainComment()
+        [TestCase("\\table_types\\", "TYPE_TestTableType.sql")]
+        [TestCase("\\foreign_keys\\", "TestTable0.sql")]
+        [TestCase("\\functions\\", "TestFunc.sql")]
+        [TestCase("\\procedures\\", "TestProc.sql")]
+        [TestCase("\\roles\\", "TestRole.sql")]
+        [TestCase("\\triggers\\", "TestTrigger.sql")]
+        [TestCase("\\tables\\", "TestTable0.sql")]
+        [TestCase("\\users\\", "TestUser.sql")]
+        [TestCase("\\views\\", "TestView.sql")]
+        [TestCase("\\", "schemas.sql")]
+        public void TestFilesContainComment(string directory, string fileName)
         {
             _db.Dir = _db.Name;
             _db.Load();
             _db.ScriptToDir();
 
             Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\table_types\\" + TestStrings.TableTypeFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\foreign_keys\\" + TestStrings.TestForeignKeyFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\functions\\" + TestStrings.TestFunctionFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\procedures\\" + TestStrings.TestProcedureFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\roles\\" + TestStrings.TestRoleFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\triggers\\" + TestStrings.TestTrigFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\tables\\" + TestStrings.TestTable0FileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\users\\" + TestStrings.TestUserFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name +
-                "\\views\\" + TestStrings.TestViewFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name + 
-                "\\" + TestStrings.PropsFileName, _comment));
-            Assert.IsTrue(ValidateFirstLineIncludesComment(_db.Name + 
-                "\\" + TestStrings.SchemasFileName, _comment));
+                directory + fileName, _comment));
         }
 
         [TearDown]
         public void TearDown() {
+            ClearPool();
             DropDb(_db.Name);
         }
 
         private void DropDb(string dbName) {
-            DBHelper.ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE", "");
-            DBHelper.ExecSql("drop database " + dbName, "");
+            DBHelper.ExecSql(_db.Connection, "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
+            DBHelper.ExecSql(_db.Connection, "drop database " + dbName);
         }
 
-        private void ClearPool(string dbName) {
+        private void ClearPool() {
             using (var cn = new SqlConnection(_db.Connection))
             {
                 SqlConnection.ClearPool(cn);
