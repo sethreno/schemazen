@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data.SqlClient;
 using System.IO;
 using NUnit.Framework;
 using SchemaZen.Library;
@@ -14,7 +13,7 @@ namespace SchemaZen.Tests
 
         [SetUp]
         public void SetUp() {
-            _db = new Database("TestScriptTableType");
+            _db = new Database("TestAppendComment");
             _db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + _db.Name);
             _db.ExecCreate(true);
             _comment = String.Format(
@@ -63,6 +62,7 @@ namespace SchemaZen.Tests
         [TearDown]
         public void TearDown() {
             DBHelper.DropDb(_db.Connection);
+            DBHelper.ClearPool(_db.Connection);
         }
 
         bool ValidateFirstLineIncludesComment(string filePath, string matchingStr) {
