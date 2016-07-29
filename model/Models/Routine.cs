@@ -67,7 +67,7 @@ namespace SchemaZen.Library.Models {
 
 			if (RoutineType == RoutineKind.Trigger)
 				after +=
-					string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Owner, Name,
+					Environment.NewLine + string.Format("{0} TRIGGER [{1}].[{2}] ON [{3}].[{4}]", Disabled ? "DISABLE" : "ENABLE", Owner, Name,
 						RelatedTableSchema, RelatedTableName) + Environment.NewLine + "GO" + Environment.NewLine;
 
 			if (string.IsNullOrEmpty(definition))
