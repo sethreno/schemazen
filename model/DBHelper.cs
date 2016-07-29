@@ -55,7 +55,7 @@ namespace SchemaZen.Library {
 			}
 		}
 
-		public static void CreateDb(string connection, string databaseFilesPath = null) {
+        public static void CreateDb(string connection, string databaseFilesPath = null) {
 			var cnBuilder = new SqlConnectionStringBuilder(connection);
 			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
