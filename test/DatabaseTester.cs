@@ -366,6 +366,7 @@ CREATE TABLE [s2].[t2b]
             Assert.AreEqual("CASCADE", db.FindForeignKey("FKName", "s2").OnDelete);
 		}
 
+        [Test]
 		public void TestScriptViewInsteadOfTrigger() {
 			var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
