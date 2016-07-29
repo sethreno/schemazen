@@ -413,6 +413,55 @@ CREATE TRIGGER [dbo].[TR_v1] ON [dbo].[v1] INSTEAD OF DELETE AS
 
 		}
 
+
+        [Test]
+        public void TestScriptTriggerWithNoSets()
+        {
+            var setupSQL1 = @"
+CREATE TABLE [dbo].[t1]
+(
+    a INT NOT NULL, 
+    CONSTRAINT [PK] PRIMARY KEY (a)
+)
+";
+
+            var setupSQL2 = @"
+CREATE TABLE [dbo].[t2]
+(
+    a INT NOT NULL
+)
+";
+
+            var setupSQL3 = @"
+
+CREATE TRIGGER [dbo].[TR_1] ON [dbo].[t1]  FOR UPDATE,INSERT
+AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
+
+            var db = new Database("TestScriptTrigger");
+
+            // Set these properties to the defaults so they are not scripted
+            db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
+            db.FindProp("ANSI_NULLS").Value = "ON";
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL1);
+            DBHelper.ExecSql(db.Connection, setupSQL2);
+            DBHelper.ExecSql(db.Connection, setupSQL3);
+
+            db.Dir = db.Name;
+            db.Load();
+            
+            db.ScriptToDir();
+
+            var script = File.ReadAllText(db.Name + "\\triggers\\TR_1.sql");
+
+            StringAssert.DoesNotContain("INSERTEDENABLE", script);
+
+        }
+
 		[Test]
 		public void TestScriptDeletedProc() {
 			var source = new Database();
