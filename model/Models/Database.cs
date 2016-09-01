@@ -755,6 +755,7 @@ order by fk.name, fkc.constraint_column_id
 					t.TABLE_SCHEMA,
 					c.TABLE_NAME,
 					c.COLUMN_NAME,
+            		c.COLLATION_NAME,
 					c.DATA_TYPE,
 					c.ORDINAL_POSITION,
 					c.IS_NULLABLE,
@@ -781,6 +782,7 @@ order by fk.name, fkc.constraint_column_id
 					s.name as TABLE_SCHEMA,
 					tt.name as TABLE_NAME, 
 					c.name as COLUMN_NAME,
+            		c.collation_name as COLLATION_NAME,
 					t.name as DATA_TYPE,
 					c.column_id as ORDINAL_POSITION,
 					CASE WHEN c.is_nullable = 1 THEN 'YES' ELSE 'NO' END as IS_NULLABLE,
@@ -817,8 +819,9 @@ order by fk.name, fkc.constraint_column_id
 					Type = (string) dr["DATA_TYPE"],
 					IsNullable = (string) dr["IS_NULLABLE"] == "YES",
 					Position = (int) dr["ORDINAL_POSITION"],
-					IsRowGuidCol = (string) dr["IS_ROW_GUID_COL"] == "YES"
-				};
+					IsRowGuidCol = (string) dr["IS_ROW_GUID_COL"] == "YES",
+                    Collation = dr["COLLATION_NAME"] == DBNull.Value ? string.Empty : dr["COLLATION_NAME"].ToString()
+                };
 
 				switch (c.Type) {
 					case "binary":
