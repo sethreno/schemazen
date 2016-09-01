@@ -335,18 +335,9 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
             db.ScriptToDir();
 
             var scriptedType = File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql");
-            var expectedScriptedType = 
-@"CREATE TYPE [dbo].[MyTableType] AS TABLE (
-   [ID] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL ,
-   [Value] [numeric](5,1) NULL ,
-   [LongNVarchar] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL 
-)
 
-
-GO
-";
-
-            Assert.AreEqual(expectedScriptedType, scriptedType);
+            Assert.That(scriptedType, Is.StringContaining("[ID] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL"));
+            Assert.That(scriptedType, Is.StringContaining("[LongNVarchar] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL"));
         }
 
 
