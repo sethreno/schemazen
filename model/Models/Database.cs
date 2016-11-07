@@ -91,7 +91,18 @@ namespace SchemaZen.Library.Models {
         public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
 
-		public DbProp FindProp(string name) {
+        private string _databaseName ;
+
+	    private string DatabaseName {
+	        get {
+	            if (_databaseName == null) {
+                    _databaseName = new SqlConnectionStringBuilder(Connection).InitialCatalog;
+                }
+                return _databaseName;
+            }
+	    }
+
+	    public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
@@ -1379,10 +1390,10 @@ where name = @dbname
 				return;
 			}
 
-			log(TraceLevel.Verbose, "Loading database schema...");
+			log(TraceLevel.Verbose, string.Format("Loading database schema for {0}", DatabaseName));
 			Load(); // load the schema first so we can import data
-			log(TraceLevel.Verbose, "Database schema loaded.");
-			log(TraceLevel.Info, "Importing data...");
+			log(TraceLevel.Verbose, string.Format("Database schema loaded for {0}", DatabaseName));
+			log(TraceLevel.Info, string.Format("Importing data for {0}", DatabaseName));
 
 			foreach (var f in Directory.GetFiles(dataDir)) {
 				var fi = new FileInfo(f);
@@ -1406,25 +1417,25 @@ where name = @dbname
 					throw new DataFileException(ex.Message, fi.FullName, -1);
 				}
 			}
-			log(TraceLevel.Info, "Data imported successfully.");
+			log(TraceLevel.Info, string.Format("Data imported successfully for {0}", DatabaseName));
 		}
 
 		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
 			if (DBHelper.DbExists(Connection)) {
-				log(TraceLevel.Verbose, "Dropping existing database...");
+				log(TraceLevel.Verbose, string.Format("Dropping existing database for {0}", DatabaseName));
 				DBHelper.DropDb(Connection);
-				log(TraceLevel.Verbose, "Existing database dropped.");
+				log(TraceLevel.Verbose, string.Format("Existing database dropped for {0}", DatabaseName));
 			}
 
-			log(TraceLevel.Info, "Creating database...");
+			log(TraceLevel.Info, string.Format("Creating database {0}", DatabaseName));
 			//create database
 			DBHelper.CreateDb(Connection, databaseFilesPath);
 
 			//run scripts
 			if (File.Exists(Dir + "/props.sql")) {
-				log(TraceLevel.Verbose, "Setting database properties...");
+				log(TraceLevel.Verbose, string.Format("Setting database properties {0}", DatabaseName));
 				try {
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
 				} catch (SqlBatchException ex) {
@@ -1437,7 +1448,7 @@ where name = @dbname
 			}
 
 			if (File.Exists(Dir + "/schemas.sql")) {
-				log(TraceLevel.Verbose, "Creating database schemas...");
+				log(TraceLevel.Verbose, string.Format("Creating database schemas for {0}", DatabaseName));
 				try {
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
 				} catch (SqlBatchException ex) {
@@ -1445,7 +1456,7 @@ where name = @dbname
 				}
 			}
 
-			log(TraceLevel.Info, "Creating database objects...");
+			log(TraceLevel.Info, string.Format("Creating database objects for {0}", DatabaseName));
 			// create db objects
 
 			// resolve dependencies by trying over and over
@@ -1457,13 +1468,13 @@ where name = @dbname
 				if (errors.Count > 0) {
 					prevCount = errors.Count;
 					log(TraceLevel.Info, string.Format(
-						"{0} errors occurred, retrying...", errors.Count));
+						"{0} errors occurred, retrying database {1}...", errors.Count, DatabaseName));
 				}
 				errors.Clear();
-				var index = 0;
-				var total = scripts.Count;
-				foreach (var f in scripts.ToArray()) {
-					log(TraceLevel.Verbose, string.Format("Executing script {0} of {1}...{2}", ++index, total, index < total ? "\r" : string.Empty));
+
+			    log(TraceLevel.Verbose, string.Format("Executing {0} scripts against {1}", scripts.Count, DatabaseName));
+
+                foreach (var f in scripts.ToArray()) {	
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
 						scripts.Remove(f);
@@ -1474,13 +1485,13 @@ where name = @dbname
 				}
 			}
 			if (prevCount > 0)
-				log(TraceLevel.Info, errors.Any() ? string.Format("{0} errors unresolved. Details will follow later.", prevCount) : "All errors resolved, were probably dependency issues...");
+				log(TraceLevel.Info, errors.Any() ? string.Format("{0} errors unresolved for {1}. Details will follow later.", prevCount, DatabaseName) : "All errors resolved, were probably dependency issues...");
 			log(TraceLevel.Info, string.Empty);
 
 			ImportData(log); // load data
 
 			if (Directory.Exists(Dir + "/after_data")) {
-				log(TraceLevel.Verbose, "Executing after-data scripts...");
+				log(TraceLevel.Verbose, string.Format("Executing after-data scripts {0}", DatabaseName));
 				foreach (var f in Directory.GetFiles(Dir + "/after_data", "*.sql")) {
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
@@ -1492,7 +1503,7 @@ where name = @dbname
 
 			// foreign keys
 			if (Directory.Exists(Dir + "/foreign_keys")) {
-				log(TraceLevel.Info, "Adding foreign key constraints...");
+				log(TraceLevel.Info, string.Format("Adding foreign key constraints {0}", DatabaseName));
 				foreach (var f in Directory.GetFiles(Dir + "/foreign_keys", "*.sql")) {
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
