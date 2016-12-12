@@ -5,7 +5,7 @@ using System.IO;
 namespace SchemaZen.Library.Command {
     public class CreateCommand : BaseCommand {
 
-        public void CreateDatabases(string databaseFilesPath)
+        public void CreateDatabase(string databaseFilesPath)
         {
             var db = CreateDatabase();
             if (!Directory.Exists(db.Dir))
