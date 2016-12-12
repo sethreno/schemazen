@@ -1411,43 +1411,11 @@ where name = @dbname
 			log(TraceLevel.Info, "Data imported successfully.");
 		}
 
-		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
+		public void CreateDbObjectsFromDir(string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
-			if (DBHelper.DbExists(Connection)) {
-				log(TraceLevel.Verbose, "Dropping existing database...");
-				DBHelper.DropDb(Connection);
-				log(TraceLevel.Verbose, "Existing database dropped.");
-			}
 
-			log(TraceLevel.Info, "Creating database...");
-			//create database
-			DBHelper.CreateDb(Connection, databaseFilesPath);
-
-			//run scripts
-			if (File.Exists(Dir + "/props.sql")) {
-				log(TraceLevel.Verbose, "Setting database properties...");
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
-				} catch (SqlBatchException ex) {
-					throw new SqlFileException(Dir + "/props.sql", ex);
-				}
-
-				// COLLATE can cause connection to be reset
-				// so clear the pool so we get a new connection
-				DBHelper.ClearPool(Connection);
-			}
-
-			if (File.Exists(Dir + "/schemas.sql")) {
-				log(TraceLevel.Verbose, "Creating database schemas...");
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
-				} catch (SqlBatchException ex) {
-					throw new SqlFileException(Dir + "/schemas.sql", ex);
-				}
-			}
-
-			log(TraceLevel.Info, "Creating database objects...");
+		    log(TraceLevel.Info, "Creating database objects...");
 			// create db objects
 
 			// resolve dependencies by trying over and over
@@ -1511,7 +1479,44 @@ where name = @dbname
 			}
 		}
 
-		private List<string> GetScripts() {
+	    public void CreateDBFromDir(string databaseFilesPath, Action<TraceLevel, string> log) {
+            if (log == null) log = (tl, s) => { };
+
+            if (DBHelper.DbExists(Connection)) {
+	            log(TraceLevel.Verbose, "Dropping existing database...");
+	            DBHelper.DropDb(Connection);
+	            log(TraceLevel.Verbose, "Existing database dropped.");
+	        }
+
+	        log(TraceLevel.Info, "Creating database...");
+	        //create database
+	        DBHelper.CreateDb(Connection, databaseFilesPath);
+
+	        //run scripts
+	        if (File.Exists(Dir + "/props.sql")) {
+	            log(TraceLevel.Verbose, "Setting database properties...");
+	            try {
+	                DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
+	            } catch (SqlBatchException ex) {
+	                throw new SqlFileException(Dir + "/props.sql", ex);
+	            }
+
+	            // COLLATE can cause connection to be reset
+	            // so clear the pool so we get a new connection
+	            DBHelper.ClearPool(Connection);
+	        }
+
+	        if (File.Exists(Dir + "/schemas.sql")) {
+	            log(TraceLevel.Verbose, "Creating database schemas...");
+	            try {
+	                DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
+	            } catch (SqlBatchException ex) {
+	                throw new SqlFileException(Dir + "/schemas.sql", ex);
+	            }
+	        }
+	    }
+
+	    private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
 				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {

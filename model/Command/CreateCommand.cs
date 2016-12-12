@@ -5,7 +5,7 @@ using System.IO;
 namespace SchemaZen.Library.Command {
     public class CreateCommand : BaseCommand {
 
-        public void Execute(string databaseFilesPath)
+        public void CreateDatabases(string databaseFilesPath)
         {
             var db = CreateDatabase();
             if (!Directory.Exists(db.Dir))
@@ -20,7 +20,19 @@ namespace SchemaZen.Library.Command {
                 throw new InvalidOperationException(msg);
             }
 
-            db.CreateFromDir(Overwrite, databaseFilesPath, Logger.Log);
+            db.CreateDBFromDir(databaseFilesPath, Logger.Log);
+            Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
+        }
+
+        public void CreateTables(string databaseFilesPath)
+        {
+            var db = CreateDatabase();
+            if (!Directory.Exists(db.Dir))
+            {
+                throw new FileNotFoundException(string.Format("Snapshot dir {0} does not exist.", db.Dir));
+            }
+
+            db.CreateDbObjectsFromDir(databaseFilesPath, Logger.Log);
             Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
         }
     }
