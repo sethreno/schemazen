@@ -21,7 +21,6 @@ namespace SchemaZen.Library.Command {
             }
 
             db.CreateDBFromDir(databaseFilesPath, Logger.Log);
-            Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
         }
 
         public void CreateTables(string databaseFilesPath)
@@ -33,7 +32,6 @@ namespace SchemaZen.Library.Command {
             }
 
             db.CreateDbObjectsFromDir(databaseFilesPath, Logger.Log);
-            Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
         }
     }
 }
