@@ -144,7 +144,46 @@ namespace SchemaZen.Tests {
 			Assert.That(result, Is.StringContaining("CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])"));
 		}
 
-		[Test]
+        [Test]
+        public void ScriptCreate_ShouldAddDefaultCollation()
+        {
+            var scriptToExecute = @"CREATE TABLE MyTable (Name nvarchar(250))";
+
+            var db = CreateTestDbWithScript(scriptToExecute);
+            var result = db.ScriptCreate();
+            TestHelper.DropDb("TEST");
+
+            Assert.That(result, Is.StringContaining("[Name] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CI_AS NULL "));
+        }
+
+	    [Test]
+        public void ScriptCreate_ShouldKeepCollation()
+        {
+            var scriptToExecute = @"CREATE TABLE MyTable (Name nvarchar(250) COLLATE SQL_Latin1_General_CP1_CS_AS)";
+
+            var db = CreateTestDbWithScript(scriptToExecute);
+            var result = db.ScriptCreate();
+            TestHelper.DropDb("TEST");
+
+            Assert.That(result, Is.StringContaining("[Name] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL "));
+        }
+
+        private static Database CreateTestDbWithScript(string scriptToExecute)
+        {
+            TestHelper.DropDb("TEST");
+            TestHelper.ExecSql("CREATE DATABASE TEST", "");
+
+            TestHelper.ExecSql(scriptToExecute, "TEST");
+
+            var db = new Database("TEST")
+            {
+                Connection = TestHelper.GetConnString("TEST")
+            };
+            db.Load();
+            return db;
+        }
+
+        [Test]
 		[Ignore("test won't work without license key for sqldbdiff")]
 		public void TestDiffScript() {
 			TestHelper.DropDb("TEST_SOURCE");
@@ -241,7 +280,7 @@ namespace SchemaZen.Tests {
 		public void TestScriptTableType() {
 			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
-	[ID] [nvarchar](250) NULL,
+	[ID] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL,
 	[Value] [numeric](5, 1) NULL,
 	[LongNVarchar] [nvarchar](max) NULL
 )
@@ -271,8 +310,38 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 		}
 
+        [Test]
+        public void ScriptToDir_ShouldAddCollation_ToVarCharTypeColumns()
+        {
+            var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[ID] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL,
+	[Value] [numeric](5, 1) NULL,
+	[LongNVarchar] [nvarchar](max) NULL
+)
+";
 
-		[Test]
+            var db = new Database("TestScriptTableType");
+
+            db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+            db.ExecCreate(true);
+
+            DBHelper.ExecSql(db.Connection, setupSQL1);
+
+            db.Dir = db.Name;
+            db.Load();
+
+            db.ScriptToDir();
+
+            var scriptedType = File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql");
+
+            Assert.That(scriptedType, Is.StringContaining("[ID] [nvarchar](250) COLLATE SQL_Latin1_General_CP1_CS_AS NULL"));
+            Assert.That(scriptedType, Is.StringContaining("[LongNVarchar] [nvarchar](max) COLLATE SQL_Latin1_General_CP1_CI_AS NULL"));
+        }
+
+
+        [Test]
 		public void TestScriptTableTypePrimaryKey() {
 			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -657,7 +726,7 @@ select * from Table1
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
 			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
-			copy.CreateFromDir(true);
+			copy.CreateDbObjectsFromDir();
 			copy.Load();
 			TestCompare(db, copy);
 		}

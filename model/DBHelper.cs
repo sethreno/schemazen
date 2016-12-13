@@ -5,7 +5,7 @@ using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library {
 	public class DBHelper {
-		public static bool EchoSql = false;
+        public static bool EchoSql = false;
 
 		public static void ExecSql(string conn, string sql) {
 			if (EchoSql) Console.WriteLine(sql);
@@ -39,7 +39,7 @@ namespace SchemaZen.Library {
 			}
 		}
 
-		public static void DropDb(string conn) {
+        public static void DropDb(string conn) {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
 			var initialCatalog = cnBuilder.InitialCatalog;
 
@@ -55,7 +55,7 @@ namespace SchemaZen.Library {
 			}
 		}
 
-		public static void CreateDb(string connection, string databaseFilesPath = null) {
+        public static void CreateDb(string connection, string databaseFilesPath = null) {
 			var cnBuilder = new SqlConnectionStringBuilder(connection);
 			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";

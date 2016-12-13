@@ -55,11 +55,22 @@ namespace SchemaZen.Library.Models {
 			}
 		}
 
-		public string RowGuidColText {
-			get { return IsRowGuidCol ? "ROWGUIDCOL" : string.Empty; }
-		}
+        public string RowGuidColText {
+	        get { return IsRowGuidCol ? "ROWGUIDCOL" : string.Empty; }
+        }
 
-		public ColumnDiff Compare(Column c) {
+        public string Collation { get; set; }
+
+        public string CollationText {
+            get {
+                if (string.IsNullOrEmpty(Collation)) {
+                    return string.Empty;
+                }
+                return "COLLATE " + Collation;
+            }
+        }
+
+        public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
 		}
 
@@ -102,8 +113,8 @@ namespace SchemaZen.Library.Models {
 						var lengthString = Length.ToString();
 						if (lengthString == "-1") lengthString = "max";
 
-						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText,
-							includeDefaultConstraint ? DefaultText : string.Empty);
+						return string.Format("[{0}] [{1}]({2}) {3} {4} {5}", Name, Type, lengthString, CollationText, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty );
 					case "decimal":
 					case "numeric":
 
