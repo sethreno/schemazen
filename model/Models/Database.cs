@@ -1420,43 +1420,11 @@ where name = @dbname
 			log(TraceLevel.Info, string.Format("Data imported successfully for {0}", DatabaseName));
 		}
 
-		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
+		public void CreateDbObjectsFromDir(string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
-			if (DBHelper.DbExists(Connection)) {
-				log(TraceLevel.Verbose, string.Format("Dropping existing database for {0}", DatabaseName));
-				DBHelper.DropDb(Connection);
-				log(TraceLevel.Verbose, string.Format("Existing database dropped for {0}", DatabaseName));
-			}
 
-			log(TraceLevel.Info, string.Format("Creating database {0}", DatabaseName));
-			//create database
-			DBHelper.CreateDb(Connection, databaseFilesPath);
-
-			//run scripts
-			if (File.Exists(Dir + "/props.sql")) {
-				log(TraceLevel.Verbose, string.Format("Setting database properties {0}", DatabaseName));
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
-				} catch (SqlBatchException ex) {
-					throw new SqlFileException(Dir + "/props.sql", ex);
-				}
-
-				// COLLATE can cause connection to be reset
-				// so clear the pool so we get a new connection
-				DBHelper.ClearPool(Connection);
-			}
-
-			if (File.Exists(Dir + "/schemas.sql")) {
-				log(TraceLevel.Verbose, string.Format("Creating database schemas for {0}", DatabaseName));
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
-				} catch (SqlBatchException ex) {
-					throw new SqlFileException(Dir + "/schemas.sql", ex);
-				}
-			}
-
-			log(TraceLevel.Info, string.Format("Creating database objects for {0}", DatabaseName));
+			log(TraceLevel.Info, "Creating database objects...");
 			// create db objects
 
 			// resolve dependencies by trying over and over
@@ -1518,9 +1486,50 @@ where name = @dbname
 				ex.Exceptions = errors;
 				throw ex;
 			}
-		}
 
-		private List<string> GetScripts() {
+            log(TraceLevel.Info, Environment.NewLine + "Database objects created successfully.");
+        }
+
+        public void CreateDBFromDir(string databaseFilesPath, Action<TraceLevel, string> log) {
+            if (log == null) log = (tl, s) => { };
+
+            if (DBHelper.DbExists(Connection)) {
+                log(TraceLevel.Verbose, string.Format("Dropping existing database for {0}", DatabaseName));
+                DBHelper.DropDb(Connection);
+                log(TraceLevel.Verbose, string.Format("Existing database dropped for {0}", DatabaseName));
+            }
+
+            log(TraceLevel.Info, string.Format("Creating database {0}", DatabaseName));
+            //create database
+            DBHelper.CreateDb(Connection, databaseFilesPath);
+
+	        //run scripts
+	        if (File.Exists(Dir + "/props.sql")) {
+                log(TraceLevel.Verbose, string.Format("Setting database properties {0}", DatabaseName));
+                try {
+	                DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
+	            } catch (SqlBatchException ex) {
+	                throw new SqlFileException(Dir + "/props.sql", ex);
+	            }
+
+	            // COLLATE can cause connection to be reset
+	            // so clear the pool so we get a new connection
+	            DBHelper.ClearPool(Connection);
+	        }
+
+	        if (File.Exists(Dir + "/schemas.sql")) {
+                log(TraceLevel.Verbose, string.Format("Creating database schemas for {0}", DatabaseName));
+                try {
+	                DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
+	            } catch (SqlBatchException ex) {
+	                throw new SqlFileException(Dir + "/schemas.sql", ex);
+	            }
+	        }
+
+            log(TraceLevel.Info, Environment.NewLine + string.Format("Database {0} created successfully.", DatabaseName));
+        }
+
+        private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
 				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {

@@ -676,7 +676,7 @@ select * from Table1
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
 			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
-			copy.CreateFromDir(true);
+			copy.CreateDbObjectsFromDir();
 			copy.Load();
 			TestCompare(db, copy);
 		}
