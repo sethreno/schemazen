@@ -4,7 +4,7 @@ namespace SchemaZen.console {
 	public static class ConsoleQuestion {
 		// ReSharper disable once InconsistentNaming
 		public static bool AskYN(string question) {
-			Console.Write(question + " (Y/N)? ");
+			Console.Write( $"{question} (Y/N)? " );
 
 			ConsoleKeyInfo key;
 			do {

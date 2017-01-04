@@ -43,7 +43,7 @@ namespace SchemaZen.console {
             {
                 Console.WriteLine();
                 if (!_overwrite && File.Exists(_outDiff)) {
-                    var question = string.Format("{0} already exists - do you want to replace it", _outDiff);
+                    var question = $"{_outDiff} already exists - do you want to replace it";
                     if (!ConsoleQuestion.AskYN(question))
                     {
                         return 1;

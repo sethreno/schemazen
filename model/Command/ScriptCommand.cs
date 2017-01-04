@@ -11,7 +11,7 @@ namespace SchemaZen.Library.Command {
             string tableHint, List<string> filteredTypes)
         {
             if (!Overwrite && Directory.Exists(ScriptDir)) {
-                var message = string.Format("{0} already exists - you must set overwrite to true", ScriptDir);
+                var message = $"{ScriptDir} already exists - you must set overwrite to true";
                 throw new InvalidOperationException(message);
             }
 
@@ -36,7 +36,7 @@ namespace SchemaZen.Library.Command {
 
             db.ScriptToDir(tableHint, Logger.Log);
 
-            Logger.Log(TraceLevel.Info, Environment.NewLine + "Snapshot successfully created at " + db.Dir);
+            Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Snapshot successfully created at {db.Dir}" );
             var routinesWithWarnings = db.Routines.Select(r => new {
                 Routine = r,
                 Warnings = r.Warnings().ToList()
@@ -49,9 +49,7 @@ namespace SchemaZen.Library.Command {
                         routinesWithWarnings.SelectMany(
                             r =>
                                 r.Warnings.Select(
-                                    w =>
-                                        string.Format("- {0} [{1}].[{2}]: {3}", r.Routine.RoutineType, r.Routine.Owner,
-                                            r.Routine.Name, w))))
+                                    w => $"- {r.Routine.RoutineType} [{r.Routine.Owner}].[{r.Routine.Name}]: {w}" )))
                 {
                     Logger.Log(TraceLevel.Warning, warning);
                 }

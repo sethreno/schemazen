@@ -30,13 +30,11 @@ namespace SchemaZen.Library.Command {
                     Console.WriteLine();
                     if (!Overwrite && File.Exists(OutDiff))
                     {
-                        var message = string.Format(
-                            "{0} already exists - set overwrite to true if you want to delete it", OutDiff);
+                        var message = $"{OutDiff} already exists - set overwrite to true if you want to delete it";
                         throw new InvalidOperationException(message);
                     }
                     File.WriteAllText(OutDiff, diff.Script());
-                    Console.WriteLine("Script to make the databases identical has been created at {0}",
-                        Path.GetFullPath(OutDiff));
+                    Console.WriteLine($"Script to make the databases identical has been created at {Path.GetFullPath(OutDiff)}");
                 }
                 return true;
             }

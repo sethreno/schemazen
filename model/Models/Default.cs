@@ -9,15 +9,15 @@
 		}
 
 		public string ScriptAsPartOfColumnDefinition() {
-			return string.Format("CONSTRAINT [{0}] DEFAULT {1}", Name, Value);
+			return $"CONSTRAINT [{Name}] DEFAULT {Value}";
 		}
 
 		public string ScriptDrop() {
-			return string.Format("DROP CONSTRAINT [{0}]", Name);
+			return $"DROP CONSTRAINT [{Name}]";
 		}
 
 		public string ScriptCreate(Column column) {
-			return string.Format("ADD {0} FOR [{1}]", ScriptAsPartOfColumnDefinition(), column.Name);
+			return $"ADD {ScriptAsPartOfColumnDefinition()} FOR [{column.Name}]";
 		}
 	}
 }

@@ -7,11 +7,9 @@ using SchemaZen.Library.Models;
 namespace SchemaZen.Tests {
 	[SetUpFixture]
 	public class TestHelper {
-		public static bool EchoSql {
-			get { return true; }
-		}
+		public static bool EchoSql => true;
 
-		[SetUp]
+	    [SetUp]
 		public void SetUp() {
 			var conn = GetConnString("TESTDB");
 			DBHelper.DropDb(conn);

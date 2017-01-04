@@ -10,18 +10,17 @@ namespace SchemaZen.Library.Command {
             var db = CreateDatabase();
             if (!Directory.Exists(db.Dir))
             {
-                throw new FileNotFoundException(string.Format("Snapshot dir {0} does not exist.", db.Dir));
+                throw new FileNotFoundException( $"Snapshot dir {db.Dir} does not exist." );
             }
 
             if (!Overwrite && (DBHelper.DbExists(db.Connection)))
             {
-                var msg = string.Format("{0} {1} already exists - use overwrite property if you want to drop it",
-    Server, DbName);
+                var msg = $"{Server} {DbName} already exists - use overwrite property if you want to drop it";
                 throw new InvalidOperationException(msg);
             }
 
             db.CreateFromDir(Overwrite, databaseFilesPath, Logger.Log);
-            Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
+            Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Database created successfully." );
         }
     }
 }

@@ -5,29 +5,27 @@ using System.Text;
 
 namespace SchemaZen.Library.Models {
 	public class ColumnList {
-		private readonly List<Column> mItems = new List<Column>();
+		private readonly List<Column> _mItems = new List<Column>();
 
-		public ReadOnlyCollection<Column> Items {
-			get { return mItems.AsReadOnly(); }
-		}
+		public ReadOnlyCollection<Column> Items => _mItems.AsReadOnly();
 
-		public void Add(Column c) {
-			mItems.Add(c);
+	    public void Add(Column c) {
+			_mItems.Add(c);
 		}
 
 		public void Remove(Column c) {
-			mItems.Remove(c);
+			_mItems.Remove(c);
 		}
 
 		public Column Find(string name) {
-			return mItems.FirstOrDefault(c => c.Name == name);
+			return _mItems.FirstOrDefault(c => c.Name == name);
 		}
 
 		public string Script() {
 			var text = new StringBuilder();
-			foreach (var c in mItems) {
+			foreach (var c in _mItems) {
 				text.Append("   " + c.ScriptCreate());
-				if (mItems.IndexOf(c) < mItems.Count - 1) {
+				if (_mItems.IndexOf(c) < _mItems.Count - 1) {
 					text.AppendLine(",");
 				} else {
 					text.AppendLine();

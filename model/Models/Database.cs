@@ -7,8 +7,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Xml.Schema;
-using Microsoft.SqlServer.Server;
 
 namespace SchemaZen.Library.Models {
 	public class Database {
@@ -65,23 +63,23 @@ namespace SchemaZen.Library.Models {
 
 		#region " Properties "
 
-		public List<SqlAssembly> Assemblies = new List<SqlAssembly>();
-		public string Connection = "";
-		public List<Table> DataTables = new List<Table>();
-		public string Dir = "";
-		public List<ForeignKey> ForeignKeys = new List<ForeignKey>();
-		public string Name;
+		public List<SqlAssembly> Assemblies { get; set; } = new List<SqlAssembly>();
+		public string Connection { get; set; } = "";
+		public List<Table> DataTables { get; set; } = new List<Table>();
+		public string Dir { get; set; } = "";
+		public List<ForeignKey> ForeignKeys { get; set; } = new List<ForeignKey>();
+		public string Name { get; set; }
 
-		public List<DbProp> Props = new List<DbProp>();
-		public List<Routine> Routines = new List<Routine>();
-		public List<Schema> Schemas = new List<Schema>();
-		public List<Synonym> Synonyms = new List<Synonym>();
-		public List<Table> TableTypes = new List<Table>();
-		public List<Table> Tables = new List<Table>();
-	    public List<UserDefinedType> UserDefinedTypes = new List<UserDefinedType>();
-        public List<Role> Roles = new List<Role>();
-        public List<SqlUser> Users = new List<SqlUser>();
-		public List<Constraint> ViewIndexes = new List<Constraint>();
+		public List<DbProp> Props { get; set; } = new List<DbProp>();
+		public List<Routine> Routines { get; set; } = new List<Routine>();
+		public List<Schema> Schemas { get; set; } = new List<Schema>();
+		public List<Synonym> Synonyms { get; set; } = new List<Synonym>();
+		public List<Table> TableTypes { get; set; } = new List<Table>();
+		public List<Table> Tables { get; set; } = new List<Table>();
+	    public List<UserDefinedType> UserDefinedTypes { get; set; } = new List<UserDefinedType>();
+        public List<Role> Roles { get; set; } = new List<Role>();
+        public List<SqlUser> Users { get; set; } = new List<SqlUser>();
+		public List<Constraint> ViewIndexes { get; set; } = new List<Constraint>();
 
 		public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
@@ -129,17 +127,14 @@ namespace SchemaZen.Library.Models {
 
         #endregion
 
-        private static HashSet<string> _dirs = new HashSet<string> {
+        private static readonly HashSet<string> _dirs = new HashSet<string> {
             "user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
             "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
         };
 
-        public static HashSet<string> Dirs
-        {
-            get { return _dirs; }
-        }
+        public static HashSet<string> Dirs => _dirs;
 
-        public static string ValidTypes
+	    public static string ValidTypes
         {
             get { return Dirs.Aggregate((x, y) => x + ", " + y); }
         }
@@ -998,10 +993,11 @@ where name = @dbname
 		#endregion
 
 		public DatabaseDiff Compare(Database db) {
-			var diff = new DatabaseDiff();
-			diff.Db = db;
+		    var diff = new DatabaseDiff {
+		        Db = db
+		    };
 
-			//compare database properties		   
+		    //compare database properties		   
 			foreach (var p in from p in Props
 				let p2 = db.FindProp(p.Name)
 				where p.Script() != p2.Script()
@@ -1018,14 +1014,14 @@ where name = @dbname
 					} else {
 						//compare mutual tables
 						var tDiff = t.Compare(t2);
-						if (tDiff.IsDiff) {
-							if (t.IsType) {
-								// types cannot be altered...
-								diff.TableTypesDiff.Add(t);
-							} else {
-								diff.TablesDiff.Add(tDiff);
-							}
-						}
+					    if( !tDiff.IsDiff )
+					        continue;
+					    if (t.IsType) {
+					        // types cannot be altered...
+					        diff.TableTypesDiff.Add(t);
+					    } else {
+					        diff.TablesDiff.Add(tDiff);
+					    }
 					}
 				}
 			}
@@ -1248,7 +1244,7 @@ where name = @dbname
 			text.Append(ScriptPropList(Props));
 			text.AppendLine("GO");
 			text.AppendLine();
-			File.WriteAllText(string.Format("{0}/props.sql", Dir), text.ToString());
+			File.WriteAllText( $"{Dir}/props.sql", text.ToString());
 		}
 
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
@@ -1259,7 +1255,7 @@ where name = @dbname
 			}
 			text.AppendLine("GO");
 			text.AppendLine();
-			File.WriteAllText(string.Format("{0}/schemas.sql", Dir), text.ToString());
+			File.WriteAllText( $"{Dir}/schemas.sql", text.ToString());
 		}
 
 		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log) {
@@ -1269,7 +1265,7 @@ where name = @dbname
 			Directory.CreateDirectory(dir);
 			var index = 0;
 			foreach (var o in objects) {
-				log(TraceLevel.Verbose, string.Format("Scripting {0} {1} of {2}...{3}", name, ++index, objects.Count, index < objects.Count ? "\r" : string.Empty));
+				log(TraceLevel.Verbose, $"Scripting {name} {++index} of {objects.Count}...{( index < objects.Count ? "\r" : string.Empty )}" );
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
 				var script = o.ScriptCreate() + "\r\nGO\r\n";
 				File.AppendAllText(filePath, script);
@@ -1298,11 +1294,9 @@ where name = @dbname
 			// SchemaZen to keep their schemas under version control.
 			var fileName = name;
 			if (!string.IsNullOrEmpty(schema) && schema.ToLower() != "dbo") {
-				fileName = string.Format("{0}.{1}", schema, name);
+				fileName = $"{schema}.{name}";
 			}
-			foreach (var invalidChar in Path.GetInvalidFileNameChars())
-				fileName = fileName.Replace(invalidChar, '-');
-			return fileName;
+		    return Path.GetInvalidFileNameChars().Aggregate( fileName, ( current, invalidChar ) => current.Replace( invalidChar, '-' ) );
 		}
 
 		public void ExportData(string tableHint = null, Action<TraceLevel, string> log = null) {
@@ -1312,21 +1306,18 @@ where name = @dbname
 			if (!Directory.Exists(dataDir)) {
 				Directory.CreateDirectory(dataDir);
 			}
-			if (log != null)
-				log(TraceLevel.Info, "Exporting data...");
-			var index = 0;
+		    log?.Invoke(TraceLevel.Info, "Exporting data...");
+		    var index = 0;
 			foreach (var t in DataTables) {
-				if (log != null)
-					log(TraceLevel.Verbose, string.Format("Exporting data from {0} (table {1} of {2})...", t.Owner + "." + t.Name, ++index, DataTables.Count));
+			    log?.Invoke(TraceLevel.Verbose, $"Exporting data from {t.Owner + "." + t.Name} (table {++index} of {DataTables.Count})..." );
 			    var filePathAndName = dataDir + "/" + MakeFileName(t) + ".tsv";
 			    var sw = File.CreateText(filePathAndName);
 				t.ExportData(Connection, sw, tableHint);
 
                 sw.Flush();
 			    if (sw.BaseStream.Length == 0) {
-                    if (log != null)
-                        log(TraceLevel.Verbose, string.Format("          No data to export for {0}, deleting file...", t.Owner + "." + t.Name));
-                    sw.Close();
+			        log?.Invoke(TraceLevel.Verbose, $"          No data to export for {t.Owner + "." + t.Name}, deleting file..." );
+			        sw.Close();
                     File.Delete(filePathAndName);
                 } else {
                     sw.Close();
@@ -1373,11 +1364,11 @@ where name = @dbname
 				}
 				var t = FindTable(table, schema);
 				if (t == null) {
-					log(TraceLevel.Warning, string.Format("Warning: found data file '{0}', but no corresponding table in database...", fi.Name));
+					log(TraceLevel.Warning, $"Warning: found data file '{fi.Name}', but no corresponding table in database..." );
 					continue;
 				}
 				try {
-					log(TraceLevel.Verbose, string.Format("Importing data for table {0}.{1}...", schema, table));
+					log(TraceLevel.Verbose, $"Importing data for table {schema}.{table}..." );
 					t.ImportData(Connection, fi.FullName);
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
@@ -1435,14 +1426,13 @@ where name = @dbname
 			while (scripts.Count > 0 && (prevCount == -1 || errors.Count < prevCount)) {
 				if (errors.Count > 0) {
 					prevCount = errors.Count;
-					log(TraceLevel.Info, string.Format(
-						"{0} errors occurred, retrying...", errors.Count));
+					log(TraceLevel.Info, $"{errors.Count} errors occurred, retrying..." );
 				}
 				errors.Clear();
 				var index = 0;
 				var total = scripts.Count;
 				foreach (var f in scripts.ToArray()) {
-					log(TraceLevel.Verbose, string.Format("Executing script {0} of {1}...{2}", ++index, total, index < total ? "\r" : string.Empty));
+					log(TraceLevel.Verbose, $"Executing script {++index} of {total}...{( index < total ? "\r" : string.Empty )}" );
 					try {
 						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
 						scripts.Remove(f);
@@ -1453,7 +1443,7 @@ where name = @dbname
 				}
 			}
 			if (prevCount > 0)
-				log(TraceLevel.Info, errors.Any() ? string.Format("{0} errors unresolved. Details will follow later.", prevCount) : "All errors resolved, were probably dependency issues...");
+				log(TraceLevel.Info, errors.Any() ? $"{prevCount} errors unresolved. Details will follow later." : "All errors resolved, were probably dependency issues...");
 			log(TraceLevel.Info, string.Empty);
 
 			ImportData(log); // load data
@@ -1482,9 +1472,10 @@ where name = @dbname
 				}
 			}
 			if (errors.Count > 0) {
-				var ex = new BatchSqlFileException();
-				ex.Exceptions = errors;
-				throw ex;
+			    var ex = new BatchSqlFileException {
+			        Exceptions = errors
+			    };
+			    throw ex;
 			}
 		}
 
@@ -1505,8 +1496,7 @@ where name = @dbname
 				if (dropIfExists) {
 					DBHelper.DropDb(Connection);
 				} else {
-					throw new ApplicationException(string.Format("Database {0} {1} already exists.",
-						conStr.DataSource, dbName));
+					throw new ApplicationException( $"Database {conStr.DataSource} {dbName} already exists." );
 				}
 			}
 			DBHelper.ExecBatchSql(conStr.ToString(), ScriptCreate());
@@ -1542,35 +1532,31 @@ where name = @dbname
 		public List<Constraint> ViewIndexesDeleted = new List<Constraint>();
 		public List<Constraint> ViewIndexesDiff = new List<Constraint>();
 
-		public bool IsDiff {
-			get {
-				return PropsChanged.Count > 0
-					   || TablesAdded.Count > 0
-					   || TablesDiff.Count > 0
-					   || TableTypesDiff.Count > 0
-					   || TablesDeleted.Count > 0
-					   || RoutinesAdded.Count > 0
-					   || RoutinesDiff.Count > 0
-					   || RoutinesDeleted.Count > 0
-					   || ForeignKeysAdded.Count > 0
-					   || ForeignKeysDiff.Count > 0
-					   || ForeignKeysDeleted.Count > 0
-					   || AssembliesAdded.Count > 0
-					   || AssembliesDiff.Count > 0
-					   || AssembliesDeleted.Count > 0
-					   || UsersAdded.Count > 0
-					   || UsersDiff.Count > 0
-					   || UsersDeleted.Count > 0
-					   || ViewIndexesAdded.Count > 0
-					   || ViewIndexesDiff.Count > 0
-					   || ViewIndexesDeleted.Count > 0
-					   || SynonymsAdded.Count > 0
-					   || SynonymsDiff.Count > 0
-					   || SynonymsDeleted.Count > 0;
-			}
-		}
+		public bool IsDiff => PropsChanged.Count > 0
+		                      || TablesAdded.Count > 0
+		                      || TablesDiff.Count > 0
+		                      || TableTypesDiff.Count > 0
+		                      || TablesDeleted.Count > 0
+		                      || RoutinesAdded.Count > 0
+		                      || RoutinesDiff.Count > 0
+		                      || RoutinesDeleted.Count > 0
+		                      || ForeignKeysAdded.Count > 0
+		                      || ForeignKeysDiff.Count > 0
+		                      || ForeignKeysDeleted.Count > 0
+		                      || AssembliesAdded.Count > 0
+		                      || AssembliesDiff.Count > 0
+		                      || AssembliesDeleted.Count > 0
+		                      || UsersAdded.Count > 0
+		                      || UsersDiff.Count > 0
+		                      || UsersDeleted.Count > 0
+		                      || ViewIndexesAdded.Count > 0
+		                      || ViewIndexesDiff.Count > 0
+		                      || ViewIndexesDeleted.Count > 0
+		                      || SynonymsAdded.Count > 0
+		                      || SynonymsDiff.Count > 0
+		                      || SynonymsDeleted.Count > 0;
 
-		private static string Summarize(bool includeNames, List<string> changes, string caption) {
+	    private static string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
 			return changes.Count + "x " + caption +
 				   (includeNames ? ("\r\n\t" + string.Join("\r\n\t", changes.ToArray())) : string.Empty) + "\r\n";
@@ -1590,29 +1576,29 @@ where name = @dbname
 			sb.Append(Summarize(includeNames, ForeignKeysDiff.Select(o => o.Name).ToList(), "foreign keys altered"));
 			sb.Append(Summarize(includeNames, PropsChanged.Select(o => o.Name).ToList(), "properties changed"));
 			sb.Append(Summarize(includeNames,
-				RoutinesAdded.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Owner, o.Name)).ToList(),
+				RoutinesAdded.Select(o => $"{o.RoutineType.ToString()} {o.Owner}.{o.Name}" ).ToList(),
 				"routines in source but not in target"));
 			sb.Append(Summarize(includeNames,
-				RoutinesDeleted.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Owner, o.Name)).ToList(),
+				RoutinesDeleted.Select(o => $"{o.RoutineType.ToString()} {o.Owner}.{o.Name}" ).ToList(),
 				"routines not in source but in target"));
 			sb.Append(Summarize(includeNames,
-				RoutinesDiff.Select(o => string.Format("{0} {1}.{2}", o.RoutineType.ToString(), o.Owner, o.Name)).ToList(),
+				RoutinesDiff.Select(o => $"{o.RoutineType.ToString()} {o.Owner}.{o.Name}" ).ToList(),
 				"routines altered"));
 			sb.Append(Summarize(includeNames,
-				TablesAdded.Where(o => !o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+				TablesAdded.Where(o => !o.IsType).Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"tables in source but not in target"));
 			sb.Append(Summarize(includeNames,
-				TablesDeleted.Where(o => !o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+				TablesDeleted.Where(o => !o.IsType).Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"tables not in source but in target"));
-			sb.Append(Summarize(includeNames, TablesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+			sb.Append(Summarize(includeNames, TablesDiff.Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"tables altered"));
 			sb.Append(Summarize(includeNames,
-				TablesAdded.Where(o => o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+				TablesAdded.Where(o => o.IsType).Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"table types in source but not in target"));
 			sb.Append(Summarize(includeNames,
-				TablesDeleted.Where(o => o.IsType).Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+				TablesDeleted.Where(o => o.IsType).Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"table types not in source but in target"));
-			sb.Append(Summarize(includeNames, TableTypesDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+			sb.Append(Summarize(includeNames, TableTypesDiff.Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"table types altered"));
 			sb.Append(Summarize(includeNames, UsersAdded.Select(o => o.Name).ToList(), "users in source but not in target"));
 			sb.Append(Summarize(includeNames, UsersDeleted.Select(o => o.Name).ToList(), "users not in source but in target"));
@@ -1622,11 +1608,11 @@ where name = @dbname
 			sb.Append(Summarize(includeNames, ViewIndexesDeleted.Select(o => o.Name).ToList(),
 				"view indexes not in source but in target"));
 			sb.Append(Summarize(includeNames, ViewIndexesDiff.Select(o => o.Name).ToList(), "view indexes altered"));
-			sb.Append(Summarize(includeNames, SynonymsAdded.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+			sb.Append(Summarize(includeNames, SynonymsAdded.Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"synonyms in source but not in target"));
-			sb.Append(Summarize(includeNames, SynonymsDeleted.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+			sb.Append(Summarize(includeNames, SynonymsDeleted.Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"synonyms not in source but in target"));
-			sb.Append(Summarize(includeNames, SynonymsDiff.Select(o => string.Format("{0}.{1}", o.Owner, o.Name)).ToList(),
+			sb.Append(Summarize(includeNames, SynonymsDiff.Select(o => $"{o.Owner}.{o.Name}" ).ToList(),
 				"synonyms altered"));
 			return sb.ToString();
 		}
