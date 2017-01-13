@@ -85,7 +85,7 @@ end
 				var c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
 					diff.ColumnsAdded.Add(c);
-				} else {
+				}				else {
 					//compare mutual columns
 					var cDiff = c.Compare(c2);
 					if (cDiff.IsDiff) {
@@ -105,17 +105,18 @@ end
 					var c2 = t.FindConstraint(c.Name);
 					if (c2 == null) {
 						diff.ConstraintsAdded.Add(c);
-					} else {
+					}					else {
 						if (c.ScriptCreate() != c2.ScriptCreate()) {
 							diff.ConstraintsChanged.Add(c);
 						}
 					}
 				}
+
 				//get deleted constraints
-				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)){
+				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
 					diff.ConstraintsDeleted.Add(c);
 				}
-			} else {
+			}			else {
 				// compare constraints on table types, which can't be named in the script, but have names in the DB
 				var dest = Constraints.ToList();
 				var src = t.Constraints.ToList();
@@ -123,15 +124,16 @@ end
 				var j = from c1 in dest
 						join c2 in src on c1.ScriptCreate() equals c2.ScriptCreate() into match //new { c1.Type, c1.Unique, c1.Clustered, Columns = string.Join(",", c1.Columns.ToArray()), IncludedColumns = string.Join(",", c1.IncludedColumns.ToArray()) } equals new { c2.Type, c2.Unique, c2.Clustered, Columns = string.Join(",", c2.Columns.ToArray()), IncludedColumns = string.Join(",", c2.IncludedColumns.ToArray()) } into match
 						from m in match.DefaultIfEmpty()
-						select new { c1, m };
+				select new { c1, m };
 
 				foreach (var c in j) {
 					if (c.m == null) {
 						diff.ConstraintsAdded.Add(c.c1);
-					} else {
+					}					else {
 						src.Remove(c.m);
 					}
 				}
+
 				foreach (var c in src) {
 					diff.ConstraintsDeleted.Add(c);
 				}
@@ -149,23 +151,25 @@ end
 			foreach (var c in _Constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
+
 			text.AppendLine(")");
 			text.AppendLine();
 			foreach (var c in _Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
 			}
+
 			text.AppendLine();
 			foreach (var c in FullTextIndexes)
 			{
 				text.AppendLine(c.ScriptCreate());
 			}
+
 			return text.ToString();
 		}
 
 		public string ScriptDrop() {
 			return string.Format("DROP {2} [{0}].[{1}]", Owner, Name, IsType ? "TYPE" : "TABLE");
 		}
-
 
 		public void ExportData(string conn, TextWriter data, string tableHint = null) {
 			if (IsType)
@@ -177,6 +181,7 @@ end
 			foreach (var c in cols) {
 				sql.AppendFormat("[{0}],", c.Name);
 			}
+
 			sql.Remove(sql.Length - 1, 1);
 			sql.AppendFormat(" from [{0}].[{1}]", Owner, Name);
 			if (!string.IsNullOrEmpty(tableHint))
@@ -201,6 +206,7 @@ end
 								if (c != cols.Last())
 									data.Write(fieldSeparator);
 							}
+
 							data.WriteLine();
 						}
 					}
@@ -246,6 +252,7 @@ end
 								break;
 							}
 						}
+
 						linenumber++;
 
 						// Skip empty lines
@@ -259,15 +266,18 @@ end
 						if (fields.Length != dt.Columns.Count) {
 							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
+
 						for (var j = 0; j < fields.Length; j++) {
 							try {
 								row[j] = ConvertType(cols[j].Type,
 									fields[j].Replace(escapeRowSeparator, rowSeparator)
 									.Replace(escapeFieldSeparator, fieldSeparator));
-							} catch (FormatException ex) {
+							}
+							catch (FormatException ex) {
 								throw new DataFileException(string.Format("{0} at column {1}", ex.Message, j + 1), filename, linenumber);
 							}
 						}
+
 						dt.Rows.Add(row);
 
 						if (batch_rows == rowsInBatch) {
@@ -289,10 +299,11 @@ end
 
 			switch (sqlType.ToLower()) {
 				case "bit":
-					//added for compatibility with bcp
+				//added for compatibility with bcp
 					if (val == "0") val = "False";
-					if (val == "1") val = "True";
-					return bool.Parse(val);
+				if (val == "1") val = "True";
+				return bool.Parse(val);
+				case "date":
 				case "datetime":
 				case "datetime2":
 				case "smalldatetime":
@@ -345,10 +356,12 @@ end
 					if (c.Source.Default != null) {
 						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Source.Default.ScriptDrop());
 					}
+
 					if (c.Target.Default != null) {
 						text.AppendFormat("ALTER TABLE [{0}].[{1}] {2}\r\n", Owner, Name, c.Target.Default.ScriptCreate(c.Target));
 					}
 				}
+
 				if (!c.OnlyDefaultIsDiff) {
 					text.AppendFormat("ALTER TABLE [{0}].[{1}] ALTER COLUMN {2}\r\n", Owner, Name, c.Target.ScriptAlter());
 				}
