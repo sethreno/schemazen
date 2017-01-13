@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
@@ -37,6 +38,7 @@ end
 
 		public ColumnList Columns = new ColumnList();
 		private List<Constraint> _Constraints = new List<Constraint>();
+		private List<FullTextIndex> FullTextIndexes = new List<FullTextIndex>();
 		public string Name { get; set; }
 		public string Owner { get; set; }
 		public bool IsType;
@@ -60,6 +62,12 @@ end
 		{
 			constraint.Table = this;
 			_Constraints.Add(constraint);
+		}
+
+		public void AddFullTextIndex(FullTextIndex index)
+		{
+			index.Table = this;
+			FullTextIndexes.Add(index);
 		}
 
 		public void RemoveContraint(Constraint constraint)
@@ -146,6 +154,11 @@ end
 			foreach (var c in _Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
 			}
+			text.AppendLine();
+			foreach (var c in FullTextIndexes)
+			{
+				text.AppendLine(c.ScriptCreate());
+			}
 			return text.ToString();
 		}
 
@@ -177,8 +190,10 @@ end
 							foreach (var c in cols) {
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
+								if (dr[c.Name] is DateTime)
+									data.Write(((DateTime)dr[c.Name]).Ticks);
 								else if (dr[c.Name] is byte[])
-									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+									data.Write(new SoapHexBinary((byte[]) dr[c.Name]).ToString());
 								else
 									data.Write(dr[c.Name].ToString()
 										.Replace(fieldSeparator, escapeFieldSeparator)
@@ -247,7 +262,8 @@ end
 						for (var j = 0; j < fields.Length; j++) {
 							try {
 								row[j] = ConvertType(cols[j].Type,
-									fields[j].Replace(escapeRowSeparator, rowSeparator).Replace(escapeFieldSeparator, fieldSeparator));
+									fields[j].Replace(escapeRowSeparator, rowSeparator)
+									.Replace(escapeFieldSeparator, fieldSeparator));
 							} catch (FormatException ex) {
 								throw new DataFileException(string.Format("{0} at column {1}", ex.Message, j + 1), filename, linenumber);
 							}
@@ -278,8 +294,9 @@ end
 					if (val == "1") val = "True";
 					return bool.Parse(val);
 				case "datetime":
+				case "datetime2":
 				case "smalldatetime":
-					return DateTime.Parse(val);
+					return new DateTime(long.Parse(val)).ToString("yyyy-MM-dd HH:mm:ss.fffffff");
 				case "int":
 					return int.Parse(val);
 				case "uniqueidentifier":

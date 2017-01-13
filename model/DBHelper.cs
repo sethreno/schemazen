@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Diagnostics;
 using System.IO;
+using Microsoft.SqlServer.Management.Common;
+using Microsoft.SqlServer.Management.Smo;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library {
@@ -19,22 +22,16 @@ namespace SchemaZen.Library {
 		}
 
 		public static void ExecBatchSql(string conn, string sql) {
-			var prevLines = 0;
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
-				using (var cm = cn.CreateCommand()) {
-					foreach (var script in BatchSqlParser.SplitBatch(sql)) {
-						if (EchoSql) Console.WriteLine(script);
-						cm.CommandText = script;
-						try {
-							cm.ExecuteNonQuery();
-						} catch (SqlException ex) {
-							throw new SqlBatchException(ex, prevLines);
-						}
-
-						prevLines += script.Split('\n').Length;
-						prevLines += 1; // add one line for GO statement
-					}
+				try
+				{
+					Server server = new Server(new ServerConnection(cn));
+					server.ConnectionContext.ExecuteNonQuery(sql);
+				}
+				catch (ExecutionFailureException ex)
+				{
+					throw new SqlBatchException(ex.InnerException as SqlException, 0);
 				}
 			}
 		}

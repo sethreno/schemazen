@@ -13,14 +13,14 @@ namespace SchemaZen.Library.Command {
                 throw new FileNotFoundException(string.Format("Snapshot dir {0} does not exist.", db.Dir));
             }
 
-            if (!Overwrite && (DBHelper.DbExists(db.Connection)))
+            if (!Overwrite && !Merge && (DBHelper.DbExists(db.Connection)))
             {
-                var msg = string.Format("{0} {1} already exists - use overwrite property if you want to drop it",
+                var msg = string.Format("{0} {1} already exists - use 'overwrite' property if you want to drop it or 'merge' property to merge the schema into an it.",
     Server, DbName);
                 throw new InvalidOperationException(msg);
             }
 
-            db.CreateFromDir(Overwrite, databaseFilesPath, Logger.Log);
+            db.CreateFromDir(Overwrite, Merge, databaseFilesPath, Logger.Log);
             Logger.Log(TraceLevel.Info, Environment.NewLine + "Database created successfully.");
         }
     }

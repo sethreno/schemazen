@@ -14,7 +14,7 @@ namespace SchemaZen.Library.Models {
 	public class Database {
 		#region " Constructors "
 
-		public Database(IList<string> filteredTypes = null) {
+		public Database(IList<string> filteredTypes = null, IList<string> filteredProps = null) {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -47,10 +47,18 @@ namespace SchemaZen.Library.Models {
             {
                 _dirs.Remove(filteredType);
             }
-        }
+			
+			filteredProps = filteredProps ?? new List<string>();
+			foreach (var filteredProp in filteredProps) {
+				var prop = Props.FirstOrDefault(x => x.Name == filteredProp);
+				if (prop != null) {
+					Props.Remove(prop);
+				}
+			}
+		}
 
-		public Database(string name, IList<string> filteredTypes = null)
-			: this(filteredTypes) {
+		public Database(string name, IList<string> filteredTypes = null, IList<string> filteredProps = null)
+			: this(filteredTypes, filteredProps) {
 			Name = name;
 		}
 
@@ -82,9 +90,14 @@ namespace SchemaZen.Library.Models {
         public List<Role> Roles = new List<Role>();
         public List<SqlUser> Users = new List<SqlUser>();
 		public List<Constraint> ViewIndexes = new List<Constraint>();
+		public List<FullTextCatalog> FullTextCatalogs = new List<FullTextCatalog>();
 
 		public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
+		}
+
+		public bool PropExists(string name) {
+			return Props.Exists(x => x.Name == name);
 		}
 
 		public Table FindTable(string name, string owner, bool isTableType = false) {
@@ -130,9 +143,9 @@ namespace SchemaZen.Library.Models {
         #endregion
 
         private static HashSet<string> _dirs = new HashSet<string> {
-            "user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
+            "user_defined_types", "functions", "procedures", "fulltextcatalogs", "tables", "foreign_keys", "assemblies", "triggers",
             "views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
-        };
+		};
 
         public static HashSet<string> Dirs
         {
@@ -151,7 +164,7 @@ namespace SchemaZen.Library.Models {
 		}
 
 		private void SetPropString(string propName, object dbVal) {
-			if (dbVal != DBNull.Value) {
+			if (dbVal != DBNull.Value && PropExists(propName)) {
 				FindProp(propName).Value = dbVal.ToString();
 			}
 		}
@@ -169,6 +182,7 @@ namespace SchemaZen.Library.Models {
 			Users.Clear();
 			Synonyms.Clear();
             Roles.Clear();
+			FullTextCatalogs.Clear();
 
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
@@ -190,6 +204,7 @@ namespace SchemaZen.Library.Models {
 					LoadUsersAndLogins(cm);
 					LoadSynonyms(cm);
                     LoadRoles(cm);
+					LoadFullTextIndexes(cm);
                 }
 			}
 		}
@@ -512,6 +527,66 @@ from #ScriptedRoles
 				}
 			}
 		}
+
+		private void LoadFullTextIndexes(SqlCommand cm)
+		{
+
+			cm.CommandText = @"
+				SELECT DISTINCT
+					catalogs.name as CATALOG_NAME, 
+					is_accent_sensitivity_on as ACCENT_SENSITIVITY_ON,
+					schemas.name as SCHEMA_NAME
+				FROM sys.fulltext_index_columns columns
+					INNER JOIN sys.fulltext_indexes indexes on indexes.object_id = columns.object_id
+					INNER JOIN sys.fulltext_catalogs catalogs on catalogs.fulltext_catalog_id = indexes.fulltext_catalog_id
+					INNER JOIN sys.tables as tables on tables.name = OBJECT_NAME(columns.object_id)
+					INNER JOIN sys.schemas as schemas on schemas.schema_id = tables.schema_id  
+			";
+			using (var dr = cm.ExecuteReader())
+			{
+				while (dr.Read()) {
+					string catalogName = (string) dr["CATALOG_NAME"];
+					bool accentSensitivity = (bool) dr["ACCENT_SENSITIVITY_ON"];
+					string schemaName = (string)dr["SCHEMA_NAME"];
+					FullTextCatalogs.Add(new FullTextCatalog {Name = catalogName, AccentSensitivityOn = accentSensitivity, SchemaName = schemaName});
+				}
+			}
+
+			cm.CommandText = @"
+				SELECT DISTINCT 
+					OBJECT_NAME(columns.object_id) as TABLE_NAME,
+					catalogs.name as CATALOG_NAME,
+					indexes.name as INDEX_NAME,
+					fulltextindexes.is_enabled as IS_ENABLED,
+					schemas.name as SCHEMA_NAME,
+					ISNULL((STUFF((SELECT ',' + rtrim(convert(nvarchar,CONCAT(COL_NAME(c.object_id,c.column_id),'|',c.language_id)))
+						FROM   sys.fulltext_index_columns c
+						WHERE  fulltextindexes.object_id = c.object_id
+						FOR XML PATH('')),1,1,'') ), -1) AS COLUMN_LANGUAGES
+				FROM sys.fulltext_index_columns columns
+					INNER JOIN sys.fulltext_indexes fulltextindexes on fulltextindexes.object_id = columns.object_id
+					INNER JOIN sys.fulltext_catalogs catalogs on catalogs.fulltext_catalog_id = fulltextindexes.fulltext_catalog_id 
+					INNER JOIN sys.tables as tables on tables.name = OBJECT_NAME(columns.object_id)
+					INNER JOIN sys.schemas as schemas on schemas.schema_id = tables.schema_id  
+					INNER JOIN sys.indexes as indexes on indexes.index_id = fulltextindexes.unique_index_id and indexes.object_id = fulltextindexes.object_id
+			";
+			using (var dr = cm.ExecuteReader())
+			{
+				while (dr.Read())
+				{
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["SCHEMA_NAME"]);
+					var index = new FullTextIndex {
+						Name = (string) dr["INDEX_NAME"],
+						Enabled = (bool) dr["IS_ENABLED"],
+						Columns = ((string) dr["COLUMN_LANGUAGES"]).Split(',').ToDictionary(x => x.Split('|')[0], x => x.Split('|')[1]),
+						SchemaName = (string)dr["SCHEMA_NAME"],
+						Catalog = (string) dr["CATALOG_NAME"],
+						Table = t
+					};
+					t.AddFullTextIndex(index);
+				}
+			}
+		}
 		private void LoadForeignKeys(SqlCommand cm) {
 			//get foreign keys
 			cm.CommandText = @"
@@ -743,6 +818,7 @@ order by fk.name, fkc.constraint_column_id
 					t.TABLE_SCHEMA,
 					c.TABLE_NAME,
 					c.COLUMN_NAME,
+					c.COLLATION_NAME,
 					c.DATA_TYPE,
 					c.ORDINAL_POSITION,
 					c.IS_NULLABLE,
@@ -769,6 +845,7 @@ order by fk.name, fkc.constraint_column_id
 					s.name as TABLE_SCHEMA,
 					tt.name as TABLE_NAME, 
 					c.name as COLUMN_NAME,
+					c.collation_name as COLLATION_NAME,
 					t.name as DATA_TYPE,
 					c.column_id as ORDINAL_POSITION,
 					CASE WHEN c.is_nullable = 1 THEN 'YES' ELSE 'NO' END as IS_NULLABLE,
@@ -802,6 +879,7 @@ order by fk.name, fkc.constraint_column_id
 			while (dr.Read()) {
 				var c = new Column {
 					Name = (string) dr["COLUMN_NAME"],
+					Collation = dr["COLLATION_NAME"] is DBNull ? null : (string)dr["COLLATION_NAME"],
 					Type = (string) dr["DATA_TYPE"],
 					IsNullable = (string) dr["IS_NULLABLE"] == "YES",
 					Position = (int) dr["ORDINAL_POSITION"],
@@ -1228,6 +1306,7 @@ where name = @dbname
 			WriteScriptDir("tables", Tables.ToArray(), log);
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
 			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
+			WriteScriptDir("fulltextcatalogs", FullTextCatalogs.ToArray(), log);
 			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x.Name).ToArray(), log);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
@@ -1388,18 +1467,20 @@ where name = @dbname
 			log(TraceLevel.Info, "Data imported successfully.");
 		}
 
-		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
+		public void CreateFromDir(bool overwrite, bool merge, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
-			if (DBHelper.DbExists(Connection)) {
+			if (DBHelper.DbExists(Connection) && overwrite) {
 				log(TraceLevel.Verbose, "Dropping existing database...");
 				DBHelper.DropDb(Connection);
 				log(TraceLevel.Verbose, "Existing database dropped.");
 			}
-
-			log(TraceLevel.Info, "Creating database...");
+			
 			//create database
-			DBHelper.CreateDb(Connection, databaseFilesPath);
+			if (!merge) {
+				log(TraceLevel.Info, "Creating database...");
+				DBHelper.CreateDb(Connection, databaseFilesPath);
+			}
 
 			//run scripts
 			if (File.Exists(Dir + "/props.sql")) {
@@ -1490,8 +1571,7 @@ where name = @dbname
 
 		private List<string> GetScripts() {
 			var scripts = new List<string>();
-			foreach (
-				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
+			foreach (var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;

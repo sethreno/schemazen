@@ -32,12 +32,17 @@ namespace SchemaZen.console
                 "filterTypes=",
                 "A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
                 o => FilterTypes = o);
-        }
+			HasOption(
+			   "filterProps=",
+			   "A comma separated list of the database properties that will not be scripted.",
+			   o => FilterProps = o);
+		}
 
         private Logger _logger;
         protected string DataTables { get; set; }
         protected string FilterTypes { get; set; }
-        protected string DataTablesPattern { get; set; }
+		protected string FilterProps { get; set; }
+		protected string DataTablesPattern { get; set; }
         protected string TableHint { get; set; }
 
         public override int Run(string[] args) {
@@ -61,10 +66,11 @@ namespace SchemaZen.console
             };
 
             var filteredTypes = HandleFilteredTypes();
-            var namesAndSchemas = HandleDataTables(DataTables);
+			var filteredProps = FilterProps?.Split(',').ToList() ?? new List<string>();
+			var namesAndSchemas = HandleDataTables(DataTables);
 
             try { 
-                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes);
+                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps);
             } catch (Exception ex) {
 		        throw new ConsoleHelpAsException(ex.Message);
             }

@@ -7,6 +7,8 @@ namespace SchemaZen.Library.Models {
 		public bool IsNullable;
 		public int Length;
 		public string Name;
+		public string Collation;
+		private string Collate => Collation == null ? "" : $"COLLATE {Collation}";
 		public int Position;
 		public byte Precision;
 		public int Scale;
@@ -91,8 +93,8 @@ namespace SchemaZen.Library.Models {
 					case "geography":
 					case "xml":
                     case "sysname":
-						return string.Format("[{0}] [{1}] {2} {3} {4} {5}", Name, Type, IsNullableText,
-							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText);
+						return string.Format("[{0}] [{1}] {6} {2} {3} {4} {5}", Name, Type, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, RowGuidColText, Collate);
 					case "binary":
 					case "char":
 					case "nchar":
@@ -102,13 +104,13 @@ namespace SchemaZen.Library.Models {
 						var lengthString = Length.ToString();
 						if (lengthString == "-1") lengthString = "max";
 
-						return string.Format("[{0}] [{1}]({2}) {3} {4}", Name, Type, lengthString, IsNullableText,
-							includeDefaultConstraint ? DefaultText : string.Empty);
+						return string.Format("[{0}] [{1}]({2}) {5} {3} {4}", Name, Type, lengthString, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty, Collate);
 					case "decimal":
 					case "numeric":
 
-						return string.Format("[{0}] [{1}]({2},{3}) {4} {5} {6}", Name, Type, Precision, Scale, IsNullableText,
-							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText);
+						return string.Format("[{0}] [{1}]({2},{3}) {7} {4} {5} {6}", Name, Type, Precision, Scale, IsNullableText,
+							includeDefaultConstraint ? DefaultText : string.Empty, IdentityText, Collate);
 					default:
 						throw new NotSupportedException("Error scripting column " + Name + ". SQL data type " + Type + " is not supported.");
 				}
