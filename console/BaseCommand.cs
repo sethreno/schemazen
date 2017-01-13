@@ -24,10 +24,6 @@ namespace SchemaZen.console
                 "Overwrite existing target without prompt.",
                 o => Overwrite = o != null);
 			HasOption(
-				"m|merge=",
-				"Merge into existing target without prompt.",
-				m => Merge = m != null);
-			HasOption(
                 "v|verbose=",
                 "Enable verbose log messages.",
                 o => Verbose = o != null);

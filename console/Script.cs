@@ -36,6 +36,10 @@ namespace SchemaZen.console
 			   "filterProps=",
 			   "A comma separated list of the database properties that will not be scripted.",
 			   o => FilterProps = o);
+			HasOption(
+				"collateColumns=",
+				"Keep individual column collation with COLLATE keyword.",
+				c => CollateColumns = c != null);
 		}
 
         private Logger _logger;
@@ -44,8 +48,9 @@ namespace SchemaZen.console
 		protected string FilterProps { get; set; }
 		protected string DataTablesPattern { get; set; }
         protected string TableHint { get; set; }
+		protected bool CollateColumns { get; set; }
 
-        public override int Run(string[] args) {
+		public override int Run(string[] args) {
             _logger = new Logger(Verbose);
 
             if (!Overwrite && Directory.Exists(ScriptDir))
@@ -70,7 +75,7 @@ namespace SchemaZen.console
 			var namesAndSchemas = HandleDataTables(DataTables);
 
             try { 
-                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps);
+                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps, CollateColumns);
             } catch (Exception ex) {
 		        throw new ConsoleHelpAsException(ex.Message);
             }

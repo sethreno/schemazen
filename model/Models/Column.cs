@@ -8,7 +8,8 @@ namespace SchemaZen.Library.Models {
 		public int Length;
 		public string Name;
 		public string Collation;
-		private string Collate => Collation == null ? "" : $"COLLATE {Collation}";
+		public bool CollateColumns { get; set; }
+		private string Collate => CollateColumns && Collation == null ? "" : $"COLLATE {Collation}";
 		public int Position;
 		public byte Precision;
 		public int Scale;

@@ -9,9 +9,16 @@ using SchemaZen.Library.Models;
 namespace SchemaZen.console {
 	public class Create : BaseCommand {
         private Logger _logger;
-        public Create()
+
+		public Create()
 			: base(
-				"Create", "Create the specified database from scripts.") { }
+				"Create", "Create the specified database from scripts.") {
+
+			HasOption(
+				"m|merge=",
+				"Merge into existing target without prompt.",
+				m => Merge = m != null);
+		}
 
 		public override int Run(string[] remainingArguments) {
             _logger = new Logger(Verbose);

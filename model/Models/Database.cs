@@ -157,7 +157,9 @@ namespace SchemaZen.Library.Models {
             get { return Dirs.Aggregate((x, y) => x + ", " + y); }
         }
 
-        private void SetPropOnOff(string propName, object dbVal) {
+		public bool CollateColumns { get; set; }
+
+		private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
 				FindProp(propName).Value = (bool) dbVal ? "ON" : "OFF";
 			}
@@ -873,7 +875,7 @@ order by fk.name, fkc.constraint_column_id
 			}
 		}
 
-		private static void LoadColumnsBase(IDataReader dr, List<Table> tables) {
+		private void LoadColumnsBase(IDataReader dr, List<Table> tables) {
 			Table table = null;
 
 			while (dr.Read()) {
@@ -883,7 +885,8 @@ order by fk.name, fkc.constraint_column_id
 					Type = (string) dr["DATA_TYPE"],
 					IsNullable = (string) dr["IS_NULLABLE"] == "YES",
 					Position = (int) dr["ORDINAL_POSITION"],
-					IsRowGuidCol = (string) dr["IS_ROW_GUID_COL"] == "YES"
+					IsRowGuidCol = (string) dr["IS_ROW_GUID_COL"] == "YES",
+					CollateColumns = CollateColumns
 				};
 
 				switch (c.Type) {
