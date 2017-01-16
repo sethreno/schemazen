@@ -158,6 +158,7 @@ namespace SchemaZen.Library.Models {
         }
 
 		public bool CollateColumns { get; set; }
+		public string FileGroup { get; internal set; }
 
 		private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
@@ -550,7 +551,14 @@ from #ScriptedRoles
 					string catalogName = (string) dr["CATALOG_NAME"];
 					bool accentSensitivity = (bool) dr["ACCENT_SENSITIVITY_ON"];
 					string schemaName = (string)dr["SCHEMA_NAME"];
-					FullTextCatalogs.Add(new FullTextCatalog {Name = catalogName, AccentSensitivityOn = accentSensitivity, SchemaName = schemaName});
+					FullTextCatalogs.Add(
+						new FullTextCatalog {
+							Name = catalogName,
+							AccentSensitivityOn = accentSensitivity,
+							SchemaName = schemaName,
+							FileGroup = string.IsNullOrEmpty(FileGroup) ? "PRIMARY" : FileGroup
+						}
+					);
 				}
 			}
 
@@ -1306,6 +1314,7 @@ where name = @dbname
 
 			WritePropsScript(log);
 			WriteSchemaScript(log);
+			WriteFileGroupScript(log);
 			WriteScriptDir("tables", Tables.ToArray(), log);
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
 			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
@@ -1331,6 +1340,36 @@ where name = @dbname
 			text.AppendLine("GO");
 			text.AppendLine();
 			File.WriteAllText(string.Format("{0}/props.sql", Dir), text.ToString());
+		}
+
+		private void WriteFileGroupScript(Action<TraceLevel, string> log)
+		{
+			if (!string.IsNullOrEmpty(FileGroup))
+			{
+				log(TraceLevel.Verbose, "Scripting filegroup creation...");
+				var text = new StringBuilder();
+				text.AppendLine($@"
+DECLARE @FULL_PATH nvarchar(max) = (SELECT physical_name FROM sys.master_files WHERE name = 'master')
+DECLARE @PATH nvarchar(max) = (SELECT LEFT(@FULL_PATH,LEN(@FULL_PATH) - charindex('\\',reverse(@FULL_PATH),1) + 1))
+DECLARE @DB NVARCHAR(255) = DB_NAME()
+DECLARE @FILEGROUP_NAME NVARCHAR(255) = '{FileGroup}'
+Declare @Sql nvarchar(max) = '
+ALTER DATABASE ['+@DB+']
+ADD FILEGROUP ['+@FILEGROUP_NAME+']
+
+ALTER DATABASE ['+@DB+']
+ADD FILE 
+(
+	NAME = '+@FILEGROUP_NAME+',
+	FILENAME = '''+@PATH+@FILEGROUP_NAME+'.mdf'+'''
+)
+TO FILEGROUP ['+@FILEGROUP_NAME+']; '
+
+EXECUTE (@Sql)");
+				text.AppendLine("GO");
+				text.AppendLine();
+				File.WriteAllText(string.Format("{0}/filegroup.sql", Dir), text.ToString());
+			}
 		}
 
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
@@ -1505,6 +1544,19 @@ where name = @dbname
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
 				} catch (SqlBatchException ex) {
 					throw new SqlFileException(Dir + "/schemas.sql", ex);
+				}
+			}
+
+			if (File.Exists(Dir + "/filegroup.sql"))
+			{
+				log(TraceLevel.Verbose, "Setting up database filegroup...");
+				try
+				{
+					DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/filegroup.sql"));
+				}
+				catch (SqlBatchException ex)
+				{
+					throw new SqlFileException(Dir + "/filegroup.sql", ex);
 				}
 			}
 

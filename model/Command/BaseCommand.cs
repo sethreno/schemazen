@@ -15,7 +15,7 @@ namespace SchemaZen.Library.Command {
         public bool Overwrite { get; set; }
 		public bool Merge { get; set; }
 
-		public Database CreateDatabase(IList<string> filteredTypes = null, IList<string> filteredProps = null, bool collateColumns = false)
+		public Database CreateDatabase(IList<string> filteredTypes = null, IList<string> filteredProps = null, bool collateColumns = false, string fileGroup = null)
         {
             filteredTypes = filteredTypes ?? new List<string>();
 
@@ -34,7 +34,8 @@ namespace SchemaZen.Library.Command {
                 {
                     Connection = ConnectionString,
                     Dir = ScriptDir,
-					CollateColumns = collateColumns
+					CollateColumns = collateColumns,
+					FileGroup = fileGroup
 				};
             }
             if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName))
@@ -60,7 +61,8 @@ namespace SchemaZen.Library.Command {
 			{
                 Connection = builder.ToString(),
                 Dir = ScriptDir,
-				CollateColumns = collateColumns
+				CollateColumns = collateColumns,
+				FileGroup = fileGroup
 			};
         }
 

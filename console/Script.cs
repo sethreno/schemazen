@@ -40,6 +40,10 @@ namespace SchemaZen.console
 				"collateColumns=",
 				"Keep individual column collation with COLLATE keyword.",
 				c => CollateColumns = c != null);
+			HasOption(
+				"fileGroup=",
+				"Name of a specific filegroup/file to script database to.",
+				f => FileGroup = f);
 		}
 
         private Logger _logger;
@@ -49,6 +53,7 @@ namespace SchemaZen.console
 		protected string DataTablesPattern { get; set; }
         protected string TableHint { get; set; }
 		protected bool CollateColumns { get; set; }
+		protected string FileGroup { get; set; }
 
 		public override int Run(string[] args) {
             _logger = new Logger(Verbose);
@@ -75,7 +80,7 @@ namespace SchemaZen.console
 			var namesAndSchemas = HandleDataTables(DataTables);
 
             try { 
-                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps, CollateColumns);
+                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps, CollateColumns, FileGroup);
             } catch (Exception ex) {
 		        throw new ConsoleHelpAsException(ex.Message);
             }

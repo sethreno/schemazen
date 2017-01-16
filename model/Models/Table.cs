@@ -41,6 +41,7 @@ end
 		private List<FullTextIndex> FullTextIndexes = new List<FullTextIndex>();
 		public string Name { get; set; }
 		public string Owner { get; set; }
+		public string FileGroup { get; set; }
 		public bool IsType;
 
 		public Table(string owner, string name) {
@@ -153,6 +154,10 @@ end
 			}
 
 			text.AppendLine(")");
+			if (!string.IsNullOrEmpty(FileGroup))
+			{
+				text.Append($" ON {FileGroup}");
+			}
 			text.AppendLine();
 			foreach (var c in _Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
