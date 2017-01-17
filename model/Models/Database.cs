@@ -985,9 +985,9 @@ order by fk.name, fkc.constraint_column_id
 
 	    }
 
-	    private static void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
+	    private void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
 			while (dr.Read()) {
-				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes});
+				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes, FileGroup = FileGroup});
 			}
 		}
 

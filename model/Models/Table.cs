@@ -153,11 +153,7 @@ end
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
 
-			text.AppendLine(")");
-			if (!string.IsNullOrEmpty(FileGroup))
-			{
-				text.Append($" ON {FileGroup}");
-			}
+			text.AppendLine(")" + (string.IsNullOrEmpty(FileGroup) ? "" : $" ON {FileGroup}"));
 			text.AppendLine();
 			foreach (var c in _Constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
