@@ -1350,7 +1350,7 @@ where name = @dbname
 				var text = new StringBuilder();
 				text.AppendLine($@"
 DECLARE @FULL_PATH nvarchar(max) = (SELECT physical_name FROM sys.master_files WHERE name = 'master')
-DECLARE @PATH nvarchar(max) = (SELECT LEFT(@FULL_PATH,LEN(@FULL_PATH) - charindex('\\',reverse(@FULL_PATH),1) + 1))
+DECLARE @PATH nvarchar(max) = (SELECT LEFT(@FULL_PATH,LEN(@FULL_PATH) - charindex('\',reverse(@FULL_PATH),1) + 1))
 DECLARE @DB NVARCHAR(255) = DB_NAME()
 DECLARE @FILEGROUP_NAME NVARCHAR(255) = '{FileGroup}'
 Declare @Sql nvarchar(max) = '
