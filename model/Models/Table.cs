@@ -198,7 +198,7 @@ end
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
 									data.Write(new SoapHexBinary((byte[]) dr[c.Name]).ToString());
-								else if (c.Type.StartsWith("date", StringComparison.OrdinalIgnoreCase) && c.Type != "datetimeoffset" && dr[c.Name] is DateTime)
+								else if (c.Type.Contains("date") && c.Type != "datetimeoffset" && dr[c.Name] is DateTime)
 									data.Write(((DateTime)dr[c.Name]).Ticks);
 								else
 									data.Write(dr[c.Name].ToString()
