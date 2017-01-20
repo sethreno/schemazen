@@ -14,6 +14,7 @@ namespace SchemaZen.Library.Command {
         public ILogger Logger { get; set; }
         public bool Overwrite { get; set; }
 		public bool Merge { get; set; }
+		public bool IgnoreDuplicateKeys { get; set; }
 
 		public Database CreateDatabase(IList<string> filteredTypes = null, IList<string> filteredProps = null, bool collateColumns = false, string fileGroup = null)
         {

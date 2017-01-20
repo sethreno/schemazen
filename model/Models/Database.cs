@@ -159,6 +159,7 @@ namespace SchemaZen.Library.Models {
 
 		public bool CollateColumns { get; set; }
 		public string FileGroup { get; internal set; }
+		public bool IgnoreDuplicateKeys { get; internal set; }
 
 		private void SetPropOnOff(string propName, object dbVal) {
 			if (dbVal != DBNull.Value) {
@@ -987,7 +988,7 @@ order by fk.name, fkc.constraint_column_id
 
 	    private void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
 			while (dr.Read()) {
-				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes, FileGroup = FileGroup});
+				tables.Add(new Table((string) dr["TABLE_SCHEMA"], (string) dr["TABLE_NAME"]) {IsType = areTableTypes, FileGroup = FileGroup, Database = this});
 			}
 		}
 

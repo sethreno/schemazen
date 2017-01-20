@@ -42,6 +42,7 @@ end
 		public string Name { get; set; }
 		public string Owner { get; set; }
 		public string FileGroup { get; set; }
+		public Database Database { get; set; }
 		public bool IsType;
 
 		public Table(string owner, string name) {
@@ -197,8 +198,8 @@ end
 								if (dr[c.Name] is DBNull)
 									data.Write(nullValue);
 								else if (dr[c.Name] is byte[])
-									data.Write(new SoapHexBinary((byte[]) dr[c.Name]).ToString());
-								else if (c.Type.StartsWith("date", StringComparison.OrdinalIgnoreCase) && c.Type != "datetimeoffset" && dr[c.Name] is DateTime)
+									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+								else if (c.Type.Contains("date") && c.Type != "datetimeoffset" && dr[c.Name] is DateTime)
 									data.Write(((DateTime)dr[c.Name]).Ticks);
 								else
 									data.Write(dr[c.Name].ToString()
@@ -218,7 +219,7 @@ end
 		public void ImportData(string conn, string filename) {
 			if (IsType)
 				throw new InvalidOperationException();
-
+			
 			var dt = new DataTable();
 			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
 			foreach (var c in cols) {
@@ -288,8 +289,13 @@ end
 						}
 					}
 				}
-
-				bulk.WriteToServer(dt);
+				try {
+					bulk.WriteToServer(dt);
+				} catch (SqlException ex) {
+					if (Database.IgnoreDuplicateKeys && !ex.Message.Contains("Cannot insert duplicate key")) {
+						throw ex;
+					}
+				}
 				bulk.Close();
 			}
 		}

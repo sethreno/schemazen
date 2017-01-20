@@ -18,7 +18,13 @@ namespace SchemaZen.console {
 				"m|merge=",
 				"Merge into existing target without prompt.",
 				m => Merge = m != null);
+			HasOption(
+				"i|ignoreDuplicateKeyErrors=",
+				"Ignores Duplicate Key errors when importing data.",
+				i => IgnoreDuplicateKeys = i != null);
 		}
+
+		public bool IgnoreDuplicateKeys { get; set; }
 
 		public override int Run(string[] remainingArguments) {
             _logger = new Logger(Verbose);
@@ -33,8 +39,9 @@ namespace SchemaZen.console {
                 User = User,
                 Logger = _logger,
                 Overwrite = Overwrite,
-				Merge = Merge
-            };
+				Merge = Merge,
+				IgnoreDuplicateKeys = IgnoreDuplicateKeys
+			};
 
 		    try {
 		        createCommand.Execute(DatabaseFilesPath);

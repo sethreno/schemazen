@@ -8,6 +8,7 @@ namespace SchemaZen.Library.Command {
         public void Execute(string databaseFilesPath)
         {
             var db = CreateDatabase();
+	        db.IgnoreDuplicateKeys = IgnoreDuplicateKeys;
             if (!Directory.Exists(db.Dir))
             {
                 throw new FileNotFoundException(string.Format("Snapshot dir {0} does not exist.", db.Dir));
