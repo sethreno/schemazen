@@ -9,9 +9,22 @@ using SchemaZen.Library.Models;
 namespace SchemaZen.console {
 	public class Create : BaseCommand {
         private Logger _logger;
-        public Create()
+
+		public Create()
 			: base(
-				"Create", "Create the specified database from scripts.") { }
+				"Create", "Create the specified database from scripts.") {
+
+			HasOption(
+				"m|merge=",
+				"Merge into existing target without prompt.",
+				m => Merge = m != null);
+			HasOption(
+				"i|ignoreDuplicateKeyErrors=",
+				"Ignores Duplicate Key errors when importing data.",
+				i => IgnoreDuplicateKeys = i != null);
+		}
+
+		public bool IgnoreDuplicateKeys { get; set; }
 
 		public override int Run(string[] remainingArguments) {
             _logger = new Logger(Verbose);
@@ -25,8 +38,10 @@ namespace SchemaZen.console {
                 Server = Server,
                 User = User,
                 Logger = _logger,
-                Overwrite = Overwrite
-            };
+                Overwrite = Overwrite,
+				Merge = Merge,
+				IgnoreDuplicateKeys = IgnoreDuplicateKeys
+			};
 
 		    try {
 		        createCommand.Execute(DatabaseFilesPath);

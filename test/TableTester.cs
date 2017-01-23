@@ -18,6 +18,7 @@ namespace SchemaZen.Tests {
 					lines[lines.Count - 1].Add(field);
 				}
 			}
+
 			////remove the \r from the end of the last field of each line
 			//foreach (List<string> line in lines) {
 			//    if (line.Count == 0) continue;
@@ -28,7 +29,6 @@ namespace SchemaZen.Tests {
 
 		[Test]
 		public void CompareConstraints() {
-
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
 			var diff = default(TableDiff);
@@ -43,7 +43,6 @@ namespace SchemaZen.Tests {
 			Assert.AreEqual(1, diff.ConstraintsChanged.Count);
 			Assert.IsNotNull(diff);
 			Assert.IsTrue(diff.IsDiff);
-
 		}
 
 		[Test]
@@ -104,11 +103,7 @@ namespace SchemaZen.Tests {
 			SqlConnection.ClearAllPools();
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
-			var dataIn =
-				@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			var dataIn = "1	R	Ready\r\n2	P	Processing\r\n3	F	Frozen\r\n";
 			var filename = Path.GetTempFileName();
 
 			var writer = File.AppendText(filename);
@@ -142,11 +137,7 @@ namespace SchemaZen.Tests {
 			SqlConnection.ClearAllPools();
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
-			var dataIn =
-				@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			var dataIn = "1	R	Ready\r\n2	P	Processing\r\n3	F	Frozen\r\n";
 			var filename = Path.GetTempFileName();
 
 			var writer = File.AppendText(filename);
@@ -159,7 +150,9 @@ namespace SchemaZen.Tests {
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
-			} finally {
+			}
+
+			finally {
 				File.Delete(filename);
 			}
 		}
@@ -181,11 +174,7 @@ namespace SchemaZen.Tests {
 			DBHelper.ExecBatchSql(conn, s.ScriptCreate());
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
-			var dataIn =
-				@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			var dataIn = "1	R	Ready\r\n2	P	Processing\r\n3	F	Frozen\r\n";
 			var filename = Path.GetTempFileName();
 
 			var writer = File.AppendText(filename);
@@ -198,7 +187,9 @@ namespace SchemaZen.Tests {
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
-			} finally {
+			}
+
+			finally {
 				File.Delete(filename);
 			}
 		}
@@ -238,7 +229,9 @@ namespace SchemaZen.Tests {
 				t.ExportData(conn, sw);
 
 				Assert.AreEqual(dataIn, sw.ToString());
-			} finally {
+			}
+
+			finally {
 				File.Delete(filename);
 			}
 		}

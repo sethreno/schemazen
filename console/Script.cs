@@ -32,15 +32,30 @@ namespace SchemaZen.console
                 "filterTypes=",
                 "A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
                 o => FilterTypes = o);
-        }
+			HasOption(
+			   "filterProps=",
+			   "A comma separated list of the database properties that will not be scripted.",
+			   o => FilterProps = o);
+			HasOption(
+				"collateColumns=",
+				"Keep individual column collation with COLLATE keyword.",
+				c => CollateColumns = c != null);
+			HasOption(
+				"fileGroup=",
+				"Name of a specific filegroup/file to script database to.",
+				f => FileGroup = f);
+		}
 
         private Logger _logger;
         protected string DataTables { get; set; }
         protected string FilterTypes { get; set; }
-        protected string DataTablesPattern { get; set; }
+		protected string FilterProps { get; set; }
+		protected string DataTablesPattern { get; set; }
         protected string TableHint { get; set; }
+		protected bool CollateColumns { get; set; }
+		protected string FileGroup { get; set; }
 
-        public override int Run(string[] args) {
+		public override int Run(string[] args) {
             _logger = new Logger(Verbose);
 
             if (!Overwrite && Directory.Exists(ScriptDir))
@@ -61,10 +76,11 @@ namespace SchemaZen.console
             };
 
             var filteredTypes = HandleFilteredTypes();
-            var namesAndSchemas = HandleDataTables(DataTables);
+			var filteredProps = FilterProps?.Split(',').ToList() ?? new List<string>();
+			var namesAndSchemas = HandleDataTables(DataTables);
 
             try { 
-                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes);
+                scriptCommand.Execute(namesAndSchemas, DataTablesPattern, TableHint, filteredTypes, filteredProps, CollateColumns, FileGroup);
             } catch (Exception ex) {
 		        throw new ConsoleHelpAsException(ex.Message);
             }

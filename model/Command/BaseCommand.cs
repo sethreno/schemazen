@@ -13,12 +13,16 @@ namespace SchemaZen.Library.Command {
         public string ScriptDir { get; set; }
         public ILogger Logger { get; set; }
         public bool Overwrite { get; set; }
+		public bool Merge { get; set; }
+		public bool IgnoreDuplicateKeys { get; set; }
 
-        public Database CreateDatabase(IList<string> filteredTypes = null)
+		public Database CreateDatabase(IList<string> filteredTypes = null, IList<string> filteredProps = null, bool collateColumns = false, string fileGroup = null)
         {
             filteredTypes = filteredTypes ?? new List<string>();
 
-            if (!string.IsNullOrEmpty(ConnectionString))
+			filteredProps = filteredProps ?? new List<string>();
+
+			if (!string.IsNullOrEmpty(ConnectionString))
             {
                 if (!string.IsNullOrEmpty(Server) ||
                     !string.IsNullOrEmpty(DbName) ||
@@ -27,11 +31,13 @@ namespace SchemaZen.Library.Command {
                 {
                     throw new ArgumentException("You must not provide both a connection string and a server/db/user/password");
                 }
-                return new Database(filteredTypes)
+                return new Database(filteredTypes, filteredProps)
                 {
                     Connection = ConnectionString,
-                    Dir = ScriptDir
-                };
+                    Dir = ScriptDir,
+					CollateColumns = collateColumns,
+					FileGroup = fileGroup
+				};
             }
             if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName))
             {
@@ -52,11 +58,13 @@ namespace SchemaZen.Library.Command {
                 builder.UserID = User;
                 builder.Password = Pass;
             }
-            return new Database(filteredTypes)
-            {
+            return new Database(filteredTypes, filteredProps)
+			{
                 Connection = builder.ToString(),
-                Dir = ScriptDir
-            };
+                Dir = ScriptDir,
+				CollateColumns = collateColumns,
+				FileGroup = fileGroup
+			};
         }
 
         public void AddDataTable(Database db, string name, string schema)

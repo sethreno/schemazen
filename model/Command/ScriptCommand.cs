@@ -8,14 +8,14 @@ namespace SchemaZen.Library.Command {
     public class ScriptCommand : BaseCommand {
 
         public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern, 
-            string tableHint, List<string> filteredTypes)
+            string tableHint, List<string> filteredTypes, List<string> filteredProps, bool collateColumns = false, string fileGroup = null)
         {
             if (!Overwrite && Directory.Exists(ScriptDir)) {
                 var message = string.Format("{0} already exists - you must set overwrite to true", ScriptDir);
                 throw new InvalidOperationException(message);
             }
 
-            var db = CreateDatabase(filteredTypes);
+            var db = CreateDatabase(filteredTypes, filteredProps, collateColumns, fileGroup);
 
             Logger.Log(TraceLevel.Verbose, "Loading database schema...");
             db.Load();

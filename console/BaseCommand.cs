@@ -23,7 +23,7 @@ namespace SchemaZen.console
                 "o|overwrite=",
                 "Overwrite existing target without prompt.",
                 o => Overwrite = o != null);
-            HasOption(
+			HasOption(
                 "v|verbose=",
                 "Enable verbose log messages.",
                 o => Verbose = o != null);
@@ -40,7 +40,8 @@ namespace SchemaZen.console
         protected string Pass { get; set; }
         protected string ScriptDir { get; set; }
         protected bool Overwrite { get; set; }
-        protected bool Verbose { get; set; }
+		protected bool Merge { get; set; }
+		protected bool Verbose { get; set; }
         protected string DatabaseFilesPath { get; set; }
     }
 }
