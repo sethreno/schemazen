@@ -29,11 +29,11 @@ namespace SchemaZen.console {
 				"Create a sql diff file in the specified path.",
 				o => _outDiff = o);
 			HasOption(
-				"o|overwrite=",
+				"o|overwrite",
 				"Overwrite existing target without prompt.",
 				o => _overwrite = o != null);
 			HasOption(
-				"v|verbose=",
+				"v|verbose",
 				"Enable verbose mode (show detailed changes).",
 				o => _verbose = o != null);
 		}

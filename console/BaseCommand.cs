@@ -18,11 +18,11 @@ namespace SchemaZen.console {
 				"Path to database script directory.",
 				o => ScriptDir = o);
 			HasOption(
-				"o|overwrite=",
+				"o|overwrite",
 				"Overwrite existing target without prompt.",
 				o => Overwrite = o != null);
 			HasOption(
-				"v|verbose=",
+				"v|verbose",
 				"Enable verbose log messages.",
 				o => Verbose = o != null);
 			HasOption(
