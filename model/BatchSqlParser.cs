@@ -8,7 +8,8 @@ namespace SchemaZen.Library {
 		InOneLineComment,
 		InMultiLineComment,
 		InBrackets,
-		InQuotes
+		InQuotes,
+		InDoubleQuotes,
 	}
 
 	public class BatchSqlParser {
@@ -65,6 +66,7 @@ namespace SchemaZen.Library {
 						else if (IsOneLineComment(p, c)) state = State.InOneLineComment;
 						else if (c == '[') state = State.InBrackets;
 						else if (c == '\'') state = State.InQuotes;
+						else if (c == '\"') state = State.InDoubleQuotes;
 						else if (IsGO(p3, p2, p, c, n, n2)) foundGO = true;
 						break;
 
@@ -87,6 +89,10 @@ namespace SchemaZen.Library {
 
 					case State.InQuotes:
 						if (c == '\'') state = State.Searching;
+						break;
+
+					case State.InDoubleQuotes:
+						if (c == '\"') state = State.Searching;
 						break;
 				}
 

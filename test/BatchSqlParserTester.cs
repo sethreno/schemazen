@@ -308,5 +308,39 @@ GO
 			//should be 2 scripts
 			Assert.AreEqual(2, scripts.Length);
 		}
+
+		[Test]
+		public void IgnoresSlashStarInsideQuotedIdentifier() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+select 1 as ""/*""
+GO
+SET ANSI_NULLS OFF
+GO
+");
+			//should be 2 scripts
+			Assert.AreEqual(2, scripts.Length);
+		}
+
+		[Test]
+		public void IgnoresGoInsideBrackets() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+1:1
+select 1 as [GO]
+SET ANSI_NULLS OFF
+GO
+");
+			Assert.AreEqual(1, scripts.Length);
+		}
+
+		[Test]
+		public void IgnoresGoInsideQuotedIdentifier() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+1:1
+select 1 as ""GO""
+SET ANSI_NULLS OFF
+GO
+");
+			Assert.AreEqual(1, scripts.Length);
+		}
 	}
 }
