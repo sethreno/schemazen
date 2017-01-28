@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 
 namespace SchemaZen.Library.Models {
 	public class Column {
@@ -66,6 +67,8 @@ namespace SchemaZen.Library.Models {
 			if (!string.IsNullOrEmpty(ComputedDefinition))
 				return $"[{Name}] AS {ComputedDefinition}";
 
+			var val = new StringBuilder($"[{Name}] [{Type}]");
+
 			switch (Type) {
 				case "bigint":
 				case "bit":
@@ -92,7 +95,12 @@ namespace SchemaZen.Library.Models {
 				case "geography":
 				case "xml":
 				case "sysname":
-					return $"[{Name}] [{Type}] {IsNullableText} {(includeDefaultConstraint ? DefaultText : string.Empty)} {IdentityText} {RowGuidColText}";
+					val.Append($" {IsNullableText}");
+					if (includeDefaultConstraint) val.Append(DefaultText);
+					if (Identity != null) val.Append(IdentityText);
+					if (IsRowGuidCol) val.Append(@" {RowGuidColText}");
+					return val.ToString();
+
 				case "binary":
 				case "char":
 				case "nchar":
@@ -101,16 +109,20 @@ namespace SchemaZen.Library.Models {
 				case "varchar":
 					var lengthString = Length.ToString();
 					if (lengthString == "-1") lengthString = "max";
-					return $"[{Name}] [{Type}]({lengthString}) {IsNullableText} {(includeDefaultConstraint ? DefaultText : string.Empty)}";
+					val.Append($"({lengthString}) {IsNullableText}");
+					if (includeDefaultConstraint) val.Append(DefaultText);
+					return val.ToString();
 
 				case "decimal":
 				case "numeric":
-					return $"[{Name}] [{Type}]({Precision},{Scale}) {IsNullableText} {(includeDefaultConstraint ? DefaultText : string.Empty)} {IdentityText}";
+					val.Append($"({Precision},{Scale}) {IsNullableText}");
+					if (includeDefaultConstraint) val.Append(DefaultText);
+					if (Identity != null) val.Append(IdentityText);
+					return val.ToString();
+
 				default:
 					throw new NotSupportedException("Error scripting column " + Name + ". SQL data type " + Type + " is not supported.");
 			}
-			// TODO: Code is unreachable
-			return $"[{Name}] AS {ComputedDefinition}";
 		}
 
 		public string ScriptCreate() {
