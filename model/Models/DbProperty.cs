@@ -13,15 +13,15 @@
 				case "COLLATE":
 					return string.IsNullOrEmpty(Value)
 						? string.Empty
-						: string.Format("EXEC('ALTER DATABASE [' + @DB + '] COLLATE {0}')", Value);
+						: $"EXEC('ALTER DATABASE [' + @DB + '] COLLATE {Value}')";
 
 				case "COMPATIBILITY_LEVEL":
-					return string.IsNullOrEmpty(Value) ? string.Empty : string.Format("EXEC dbo.sp_dbcmptlevel @DB, {0}", Value);
+					return string.IsNullOrEmpty(Value) ? string.Empty : $"EXEC dbo.sp_dbcmptlevel @DB, {Value}";
 
 				default:
 					return string.IsNullOrEmpty(Value)
 						? string.Empty
-						: string.Format("EXEC('ALTER DATABASE [' + @DB + '] SET {0} {1}')", Name, Value);
+						: $"EXEC('ALTER DATABASE [' + @DB + '] SET {Name} {Value}')";
 			}
 		}
 	}

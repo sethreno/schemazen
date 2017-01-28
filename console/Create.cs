@@ -31,18 +31,15 @@ namespace SchemaZen.console {
 		    try {
 		        createCommand.Execute(DatabaseFilesPath);
 		    } catch (BatchSqlFileException ex) {
-		        _logger.Log(TraceLevel.Info, Environment.NewLine + "Create completed with the following errors:");
+		        _logger.Log(TraceLevel.Info, $"{Environment.NewLine}Create completed with the following errors:" );
 		        foreach (var e in ex.Exceptions) {
-		            _logger.Log(TraceLevel.Info,
-		                string.Format("- {0} (Line {1}):", e.FileName.Replace("/", "\\"), e.LineNumber));
-		            _logger.Log(TraceLevel.Error, string.Format(" {0}", e.Message));
+		            _logger.Log(TraceLevel.Info, $"- {e.FileName.Replace( "/", "\\" )} (Line {e.LineNumber}):" );
+		            _logger.Log(TraceLevel.Error, $" {e.Message}" );
 		        }
 		        return -1;
 		    } catch (SqlFileException ex) {
-		        _logger.Log(TraceLevel.Info,
-		            Environment.NewLine +
-		            string.Format(@"An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
-{0} (Line {1}):", ex.FileName.Replace("/", "\\"), ex.LineNumber));
+		        _logger.Log(TraceLevel.Info, $@"{Environment.NewLine}An unexpected SQL error occurred while executing scripts, and the process wasn't completed.
+{ex.FileName.Replace( "/", "\\" )} (Line {ex.LineNumber}):" );
 		        _logger.Log(TraceLevel.Error, ex.Message);
 		        return -1;
 		    } catch (Exception ex) {

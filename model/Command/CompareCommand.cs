@@ -7,10 +7,10 @@ using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library.Command {
     public class CompareCommand : BaseCommand {
-        public string Source;
-        public string Target;
-        public bool Verbose;
-        public string OutDiff;
+        public string Source { get; set; }
+        public string Target { get; set; }
+        public bool Verbose { get; set; }
+        public string OutDiff { get; set; }
 
         public bool Execute()
         {
@@ -30,13 +30,11 @@ namespace SchemaZen.Library.Command {
                     Console.WriteLine();
                     if (!Overwrite && File.Exists(OutDiff))
                     {
-                        var message = string.Format(
-                            "{0} already exists - set overwrite to true if you want to delete it", OutDiff);
+                        var message = $"{OutDiff} already exists - set overwrite to true if you want to delete it";
                         throw new InvalidOperationException(message);
                     }
                     File.WriteAllText(OutDiff, diff.Script());
-                    Console.WriteLine("Script to make the databases identical has been created at {0}",
-                        Path.GetFullPath(OutDiff));
+                    Console.WriteLine($"Script to make the databases identical has been created at {Path.GetFullPath(OutDiff)}");
                 }
                 return true;
             }

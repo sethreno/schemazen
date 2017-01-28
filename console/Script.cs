@@ -45,7 +45,7 @@ namespace SchemaZen.console
 
             if (!Overwrite && Directory.Exists(ScriptDir))
             {
-                if (!ConsoleQuestion.AskYN(string.Format("{0} already exists - do you want to replace it", ScriptDir)))
+                if (!ConsoleQuestion.AskYN( $"{ScriptDir} already exists - do you want to replace it" ))
                     return 1;
             }
 
@@ -73,21 +73,21 @@ namespace SchemaZen.console
 
         private List<string> HandleFilteredTypes()
         {
-            var filteredTypes = FilterTypes == null ? new List<string>() : FilterTypes.Split(',').ToList();
+            var filteredTypes = FilterTypes?.Split(',').ToList() ?? new List<string>();
 
             var anyInvalidType = false;
             foreach (var filterType in filteredTypes)
             {
                 if (!Database.Dirs.Contains(filterType))
                 {
-                    _logger.Log(TraceLevel.Warning, string.Format("{0} is not a valid type.", filterType));
+                    _logger.Log(TraceLevel.Warning, $"{filterType} is not a valid type." );
                     anyInvalidType = true;
                 }
             }
 
             if (anyInvalidType)
             {
-                _logger.Log(TraceLevel.Warning, string.Format("Valid types: {0}", Database.ValidTypes));
+                _logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}" );
             }
 
             return filteredTypes;
@@ -96,20 +96,23 @@ namespace SchemaZen.console
         private Dictionary<string, string> HandleDataTables(string tableNames)
         {
             var dataTables = new Dictionary<string, string>();
-            if (!string.IsNullOrEmpty(tableNames)) {
-                foreach (var value in tableNames.Split(','))
-                {
-                    var schema = "dbo";
-                    var name = value;
-                    if (value.Contains("."))
-                    {
-                        schema = value.Split('.')[0];
-                        name = value.Split('.')[1];
-                    }
 
-                    dataTables[name] = schema;
+            if( string.IsNullOrEmpty( tableNames ) )
+                return dataTables;
+
+            foreach (var value in tableNames.Split(','))
+            {
+                var schema = "dbo";
+                var name = value;
+                if (value.Contains("."))
+                {
+                    schema = value.Split('.')[0];
+                    name = value.Split('.')[1];
                 }
+
+                dataTables[name] = schema;
             }
+
             return dataTables;
         }
     }

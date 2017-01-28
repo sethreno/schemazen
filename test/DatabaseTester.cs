@@ -28,9 +28,10 @@ namespace SchemaZen.Tests {
 			TestHelper.ExecBatchSql(scripted, "master");
 
 			//compare the dbs to make sure they are the same
-			var source = new Database("TEST_SOURCE");
-			source.Connection = TestHelper.GetConnString("TEST_SOURCE");
-			source.Load();
+		    var source = new Database( "TEST_SOURCE" ) {
+		        Connection = TestHelper.GetConnString( "TEST_SOURCE" )
+		    };
+		    source.Load();
 			copy.Load();
 			TestCompare(source, copy);
 		}
@@ -175,11 +176,14 @@ namespace SchemaZen.Tests {
 			var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
 				"localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y",
 				"SqlDbDiff.XML CompareResult.txt null");
-			var proc = new Process();
-			proc.StartInfo.FileName = "cmd.exe";
-			proc.StartInfo.Arguments = cmd;
-			proc.StartInfo.WindowStyle = ProcessWindowStyle.Normal;
-			proc.Start();
+		    var proc = new Process {
+		        StartInfo = {
+		            FileName = "cmd.exe",
+		            Arguments = cmd,
+		            WindowStyle = ProcessWindowStyle.Normal
+		        }
+		    };
+		    proc.Start();
 			proc.WaitForExit();
 
 			Assert.AreEqual("no difference", File.ReadAllLines("CompareResult.txt")[0]);

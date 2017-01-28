@@ -7,7 +7,7 @@ namespace SchemaZen.Library.Models {
 		public List<string> DatabaseRoles = new List<string>();
 		public string Owner { get; set; }
 		public string Name { get; set; }
-		public byte[] PasswordHash;
+		public byte[] PasswordHash { get; set; }
 
 		public SqlUser(string name, string owner) {
 			Name = name;
@@ -15,22 +15,20 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public string ScriptDrop() {
-			return string.Format("DROP {0} [{1}]", "USER", Name);
+			return $"DROP USER [{Name}]";
 			// NOTE: login is deliberately not dropped
 		}
 
 		public string ScriptCreate() {
-			var login = PasswordHash == null ? string.Empty : string.Format(@"IF SUSER_ID('{0}') IS NULL
-				BEGIN CREATE LOGIN {0} WITH PASSWORD = {1} HASHED END
-", Name, "0x" + new SoapHexBinary(PasswordHash));
+			var login = PasswordHash == null ? string.Empty : $@"IF SUSER_ID('{Name}') IS NULL
+				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + new SoapHexBinary( PasswordHash )} HASHED END
+";
 
-			return login +
-			       string.Format("CREATE USER [{0}] {1} {2}{3}", Name, PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name,
-				       string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ", Owner)
+			return login + $"CREATE USER [{Name}] {( PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name )} {( string.IsNullOrEmpty( Owner ) ? string.Empty : "WITH DEFAULT_SCHEMA = " )}{Owner}"
 			       + "\r\n" +
 			       string.Join("\r\n",
 				       DatabaseRoles.Select(
-					       r => string.Format("/*ALTER ROLE {0} ADD MEMBER {1}*/ exec sp_addrolemember '{0}', '{1}'", r, Name))
+					       r => $"/*ALTER ROLE {r} ADD MEMBER {Name}*/ exec sp_addrolemember '{r}', '{Name}'" )
 					       .ToArray());
 		}
 	}

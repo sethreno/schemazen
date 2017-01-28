@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Diagnostics;
-using SchemaZen.Library.Command;
 
 namespace SchemaZen.Library
 {

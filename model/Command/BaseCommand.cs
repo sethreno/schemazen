@@ -64,9 +64,7 @@ namespace SchemaZen.Library.Command {
             var t = db.FindTable(name, schema);
             if (t == null)
             {
-                Console.WriteLine(
-                    "warning: could not find data table {0}.{1}",
-                    schema, name);
+                Console.WriteLine( $"warning: could not find data table {schema}.{name}");
             }
             if (db.DataTables.Contains(t)) return;
             db.DataTables.Add(t);

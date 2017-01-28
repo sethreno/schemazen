@@ -29,7 +29,7 @@ namespace SchemaZen.Library.Models {
                 }
             }
         }
-        private short _maxLength;
+        private readonly short _maxLength;
 
         private bool HasMaxLength() {
             switch (BaseTypeName) {
@@ -67,7 +67,7 @@ namespace SchemaZen.Library.Models {
             }
         }
 
-        public string Nullable { get { return _nullable ? "NULL" : "NOT NULL"; } }
+        public string Nullable => _nullable ? "NULL" : "NOT NULL";
         private readonly bool _nullable;
 
         public UserDefinedType(string owner, 
@@ -85,14 +85,13 @@ namespace SchemaZen.Library.Models {
         public string ScriptCreate() {
             var text = new StringBuilder();
 
-            text.AppendFormat("CREATE TYPE [{0}].[{1}] FROM [{2}]",
-                Owner, Name, BaseTypeName);
+            text.Append($"CREATE TYPE [{Owner}].[{Name}] FROM [{BaseTypeName}]");
 
             if (HasMaxLength()) {
-                text.AppendFormat(" ({0})", MaxLength);
+                text.Append($" ({MaxLength})");
             }
 
-            text.AppendFormat(" {0}", Nullable);
+            text.Append($" {Nullable}");
 
             return text.ToString();
         }
