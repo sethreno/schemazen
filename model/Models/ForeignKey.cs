@@ -9,12 +9,12 @@ namespace SchemaZen.Library.Models {
 		public List<string> Columns { get; set; } = new List<string>();
 		public string Name { get; set; }
 		public string OnDelete { get; set; }
-        public string OnUpdate { get; set; }
-        public List<string> RefColumns { get; set; } = new List<string>();
+		public string OnUpdate { get; set; }
+		public List<string> RefColumns { get; set; } = new List<string>();
 		public Table RefTable { get; set; }
-        public Table Table { get; set; }
+		public Table Table { get; set; }
 
-        private const string _defaultRules = "NO ACTION|RESTRICT";
+		private const string _defaultRules = "NO ACTION|RESTRICT";
 
 		public ForeignKey(string name) {
 			Name = name;
@@ -36,9 +36,9 @@ namespace SchemaZen.Library.Models {
 
 		public string CheckText => Check ? "CHECK" : "NOCHECK";
 
-	    private void AssertArgNotNull(object arg, string argName) {
+		private void AssertArgNotNull(object arg, string argName) {
 			if (arg == null) {
-				throw new ArgumentNullException( $"Unable to Script FK {Name} on table {Table.Owner}.{Table.Name}. {argName} must not be null." );
+				throw new ArgumentNullException($"Unable to Script FK {Name} on table {Table.Owner}.{Table.Name}. {argName} must not be null.");
 			}
 		}
 

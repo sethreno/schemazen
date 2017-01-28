@@ -3,7 +3,7 @@
 		public string Increment { get; set; }
 		public string Seed { get; set; }
 
-        public Identity(string seed, string increment) {
+		public Identity(string seed, string increment) {
 			Seed = seed;
 			Increment = increment;
 		}

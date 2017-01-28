@@ -8,7 +8,7 @@ namespace SchemaZen.Library.Models {
 	}
 
 	public class SqlBatchException : Exception {
-	    public SqlBatchException(SqlException ex, int prevLinesInBatch)
+		public SqlBatchException(SqlException ex, int prevLinesInBatch)
 			: base("", ex) {
 			LineNumber = ex.LineNumber + prevLinesInBatch;
 			Message = ex.Message;
@@ -16,12 +16,12 @@ namespace SchemaZen.Library.Models {
 
 		public int LineNumber { get; }
 
-	    public override string Message { get; }
+		public override string Message { get; }
 	}
 
 	public class SqlFileException : SqlBatchException {
-	    public SqlFileException(string fileName, SqlBatchException ex)
-			: base((SqlException) ex.InnerException, ex.LineNumber - 1) {
+		public SqlFileException(string fileName, SqlBatchException ex)
+			: base((SqlException)ex.InnerException, ex.LineNumber - 1) {
 			FileName = fileName;
 		}
 
@@ -41,8 +41,8 @@ namespace SchemaZen.Library.Models {
 
 		public override string Message => _message + $" - in file named {_fileName}:{_lineNumber}";
 
-	    public string FileName => _fileName;
+		public string FileName => _fileName;
 
-	    public int LineNumber => _lineNumber;
+		public int LineNumber => _lineNumber;
 	}
 }

@@ -43,9 +43,9 @@ namespace SchemaZen.Library {
 			var cnBuilder = new SqlConnectionStringBuilder(conn);
 			var initialCatalog = cnBuilder.InitialCatalog;
 
-		    var dbName = "[" + initialCatalog + "]";
+			var dbName = "[" + initialCatalog + "]";
 
-		    if (DbExists(cnBuilder.ToString())) {
+			if (DbExists(cnBuilder.ToString())) {
 				cnBuilder.InitialCatalog = "master";
 				ExecSql(cnBuilder.ToString(), "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
 				ExecSql(cnBuilder.ToString(), "drop database " + dbName);
@@ -59,17 +59,17 @@ namespace SchemaZen.Library {
 			var cnBuilder = new SqlConnectionStringBuilder(connection);
 			var dbName = cnBuilder.InitialCatalog;
 			cnBuilder.InitialCatalog = "master";
-		    var files = string.Empty;
-		    if (databaseFilesPath != null) {
-		        Directory.CreateDirectory(databaseFilesPath);
-		        files = $@"ON 
+			var files = string.Empty;
+			if (databaseFilesPath != null) {
+				Directory.CreateDirectory(databaseFilesPath);
+				files = $@"ON 
 (NAME = {dbName},
     FILENAME = '{databaseFilesPath}\{dbName + Guid.NewGuid()}.mdf')
 LOG ON
 (NAME = {dbName}_log,
     FILENAME =  '{databaseFilesPath}\{dbName + Guid.NewGuid()}.ldf')";
-		    }
-		    ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]" + files);
+			}
+			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]" + files);
 		}
 
 		public static bool DbExists(string conn) {

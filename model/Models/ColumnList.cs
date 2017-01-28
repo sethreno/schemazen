@@ -9,7 +9,7 @@ namespace SchemaZen.Library.Models {
 
 		public ReadOnlyCollection<Column> Items => _mItems.AsReadOnly();
 
-	    public void Add(Column c) {
+		public void Add(Column c) {
 			_mItems.Add(c);
 		}
 

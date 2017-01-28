@@ -130,10 +130,10 @@ namespace SchemaZen.Tests {
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
 			t.Columns.Add(new Column("description", "varchar", 20, false, null));
-		    var computedCol = new Column( "computed", "varchar", false, null ) {
-		        ComputedDefinition = "code + ' : ' + description"
-		    };
-		    t.Columns.Add(computedCol);
+			var computedCol = new Column("computed", "varchar", false, null) {
+				ComputedDefinition = "code + ' : ' + description"
+			};
+			t.Columns.Add(computedCol);
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 

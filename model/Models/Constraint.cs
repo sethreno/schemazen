@@ -9,9 +9,9 @@ namespace SchemaZen.Library.Models {
 		public string Name { get; set; }
 		public Table Table { get; set; }
 		public string Type { get; set; }
-        public string Filter { get; set; }
-        public bool Unique { get; set; }
-        private bool _isNotForReplication;
+		public string Filter { get; set; }
+		public bool Unique { get; set; }
+		private bool _isNotForReplication;
 		private string _checkConstraintExpression;
 
 		public Constraint(string name, string type, string columns) {
@@ -32,26 +32,25 @@ namespace SchemaZen.Library.Models {
 
 		public string ClusteredText => !Clustered ? "NONCLUSTERED" : "CLUSTERED";
 
-	    public string UniqueText => Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE";
+		public string UniqueText => Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE";
 
-	    public string ScriptCreate() {
-			switch( Type ) {
-			    case "CHECK":
-			        var notForReplicationOption = _isNotForReplication ? "NOT FOR REPLICATION" : "";
-			        return $"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {_checkConstraintExpression}";
-			    case "INDEX":
-			        var sql = $"CREATE {UniqueText} {ClusteredText} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join( ", ", Columns.Select( c => c.Script() ).ToArray() )})";
-			        if (IncludedColumns.Count > 0) {
-			            sql += $" INCLUDE ([{string.Join( "], [", IncludedColumns.ToArray() )}])";
-			        }
-			        if (!string.IsNullOrEmpty(Filter))
-			        {
-			            sql += $" WHERE {Filter}";
-			        }
-			        return sql;
+		public string ScriptCreate() {
+			switch (Type) {
+				case "CHECK":
+					var notForReplicationOption = _isNotForReplication ? "NOT FOR REPLICATION" : "";
+					return $"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {_checkConstraintExpression}";
+				case "INDEX":
+					var sql = $"CREATE {UniqueText} {ClusteredText} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
+					if (IncludedColumns.Count > 0) {
+						sql += $" INCLUDE ([{string.Join("], [", IncludedColumns.ToArray())}])";
+					}
+					if (!string.IsNullOrEmpty(Filter)) {
+						sql += $" WHERE {Filter}";
+					}
+					return sql;
 			}
 
-	        return (Table.IsType ? string.Empty : $"CONSTRAINT [{Name}] " ) + $"{Type} {ClusteredText} ({string.Join( ", ", Columns.Select( c => c.Script() ).ToArray() )})";
+			return (Table.IsType ? string.Empty : $"CONSTRAINT [{Name}] ") + $"{Type} {ClusteredText} ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
 		}
 	}
 }

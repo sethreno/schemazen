@@ -21,15 +21,15 @@ namespace SchemaZen.Library.Models {
 
 		public string ScriptCreate() {
 			var login = PasswordHash == null ? string.Empty : $@"IF SUSER_ID('{Name}') IS NULL
-				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + new SoapHexBinary( PasswordHash )} HASHED END
+				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + new SoapHexBinary(PasswordHash)} HASHED END
 ";
 
-			return login + $"CREATE USER [{Name}] {( PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name )} {( string.IsNullOrEmpty( Owner ) ? string.Empty : "WITH DEFAULT_SCHEMA = " )}{Owner}"
-			       + "\r\n" +
-			       string.Join("\r\n",
-				       DatabaseRoles.Select(
-					       r => $"/*ALTER ROLE {r} ADD MEMBER {Name}*/ exec sp_addrolemember '{r}', '{Name}'" )
-					       .ToArray());
+			return login + $"CREATE USER [{Name}] {(PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name)} {(string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ")}{Owner}"
+				   + "\r\n" +
+				   string.Join("\r\n",
+					   DatabaseRoles.Select(
+						   r => $"/*ALTER ROLE {r} ADD MEMBER {Name}*/ exec sp_addrolemember '{r}', '{Name}'")
+						   .ToArray());
 		}
 	}
 }

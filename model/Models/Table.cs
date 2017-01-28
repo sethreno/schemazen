@@ -56,24 +56,22 @@ end
 
 		public IEnumerable<Constraint> Constraints => _constraints.AsEnumerable();
 
-	    public void AddConstraint(Constraint constraint)
-		{
+		public void AddConstraint(Constraint constraint) {
 			constraint.Table = this;
 			_constraints.Add(constraint);
 		}
 
-		public void RemoveContraint(Constraint constraint)
-		{
+		public void RemoveContraint(Constraint constraint) {
 			_constraints.Remove(constraint);
 		}
 
 		public TableDiff Compare(Table t) {
-		    var diff = new TableDiff {
-		        Owner = t.Owner,
-		        Name = t.Name
-		    };
+			var diff = new TableDiff {
+				Owner = t.Owner,
+				Name = t.Name
+			};
 
-		    //get additions and compare mutual columns
+			//get additions and compare mutual columns
 			foreach (var c in Columns.Items) {
 				var c2 = t.Columns.Find(c.Name);
 				if (c2 == null) {
@@ -105,7 +103,7 @@ end
 					}
 				}
 				//get deleted constraints
-				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)){
+				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
 					diff.ConstraintsDeleted.Add(c);
 				}
 			} else {
@@ -135,7 +133,7 @@ end
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.Append($"CREATE {( IsType ? "TYPE" : "TABLE" )} [{Owner}].[{Name}] {( IsType ? "AS TABLE " : string.Empty )}(\r\n");
+			text.Append($"CREATE {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}] {(IsType ? "AS TABLE " : string.Empty)}(\r\n");
 			text.Append(Columns.Script());
 			if (_constraints.Count > 0) text.AppendLine();
 			foreach (var c in _constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
@@ -150,7 +148,7 @@ end
 		}
 
 		public string ScriptDrop() {
-			return $"DROP {( IsType ? "TYPE" : "TABLE" )} [{Owner}].[{Name}]";
+			return $"DROP {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}]";
 		}
 
 
@@ -249,7 +247,7 @@ end
 								row[j] = ConvertType(cols[j].Type,
 									fields[j].Replace(_escapeRowSeparator, _rowSeparator).Replace(_escapeFieldSeparator, _fieldSeparator));
 							} catch (FormatException ex) {
-								throw new DataFileException( $"{ex.Message} at column {j + 1}", filename, linenumber);
+								throw new DataFileException($"{ex.Message} at column {j + 1}", filename, linenumber);
 							}
 						}
 						dt.Rows.Add(row);
@@ -306,9 +304,9 @@ end
 		public string Owner;
 
 		public bool IsDiff => ColumnsAdded.Count + ColumnsDropped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-		                      ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+							  ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
 
-	    public string Script() {
+		public string Script() {
 			var text = new StringBuilder();
 
 			foreach (var c in ColumnsAdded) {

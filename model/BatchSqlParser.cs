@@ -36,7 +36,7 @@ namespace SchemaZen.Library {
 			if (char.ToUpper(p) != 'G' || char.ToUpper(c) != 'O') return false;
 			if (!IsWhitespace(p2) && !IsEndMultiLineComment(p3, p2)) return false;
 			if (!IsWhitespace(n) && !IsOneLineComment(n, n2)
-			    && !IsMultiLineComment(n, n2)) return false;
+				&& !IsMultiLineComment(n, n2)) return false;
 
 			return true;
 		}

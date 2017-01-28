@@ -101,10 +101,10 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotBeSplitByGoKeyword() {
 			var script = "PRINT '" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "SELECT * FROM BLAH" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "'";
+						 + "GO" + Environment.NewLine
+						 + "SELECT * FROM BLAH" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 
@@ -115,11 +115,11 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotIgnoreDoubleQuote() {
 			var script = "PRINT '" + Environment.NewLine
-			             + "''" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "/*" + Environment.NewLine
-			             + "GO"
-			             + "'";
+						 + "''" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "/*" + Environment.NewLine
+						 + "GO"
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 

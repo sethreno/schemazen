@@ -39,30 +39,28 @@ namespace SchemaZen.console {
 		}
 
 		public override int Run(string[] remainingArguments) {
-		    if (!string.IsNullOrEmpty(_outDiff))
-            {
-                Console.WriteLine();
-                if (!_overwrite && File.Exists(_outDiff)) {
-                    var question = $"{_outDiff} already exists - do you want to replace it";
-                    if (!ConsoleQuestion.AskYN(question))
-                    {
-                        return 1;
-                    }
-                }
-            }
+			if (!string.IsNullOrEmpty(_outDiff)) {
+				Console.WriteLine();
+				if (!_overwrite && File.Exists(_outDiff)) {
+					var question = $"{_outDiff} already exists - do you want to replace it";
+					if (!ConsoleQuestion.AskYN(question)) {
+						return 1;
+					}
+				}
+			}
 
-		    var compareCommand = new CompareCommand {
-		        Source = _source,
-		        Target = _target,
-		        Verbose = _verbose,
-		        OutDiff = _outDiff
-		    };
+			var compareCommand = new CompareCommand {
+				Source = _source,
+				Target = _target,
+				Verbose = _verbose,
+				OutDiff = _outDiff
+			};
 
-		    try {
-		        return compareCommand.Execute() ? 1 : 0;
-		    } catch (Exception ex) {
-		        throw new ConsoleHelpAsException(ex.Message);
-		    }
+			try {
+				return compareCommand.Execute() ? 1 : 0;
+			} catch (Exception ex) {
+				throw new ConsoleHelpAsException(ex.Message);
+			}
 		}
 	}
 }
