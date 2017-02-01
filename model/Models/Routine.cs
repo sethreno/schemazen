@@ -128,7 +128,7 @@ namespace SchemaZen.Library.Models {
 					name = name.Substring(1, name.Length - 2);
 
 				if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
-					yield return $"Name from script definition '{name}' does not match expected name '{Name}'";
+					yield return $"Name from script definition '{name}' does not match expected value from sys.objects.name '{Name}'. This can be corrected by dropping and recreating the object.";
 				}
 			}
 		}
