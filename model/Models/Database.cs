@@ -454,6 +454,7 @@ from #ScriptedRoles
 							break;
 						case "SQL_SCALAR_FUNCTION":
 						case "SQL_INLINE_TABLE_VALUED_FUNCTION":
+						case "SQL_TABLE_VALUED_FUNCTION":
 							r.RoutineType = Routine.RoutineKind.Function;
 							break;
 						case "VIEW":
