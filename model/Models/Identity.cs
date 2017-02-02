@@ -1,7 +1,7 @@
-﻿namespace SchemaZen.model {
+﻿namespace SchemaZen.Library.Models {
 	public class Identity {
-		public string Increment;
-		public string Seed;
+		public string Increment { get; set; }
+		public string Seed { get; set; }
 
 		public Identity(string seed, string increment) {
 			Seed = seed;
@@ -14,7 +14,7 @@
 		}
 
 		public string Script() {
-			return string.Format("IDENTITY ({0},{1})", Seed, Increment);
+			return $"IDENTITY ({Seed},{Increment})";
 		}
 	}
 }

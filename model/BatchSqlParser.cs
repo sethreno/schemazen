@@ -2,13 +2,14 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library {
 	internal enum State {
 		Searching,
 		InOneLineComment,
 		InMultiLineComment,
 		InBrackets,
-		InQuotes
+		InQuotes,
+		InDoubleQuotes,
 	}
 
 	public class BatchSqlParser {
@@ -35,7 +36,7 @@ namespace SchemaZen.model {
 			if (char.ToUpper(p) != 'G' || char.ToUpper(c) != 'O') return false;
 			if (!IsWhitespace(p2) && !IsEndMultiLineComment(p3, p2)) return false;
 			if (!IsWhitespace(n) && !IsOneLineComment(n, n2)
-			    && !IsMultiLineComment(n, n2)) return false;
+				&& !IsMultiLineComment(n, n2)) return false;
 
 			return true;
 		}
@@ -65,6 +66,7 @@ namespace SchemaZen.model {
 						else if (IsOneLineComment(p, c)) state = State.InOneLineComment;
 						else if (c == '[') state = State.InBrackets;
 						else if (c == '\'') state = State.InQuotes;
+						else if (c == '\"') state = State.InDoubleQuotes;
 						else if (IsGO(p3, p2, p, c, n, n2)) foundGO = true;
 						break;
 
@@ -87,6 +89,10 @@ namespace SchemaZen.model {
 
 					case State.InQuotes:
 						if (c == '\'') state = State.Searching;
+						break;
+
+					case State.InDoubleQuotes:
+						if (c == '\"') state = State.Searching;
 						break;
 				}
 

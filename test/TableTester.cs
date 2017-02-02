@@ -4,9 +4,10 @@ using System.Data.SqlClient;
 using System.IO;
 using System.Text;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class TableTester {
 		private List<List<string>> TabDataToList(string data) {
@@ -129,8 +130,9 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("code", "char", 1, false, null));
 			t.Columns.Add(new Column("description", "varchar", 20, false, null));
-			var computedCol = new Column("computed", "varchar", false, null);
-			computedCol.ComputedDefinition = "code + ' : ' + description";
+			var computedCol = new Column("computed", "varchar", false, null) {
+				ComputedDefinition = "code + ' : ' + description"
+			};
 			t.Columns.Add(computedCol);
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
@@ -220,7 +222,7 @@ namespace SchemaZen.test {
 			var writer = File.CreateText(filename);
 			StringBuilder sb = new StringBuilder();
 
-			for (var i = 0; i < Table.rowsInBatch * 4.2; i++) {
+			for (var i = 0; i < Table.RowsInBatch * 4.2; i++) {
 				sb.AppendLine(i.ToString());
 				writer.WriteLine(i.ToString());
 			}
@@ -275,6 +277,7 @@ namespace SchemaZen.test {
 			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'")));
 			t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 			t.Columns.Add(new Column("cc", "xml", true, null));
+			t.Columns.Add(new Column("dd", "hierarchyid", false, null));
 
 			Console.WriteLine(t.ScriptCreate());
 			TestHelper.ExecSql(t.ScriptCreate(), "");

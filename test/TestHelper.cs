@@ -1,14 +1,13 @@
 ﻿using System;
 using System.Data.SqlClient;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[SetUpFixture]
 	public class TestHelper {
-		public static bool EchoSql {
-			get { return true; }
-		}
+		public static bool EchoSql => true;
 
 		[SetUp]
 		public void SetUp() {

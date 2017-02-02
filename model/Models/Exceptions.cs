@@ -2,42 +2,30 @@
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class BatchSqlFileException : Exception {
 		public List<SqlFileException> Exceptions { get; set; }
 	}
 
 	public class SqlBatchException : Exception {
-		private readonly int lineNumber;
-
-		private readonly string message;
-
 		public SqlBatchException(SqlException ex, int prevLinesInBatch)
 			: base("", ex) {
-			lineNumber = ex.LineNumber + prevLinesInBatch;
-			message = ex.Message;
+			LineNumber = ex.LineNumber + prevLinesInBatch;
+			Message = ex.Message;
 		}
 
-		public int LineNumber {
-			get { return lineNumber; }
-		}
+		public int LineNumber { get; }
 
-		public override string Message {
-			get { return message; }
-		}
+		public override string Message { get; }
 	}
 
 	public class SqlFileException : SqlBatchException {
-		private readonly string fileName;
-
 		public SqlFileException(string fileName, SqlBatchException ex)
-			: base((SqlException) ex.InnerException, ex.LineNumber - 1) {
-			this.fileName = fileName;
+			: base((SqlException)ex.InnerException, ex.LineNumber - 1) {
+			FileName = fileName;
 		}
 
-		public string FileName {
-			get { return fileName; }
-		}
+		public string FileName { get; }
 	}
 
 	public class DataFileException : Exception {
@@ -51,16 +39,10 @@ namespace SchemaZen.model {
 			_lineNumber = lineNumber;
 		}
 
-		public override string Message {
-			get { return _message; }
-		}
+		public override string Message => _message + $" - in file named {_fileName}:{_lineNumber}";
 
-		public string FileName {
-			get { return _fileName; }
-		}
+		public string FileName => _fileName;
 
-		public int LineNumber {
-			get { return _lineNumber; }
-		}
+		public int LineNumber => _lineNumber;
 	}
 }

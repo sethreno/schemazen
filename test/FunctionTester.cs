@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Linq;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library.Models;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class FunctionTester {
-		private const string ExampleFunc = @"
+		private const string _exampleFunc = @"
 CREATE FUNCTION [dbo].udf_GetDate()
 RETURNS DATETIME AS
 BEGIN
@@ -18,7 +18,7 @@ END
 		public void TestScript() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
 				RoutineType = Routine.RoutineKind.Function,
-				Text = ExampleFunc
+				Text = _exampleFunc
 			};
 			Console.WriteLine(f.ScriptCreate());
 			TestHelper.ExecBatchSql(f.ScriptCreate() + "\nGO", "");
@@ -28,7 +28,7 @@ END
 		[Test]
 		public void TestScriptNoWarnings() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
-				Text = ExampleFunc,
+				Text = _exampleFunc,
 				RoutineType = Routine.RoutineKind.Function
 			};
 			Assert.IsFalse(f.Warnings().Any());
@@ -37,7 +37,7 @@ END
 		[Test]
 		public void TestScriptWarnings() {
 			var f = new Routine("dbo", "udf_GetDate2", null) {
-				Text = ExampleFunc,
+				Text = _exampleFunc,
 				RoutineType = Routine.RoutineKind.Function
 			};
 			Assert.IsTrue(f.Warnings().Any());

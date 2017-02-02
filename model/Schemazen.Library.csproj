@@ -8,8 +8,8 @@
     <ProjectGuid>{1283684F-CC5F-4647-BD97-9D833D20110E}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SchemaZen.model</RootNamespace>
-    <AssemblyName>model</AssemblyName>
+    <RootNamespace>SchemaZen.Library</RootNamespace>
+    <AssemblyName>SchemaZen.Library</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <FileUpgradeFlags>
@@ -41,6 +41,7 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Web" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
@@ -51,25 +52,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assembly.cs" />
+    <Compile Include="Command\BaseCommand.cs" />
+    <Compile Include="ILogger.cs" />
+    <Compile Include="Command\CreateCommand.cs" />
+    <Compile Include="Command\CompareCommand.cs" />
+    <Compile Include="Command\ScriptCommand.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Models\Assembly.cs" />
     <Compile Include="BatchSqlParser.cs" />
-    <Compile Include="Column.cs" />
-    <Compile Include="ColumnList.cs" />
+    <Compile Include="Models\Column.cs" />
+    <Compile Include="Models\ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
-    <Compile Include="Constraint.cs" />
-    <Compile Include="Database.cs" />
+    <Compile Include="Models\Constraint.cs" />
+    <Compile Include="Models\ConstraintColumn.cs" />
+    <Compile Include="Models\Database.cs" />
     <Compile Include="DBHelper.cs" />
-    <Compile Include="DbProperty.cs" />
-    <Compile Include="Default.cs" />
-    <Compile Include="Exceptions.cs" />
-    <Compile Include="ForeignKey.cs" />
-    <Compile Include="Identity.cs" />
-    <Compile Include="Interfaces.cs" />
+    <Compile Include="Models\DbProperty.cs" />
+    <Compile Include="Models\Default.cs" />
+    <Compile Include="Models\Exceptions.cs" />
+    <Compile Include="Models\ForeignKey.cs" />
+    <Compile Include="Models\Identity.cs" />
+    <Compile Include="Models\Interfaces.cs" />
+    <Compile Include="Models\UserDefinedType.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Routine.cs" />
-    <Compile Include="SqlUser.cs" />
-    <Compile Include="Synonym.cs" />
-    <Compile Include="Table.cs" />
+    <Compile Include="Models\Role.cs" />
+    <Compile Include="Models\Routine.cs" />
+    <Compile Include="Models\SqlUser.cs" />
+    <Compile Include="Models\Synonym.cs" />
+    <Compile Include="Models\Table.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Schemazen.Library.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

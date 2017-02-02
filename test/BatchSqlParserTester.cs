@@ -1,8 +1,8 @@
 ﻿using System;
 using NUnit.Framework;
-using SchemaZen.model;
+using SchemaZen.Library;
 
-namespace SchemaZen.test {
+namespace SchemaZen.Tests {
 	[TestFixture]
 	public class BatchSqlParserTester {
 		[Test]
@@ -101,10 +101,10 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotBeSplitByGoKeyword() {
 			var script = "PRINT '" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "SELECT * FROM BLAH" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "'";
+						 + "GO" + Environment.NewLine
+						 + "SELECT * FROM BLAH" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 
@@ -115,11 +115,11 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotIgnoreDoubleQuote() {
 			var script = "PRINT '" + Environment.NewLine
-			             + "''" + Environment.NewLine
-			             + "GO" + Environment.NewLine
-			             + "/*" + Environment.NewLine
-			             + "GO"
-			             + "'";
+						 + "''" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "/*" + Environment.NewLine
+						 + "GO"
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 
@@ -307,6 +307,40 @@ GO
 ");
 			//should be 2 scripts
 			Assert.AreEqual(2, scripts.Length);
+		}
+
+		[Test]
+		public void IgnoresSlashStarInsideQuotedIdentifier() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+select 1 as ""/*""
+GO
+SET ANSI_NULLS OFF
+GO
+");
+			//should be 2 scripts
+			Assert.AreEqual(2, scripts.Length);
+		}
+
+		[Test]
+		public void IgnoresGoInsideBrackets() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+1:1
+select 1 as [GO]
+SET ANSI_NULLS OFF
+GO
+");
+			Assert.AreEqual(1, scripts.Length);
+		}
+
+		[Test]
+		public void IgnoresGoInsideQuotedIdentifier() {
+			var scripts = BatchSqlParser.SplitBatch(@"
+1:1
+select 1 as ""GO""
+SET ANSI_NULLS OFF
+GO
+");
+			Assert.AreEqual(1, scripts.Length);
 		}
 	}
 }

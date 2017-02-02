@@ -1,6 +1,6 @@
 ﻿using System.Configuration;
 
-namespace SchemaZen.model {
+namespace SchemaZen.Library.Models {
 	public class ConfigHelper {
 		public static string GetConnectionString(string name) {
 			return ConfigurationManager.ConnectionStrings[name].ConnectionString;
