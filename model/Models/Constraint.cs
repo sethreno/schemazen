@@ -4,6 +4,7 @@ using System.Linq;
 namespace SchemaZen.Library.Models {
 	public class Constraint : INameable, IScriptable {
 		public bool Clustered { get; set; }
+		public bool ColumnStore { get; set; }
 		public List<ConstraintColumn> Columns { get; set; } = new List<ConstraintColumn>();
 		public List<string> IncludedColumns { get; set; } = new List<string>();
 		public string Name { get; set; }
@@ -30,9 +31,11 @@ namespace SchemaZen.Library.Models {
 			return constraint;
 		}
 
+		public string ColumnStoreText => !ColumnStore ? "" : " COLUMNSTORE";
+
 		public string ClusteredText => !Clustered ? "NONCLUSTERED" : "CLUSTERED";
 
-		public string UniqueText => Type != "PRIMARY KEY" && !Unique ? "" : "UNIQUE";
+		public string UniqueText => Type != " PRIMARY KEY" && !Unique ? "" : " UNIQUE";
 
 		public string ScriptCreate() {
 			switch (Type) {
@@ -40,7 +43,7 @@ namespace SchemaZen.Library.Models {
 					var notForReplicationOption = _isNotForReplication ? "NOT FOR REPLICATION" : "";
 					return $"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {_checkConstraintExpression}";
 				case "INDEX":
-					var sql = $"CREATE {UniqueText} {ClusteredText} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
+					var sql = $"CREATE{UniqueText} {ClusteredText}{ColumnStoreText} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
 					if (IncludedColumns.Count > 0) {
 						sql += $" INCLUDE ([{string.Join("], [", IncludedColumns.ToArray())}])";
 					}
