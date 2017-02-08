@@ -590,7 +590,8 @@ order by fk.name, fkc.constraint_column_id
 						i.type_desc,
 						i.filter_definition,
 						isnull(ic.is_included_column, 0) as is_included_column,
-                        ic.is_descending_key
+						ic.is_descending_key,
+						i.type
 					from (
 						select object_id, name, schema_id, 'T' as baseType
 						from   sys.tables
@@ -633,10 +634,9 @@ order by fk.name, fkc.constraint_column_id
 							ViewIndexes.Add(c);
 						}
 					}
-					c.Clustered = (string)dr["type_desc"] == "CLUSTERED";
+					c.IndexType = dr["type_desc"] as string;
 					c.Unique = (bool)dr["is_unique"];
-					var filter = dr["filter_definition"].ToString(); //can be null
-					c.Filter = filter;
+					c.Filter = dr["filter_definition"] as string;
 					if ((bool)dr["is_included_column"]) {
 						c.IncludedColumns.Add((string)dr["columnName"]);
 					} else {

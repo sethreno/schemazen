@@ -209,16 +209,20 @@ namespace SchemaZen.Tests {
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
 			t1.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
-			t1.AddConstraint(new Constraint("pk_t1", "PRIMARY KEY", "col1,col2"));
-			t1.FindConstraint("pk_t1").Clustered = true;
+			t1.AddConstraint(new Constraint("pk_t1", "PRIMARY KEY", "col1,col2") {
+				IndexType = "CLUSTERED"
+			});
 
 			var t2 = new Table("dbo", "t2");
 			t2.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
 			t2.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
 			t2.Columns.Add(new Column("col3", "int", false, null) { Position = 3 });
-			t2.AddConstraint(new Constraint("pk_t2", "PRIMARY KEY", "col1"));
-			t2.FindConstraint("pk_t2").Clustered = true;
-			t2.AddConstraint(new Constraint("IX_col3", "UNIQUE", "col3"));
+			t2.AddConstraint(new Constraint("pk_t2", "PRIMARY KEY", "col1") {
+				IndexType = "CLUSTERED"
+			});
+			t2.AddConstraint(new Constraint("IX_col3", "UNIQUE", "col3") {
+				IndexType = "NONCLUSTERED"
+			});
 
 			db.ForeignKeys.Add(new ForeignKey(t2, "fk_t2_t1", "col2,col3", t1, "col1,col2"));
 
@@ -236,8 +240,9 @@ namespace SchemaZen.Tests {
 			TestHelper.DropDb("TEST_TEMP");
 
 			foreach (var t in db.Tables) {
-				Assert.IsNotNull(db2.FindTable(t.Name, t.Owner));
-				Assert.IsFalse(db2.FindTable(t.Name, t.Owner).Compare(t).IsDiff);
+				var copy = db2.FindTable(t.Name, t.Owner);
+				Assert.IsNotNull(copy);
+				Assert.IsFalse(copy.Compare(t).IsDiff);
 			}
 		}
 
@@ -489,7 +494,10 @@ select * from Table1
 			var policy = new Table("dbo", "Policy");
 			policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
 			policy.Columns.Add(new Column("form", "tinyint", false, null) { Position = 2 });
-			policy.AddConstraint(new Constraint("PK_Policy", "PRIMARY KEY", "id") { Clustered = true, Unique = true });
+			policy.AddConstraint(new Constraint("PK_Policy", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 			policy.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var loc = new Table("dbo", "Location");
@@ -497,23 +505,35 @@ select * from Table1
 			loc.Columns.Add(new Column("policyId", "int", false, null) { Position = 2 });
 			loc.Columns.Add(new Column("storage", "bit", false, null) { Position = 3 });
 			loc.Columns.Add(new Column("category", "int", false, null) { Position = 4 });
-			loc.AddConstraint(new Constraint("PK_Location", "PRIMARY KEY", "id") { Clustered = true, Unique = true });
+			loc.AddConstraint(new Constraint("PK_Location", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 			loc.Columns.Items[0].Identity = new Identity(1, 1);
 
 			var formType = new Table("dbo", "FormType");
 			formType.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
 			formType.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
-			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
+			formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 			formType.AddConstraint(Constraint.CreateCheckedConstraint("CK_FormType", false, "([code]<(5))"));
 
 			var categoryType = new Table("dbo", "CategoryType");
 			categoryType.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
 			categoryType.Columns.Add(new Column("Category", "varchar", 10, false, null) { Position = 2 });
-			categoryType.AddConstraint(new Constraint("PK_CategoryType", "PRIMARY KEY", "id") { Clustered = true, Unique = true });
+			categoryType.AddConstraint(new Constraint("PK_CategoryType", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 
 			var emptyTable = new Table("dbo", "EmptyTable");
 			emptyTable.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
-			emptyTable.AddConstraint(new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") { Clustered = true, Unique = true });
+			emptyTable.AddConstraint(new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 
 			var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 			fk_policy_formType.Table = policy;
@@ -543,7 +563,9 @@ select * from Table1
 			tt_codedesc.IsType = true;
 			tt_codedesc.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
 			tt_codedesc.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
-			tt_codedesc.AddConstraint(new Constraint("PK_CodeDesc", "PRIMARY KEY", "code"));
+			tt_codedesc.AddConstraint(new Constraint("PK_CodeDesc", "PRIMARY KEY", "code") {
+				IndexType = "NONCLUSTERED"
+			});
 
 			var db = new Database("ScriptToDirTest");
 			db.Tables.Add(policy);

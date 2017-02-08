@@ -18,7 +18,7 @@ namespace SchemaZen.Tests {
 			[Test]
 			public void clustered_index() {
 				var c = SetUp();
-				c.Clustered = true;
+				c.IndexType = "CLUSTERED";
 				Assert.AreEqual(
 					"CREATE CLUSTERED INDEX [test] ON [dbo].[test] ([a], [b])",
 					c.ScriptCreate());
@@ -27,16 +27,25 @@ namespace SchemaZen.Tests {
 			[Test]
 			public void nonclustered_index() {
 				var c = SetUp();
-				c.Clustered = false;
+				c.IndexType = "NONCLUSTERED";
 				Assert.AreEqual(
 					"CREATE NONCLUSTERED INDEX [test] ON [dbo].[test] ([a], [b])",
 					c.ScriptCreate());
 			}
 
 			[Test]
-			public void columnstore_index() {
+			public void clustered_columnstore_index() {
 				var c = SetUp();
-				c.ColumnStore = true;
+				c.IndexType = "CLUSTERED COLUMNSTORE";
+				Assert.AreEqual(
+					"CREATE CLUSTERED COLUMNSTORE INDEX [test] ON [dbo].[test] ([a], [b])",
+					c.ScriptCreate());
+			}
+
+			[Test]
+			public void nonclustered_columnstore_index() {
+				var c = SetUp();
+				c.IndexType = "NONCLUSTERED COLUMNSTORE";
 				Assert.AreEqual(
 					"CREATE NONCLUSTERED COLUMNSTORE INDEX [test] ON [dbo].[test] ([a], [b])",
 					c.ScriptCreate());
@@ -46,6 +55,7 @@ namespace SchemaZen.Tests {
 			public void primary_key() {
 				var c = SetUp();
 				c.Type = "PRIMARY KEY";
+				c.IndexType = "NONCLUSTERED";
 				Assert.AreEqual(
 					"CONSTRAINT [test] PRIMARY KEY NONCLUSTERED ([a], [b])",
 					c.ScriptCreate());
@@ -55,6 +65,7 @@ namespace SchemaZen.Tests {
 			public void foreign_key() {
 				var c = SetUp();
 				c.Type = "FOREIGN KEY";
+				c.IndexType = "NONCLUSTERED";
 				Assert.AreEqual(
 					"CONSTRAINT [test] FOREIGN KEY NONCLUSTERED ([a], [b])",
 					c.ScriptCreate());

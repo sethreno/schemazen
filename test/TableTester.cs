@@ -208,8 +208,15 @@ namespace SchemaZen.Tests {
 		public void TestLargeAmountOfRowsImportAndExport() {
 			var t = new Table("dbo", "TestData");
 			t.Columns.Add(new Column("test_field", "int", false, null));
-			t.AddConstraint(new Constraint("PK_TestData", "PRIMARY KEY", "test_field"));
-			t.AddConstraint(new Constraint("IX_TestData_PK", "INDEX", "test_field") { Clustered = true, Table = t, Unique = true }); // clustered index is required to ensure the row order is the same as what we import
+			t.AddConstraint(new Constraint("PK_TestData", "PRIMARY KEY", "test_field") {
+				IndexType = "NONCLUSTERED"
+			});
+			t.AddConstraint(new Constraint("IX_TestData_PK", "INDEX", "test_field") {
+				 // clustered index is required to ensure the row order is the same as what we import
+				IndexType = "CLUSTERED",
+				Table = t,
+				Unique = true
+			});
 
 			var conn = TestHelper.GetConnString("TESTDB");
 			DBHelper.DropDb(conn);

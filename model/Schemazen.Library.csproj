@@ -80,6 +80,7 @@
     <Compile Include="Models\SqlUser.cs" />
     <Compile Include="Models\Synonym.cs" />
     <Compile Include="Models\Table.cs" />
+    <Compile Include="StringUtil.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Schemazen.Library.nuspec" />
