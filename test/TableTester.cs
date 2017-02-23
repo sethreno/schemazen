@@ -165,7 +165,49 @@ namespace SchemaZen.Tests {
 			}
 		}
 
-		[Test]
+
+        [Test]
+        public void TestImportAndExportDateTimeWithoutLosePrecision()
+        {
+            var t = new Table("dbo", "Dummy");
+            t.Columns.Add(new Column("id", "int", false, null));
+            t.Columns.Add(new Column("createdTime", "datetime", false, null));
+            t.Columns.Find("id").Identity = new Identity(1, 1);
+            t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
+
+            var conn = TestHelper.GetConnString("TESTDB");
+            DBHelper.DropDb(conn);
+            DBHelper.CreateDb(conn);
+            SqlConnection.ClearAllPools();
+            DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+
+            var dataIn =
+                @"1	2017-02-21 11:20:30.1
+2	2017-02-22 11:20:30.12
+3	2017-02-23 11:20:30.123
+";
+            var filename = Path.GetTempFileName();
+
+            var writer = File.AppendText(filename);
+            writer.Write(dataIn);
+            writer.Flush();
+            writer.Close();
+
+            try
+            {
+                t.ImportData(conn, filename);
+                var sw = new StringWriter();
+                t.ExportData(conn, sw);
+                Assert.AreEqual(dataIn, sw.ToString());
+            }
+            finally
+            {
+                File.Delete(filename);
+            }
+        }
+
+
+        [Test]
 		public void TestImportAndExportNonDefaultSchema() {
 			var s = new Schema("example", "dbo");
 			var t = new Table(s.Name, "Example");
