@@ -323,7 +323,7 @@ namespace SchemaZen.Tests {
 			t.Columns.Add(new Column("x", "uniqueidentifier", false, null));
 			t.Columns.Add(new Column("y", "varbinary", 50, false, null));
 			t.Columns.Add(new Column("z", "varbinary", -1, false, null));
-			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'")));
+			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'", false)));
 			t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 			t.Columns.Add(new Column("cc", "xml", true, null));
 			t.Columns.Add(new Column("dd", "hierarchyid", false, null));
