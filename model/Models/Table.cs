@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Runtime.Remoting.Metadata.W3cXsd2001;
@@ -33,7 +34,9 @@ end
 		private const string _rowSeparator = "\r\n";
 		private const string _escapeRowSeparator = "--SchemaZenRowSeparator--";
 		private const string _nullValue = "--SchemaZenNull--";
-		public const int RowsInBatch = 15000;
+	    private const string _dateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
+
+        public const int RowsInBatch = 15000;
 
 		public ColumnList Columns = new ColumnList();
 		private readonly List<Constraint> _constraints = new List<Constraint>();
@@ -177,6 +180,8 @@ end
 									data.Write(_nullValue);
 								else if (dr[c.Name] is byte[])
 									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+                                else if (dr[c.Name] is DateTime)
+								    data.Write(((DateTime) dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
 								else
 									data.Write(dr[c.Name].ToString()
 										.Replace(_fieldSeparator, _escapeFieldSeparator)
@@ -277,7 +282,7 @@ end
 					return bool.Parse(val);
 				case "datetime":
 				case "smalldatetime":
-					return DateTime.Parse(val);
+					return DateTime.Parse(val, CultureInfo.InvariantCulture);
 				case "int":
 					return int.Parse(val);
 				case "uniqueidentifier":
