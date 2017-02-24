@@ -35,7 +35,16 @@ namespace SchemaZen.Tests {
 				Assert.AreEqual("[test] [int] NULL", lines[0]);
 				Assert.AreEqual("      CONSTRAINT [df_test] DEFAULT 0", lines[1]);
 			}
-			
-		}
+
+            [Test]
+            public void no_trailing_space_with_no_name_default()
+            {
+                var c = new Column("test", "int", true, new Default("df_ABCDEF", "0", true));
+                var lines = c.ScriptCreate().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+                Assert.AreEqual("[test] [int] NULL", lines[0]);
+                Assert.AreEqual("       DEFAULT 0", lines[1]);
+            }
+
+        }
 	}
 }
