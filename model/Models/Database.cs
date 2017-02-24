@@ -528,7 +528,8 @@ from #ScriptedRoles
 						OBJECT_SCHEMA_NAME(fk.parent_object_id) as TABLE_SCHEMA,
 						UPDATE_RULE, 
 						DELETE_RULE,
-						fk.is_disabled
+						fk.is_disabled,
+                        fk.is_system_named
 					from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name and rc.CONSTRAINT_SCHEMA = OBJECT_SCHEMA_NAME(fk.parent_object_id)";
 			using (var dr = cm.ExecuteReader()) {
@@ -537,6 +538,7 @@ from #ScriptedRoles
 					fk.OnUpdate = (string)dr["UPDATE_RULE"];
 					fk.OnDelete = (string)dr["DELETE_RULE"];
 					fk.Check = !(bool)dr["is_disabled"];
+				    fk.IsSystemNamed = (bool)dr["is_system_named"];
 				}
 			}
 
@@ -678,7 +680,8 @@ order by fk.name, fkc.constraint_column_id
 						t.name as TABLE_NAME, 
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
-						d.definition as DEFAULT_VALUE
+						d.definition as DEFAULT_VALUE,
+                        d.is_system_named as IS_SYSTEM_NAMED
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
@@ -688,7 +691,7 @@ order by fk.name, fkc.constraint_column_id
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
 					t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default((string)dr["DEFAULT_NAME"],
-						(string)dr["DEFAULT_VALUE"]);
+						(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
 				}
 			}
 		}

@@ -2,14 +2,16 @@
 	public class Default {
 		public string Name;
 		public string Value;
+	    public bool IsSystemNamed;
 
-		public Default(string name, string value) {
+	    public Default(string name, string value, bool isSystemNamed) {
 			Name = name;
 			Value = value;
-		}
+	        IsSystemNamed = isSystemNamed;
+	    }
 
 		public string ScriptAsPartOfColumnDefinition() {
-			return $"CONSTRAINT [{Name}] DEFAULT {Value}";
+		    return IsSystemNamed ? $" DEFAULT {Value}" : $"CONSTRAINT [{Name}] DEFAULT {Value}";
 		}
 
 		public string ScriptDrop() {

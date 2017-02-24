@@ -30,7 +30,7 @@ namespace SchemaZen.Tests {
 
 			[Test]
 			public void no_trailing_space_with_default() {
-				var c = new Column("test", "int", true, new Default("df_test", "0"));
+				var c = new Column("test", "int", true, new Default("df_test", "0", false));
 				var lines = c.ScriptCreate().Split(new []{Environment.NewLine}, StringSplitOptions.None);
 				Assert.AreEqual("[test] [int] NULL", lines[0]);
 				Assert.AreEqual("      CONSTRAINT [df_test] DEFAULT 0", lines[1]);
