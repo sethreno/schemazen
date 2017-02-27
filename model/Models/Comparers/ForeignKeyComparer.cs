@@ -23,6 +23,13 @@ namespace SchemaZen.Library.Models.Comparers
                 return result;
             }
 
+            result = x.Columns.Count.CompareTo(y.Columns.Count);
+
+            if (result != 0)
+            {
+                return result;
+            }
+
             for (var i = 0; i < x.Columns.Count; i++)
             {
                 result = string.Compare(x.Columns[i], y.Columns[i], StringComparison.Ordinal);
@@ -30,6 +37,13 @@ namespace SchemaZen.Library.Models.Comparers
                 {
                     return result;
                 }
+            }
+
+            result = x.RefColumns.Count.CompareTo(y.RefColumns.Count);
+
+            if (result != 0)
+            {
+                return result;
             }
 
             for (var i = 0; i < x.RefColumns.Count; i++)
