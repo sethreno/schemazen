@@ -76,23 +76,7 @@ namespace SchemaZen.Library.Models {
 		}
 
 	    private static string RemoveExtraNewLines(string definition) {
-	        int startIndex = 0;
-	        int length = definition.Length;
-
-            if (definition.StartsWith(Environment.NewLine)) {
-                startIndex += Environment.NewLine.Length;
-            }
-
-            if (definition.EndsWith(Environment.NewLine))
-            {
-                length -= Environment.NewLine.Length;
-            }
-
-	        if (length - startIndex == definition.Length) {
-	            return definition;
-	        }
-
-	        return definition.Substring(startIndex, length);
+	        return definition.Trim('\r', '\n');
 	    }
 
 	    public string ScriptCreate() {
