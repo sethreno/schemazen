@@ -45,14 +45,14 @@ namespace SchemaZen.Library.Models {
 				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
 			if (defaultQuotedId != QuotedId) {
-				script += $"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO";
+				script += $"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 			var defaultAnsiNulls = !AnsiNull;
 			if (db?.FindProp("ANSI_NULLS") != null) {
 				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
 			}
 			if (defaultAnsiNulls != AnsiNull) {
-			    script += (script != "" ? Environment.NewLine : "") + $"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO";
+				script += $"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 			return script;
 		}
@@ -61,7 +61,7 @@ namespace SchemaZen.Library.Models {
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
 			if (!string.IsNullOrEmpty(after))
-				after = "GO" + Environment.NewLine + after;
+				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
 			if (RoutineType == RoutineKind.Trigger)
 				after +=
@@ -70,7 +70,7 @@ namespace SchemaZen.Library.Models {
 			if (string.IsNullOrEmpty(definition))
 				definition = $"/* missing definition for {RoutineType} [{Owner}].[{Name}] */";
 
-			return before + definition + after + Environment.NewLine;
+			return before + definition + after;
 		}
 
 		public string ScriptCreate() {
