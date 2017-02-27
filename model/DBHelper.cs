@@ -63,13 +63,13 @@ namespace SchemaZen.Library {
 			if (databaseFilesPath != null) {
 				Directory.CreateDirectory(databaseFilesPath);
 				files = $@"ON 
-(NAME = {dbName},
+(NAME = '{dbName}',
     FILENAME = '{databaseFilesPath}\{dbName + Guid.NewGuid()}.mdf')
 LOG ON
-(NAME = {dbName}_log,
+(NAME = '{dbName}_log',
     FILENAME =  '{databaseFilesPath}\{dbName + Guid.NewGuid()}.ldf')";
 			}
-			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "]" + files);
+			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "] " + files);
 		}
 
 		public static bool DbExists(string conn) {
