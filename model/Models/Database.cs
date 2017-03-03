@@ -120,13 +120,20 @@ namespace SchemaZen.Library.Models {
 			return Synonyms.FirstOrDefault(s => s.Name == name && s.Owner == schema);
 		}
 
-		public List<Table> FindTablesRegEx(string pattern) {
-			return Tables.Where(t => Regex.Match(t.Name, pattern).Success).ToList();
-		}
+		public List<Table> FindTablesRegEx(string pattern, string excludePattern = null) {
+            return Tables.Where(t => FindTablesRegExPredicate(t, pattern, excludePattern)).ToList();
+        }
 
-		#endregion
+        private static bool FindTablesRegExPredicate(Table table, string pattern, string excludePattern) {
+            var include = string.IsNullOrEmpty(pattern) || Regex.IsMatch(table.Name, pattern);
+            var exclude = !string.IsNullOrEmpty(excludePattern) && Regex.IsMatch(table.Name, excludePattern);
 
-		private static readonly HashSet<string> _dirs = new HashSet<string> {
+            return include && !exclude;
+        }
+
+        #endregion
+
+        private static readonly HashSet<string> _dirs = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
 			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
 		};

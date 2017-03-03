@@ -7,8 +7,8 @@ using System.Linq;
 namespace SchemaZen.Library.Command {
 	public class ScriptCommand : BaseCommand {
 
-		public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern,
-			string tableHint, List<string> filteredTypes) {
+		public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern, string dataTablesExcludePattern,
+            string tableHint, List<string> filteredTypes) {
 			if (!Overwrite && Directory.Exists(ScriptDir)) {
 				var message = $"{ScriptDir} already exists - you must set overwrite to true";
 				throw new InvalidOperationException(message);
@@ -24,14 +24,14 @@ namespace SchemaZen.Library.Command {
 				AddDataTable(db, nameAndSchema.Key, nameAndSchema.Value);
 			}
 
-			if (!string.IsNullOrEmpty(dataTablesPattern)) {
-				var tables = db.FindTablesRegEx(dataTablesPattern);
-				foreach (var t in tables.Where(t => !db.DataTables.Contains(t))) {
-					db.DataTables.Add(t);
-				}
-			}
+            if (!string.IsNullOrEmpty(dataTablesPattern) || !string.IsNullOrEmpty(dataTablesExcludePattern)) {
+                var tables = db.FindTablesRegEx(dataTablesPattern, dataTablesExcludePattern);
+                foreach (var t in tables.Where(t => !db.DataTables.Contains(t))) {
+                    db.DataTables.Add(t);
+                }
+            }
 
-			db.ScriptToDir(tableHint, Logger.Log);
+		    db.ScriptToDir(tableHint, Logger.Log);
 
 			Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Snapshot successfully created at {db.Dir}");
 			var routinesWithWarnings = db.Routines.Select(r => new {

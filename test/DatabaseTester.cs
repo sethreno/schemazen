@@ -191,19 +191,43 @@ namespace SchemaZen.Tests {
 
 		[Test]
 		public void TestFindTableRegEx() {
-			var db = new Database();
-			db.Tables.Add(new Table("dbo", "cmicDeductible"));
-			db.Tables.Add(new Table("dbo", "cmicZipCode"));
-			db.Tables.Add(new Table("dbo", "cmicState"));
-			db.Tables.Add(new Table("dbo", "Policy"));
-			db.Tables.Add(new Table("dbo", "Location"));
-			db.Tables.Add(new Table("dbo", "Rate"));
+            var db = CreateSampleDataForRegExTests();
 
-			Assert.AreEqual(3, db.FindTablesRegEx("^cmic").Count);
+            Assert.AreEqual(3, db.FindTablesRegEx("^cmic").Count);
 			Assert.AreEqual(1, db.FindTablesRegEx("Location").Count);
 		}
 
-		[Test]
+        [Test]
+        public void TestFindTableRegEx_ExcludeOnly()
+        {
+            var db = CreateSampleDataForRegExTests();
+
+            Assert.AreEqual(3, db.FindTablesRegEx(null, "^cmic").Count);
+            Assert.AreEqual(5, db.FindTablesRegEx(null, "Location").Count);
+        }
+
+
+        [Test]
+        public void TestFindTableRegEx_BothIncludeExclude()
+        {
+            var db = CreateSampleDataForRegExTests();
+
+            Assert.AreEqual(2, db.FindTablesRegEx("^cmic", "Code$").Count);
+            Assert.AreEqual(0, db.FindTablesRegEx("Location", "Location").Count);
+        }
+
+	    private static Database CreateSampleDataForRegExTests() {
+	        var db = new Database();
+	        db.Tables.Add(new Table("dbo", "cmicDeductible"));
+	        db.Tables.Add(new Table("dbo", "cmicZipCode"));
+	        db.Tables.Add(new Table("dbo", "cmicState"));
+	        db.Tables.Add(new Table("dbo", "Policy"));
+	        db.Tables.Add(new Table("dbo", "Location"));
+	        db.Tables.Add(new Table("dbo", "Rate"));
+	        return db;
+	    }
+
+	    [Test]
 		public void TestScript() {
 			var db = new Database("TEST_TEMP");
 			var t1 = new Table("dbo", "t1");
