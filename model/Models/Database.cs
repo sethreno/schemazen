@@ -687,7 +687,7 @@ order by fk.name, fkc.constraint_column_id
 						t.name as TABLE_NAME, 
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
-						d.definition as DEFAULT_VALUE,
+						isnull(d.definition,0) as DEFAULT_VALUE,
                         d.is_system_named as IS_SYSTEM_NAMED
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
