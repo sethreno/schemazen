@@ -57,8 +57,9 @@ namespace SchemaZen.Library.Models {
 			}
 		}
 
-		public string RowGuidColText => IsRowGuidCol ? "ROWGUIDCOL" : string.Empty;
-	    public bool Persisted { get; set; }
+    public string RowGuidColText => IsRowGuidCol ? " ROWGUIDCOL " : string.Empty;
+    
+    public bool Persisted { get; set; }
 
 	    public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
@@ -101,7 +102,7 @@ namespace SchemaZen.Library.Models {
 					val.Append($" {IsNullableText}");
 					if (includeDefaultConstraint) val.Append(DefaultText);
 					if (Identity != null) val.Append(IdentityText);
-					if (IsRowGuidCol) val.Append(@" {RowGuidColText}");
+					if (IsRowGuidCol) val.Append(RowGuidColText);
 					return val.ToString();
 
 				case "binary":
