@@ -29,11 +29,14 @@ end
 	}
 
 	public class Table : INameable, IHasOwner, IScriptable {
-		private const string _fieldSeparator = "\t";
-		private const string _escapeFieldSeparator = "--SchemaZenFieldSeparator--";
-		private const string _rowSeparator = "\r\n";
-		private const string _escapeRowSeparator = "--SchemaZenRowSeparator--";
-		private const string _nullValue = "--SchemaZenNull--";
+        private const string _rowSeparator = "\r\n";
+        private const string _tab = "\t";
+		private const string _escapeTab = "--SchemaZenTAB--";
+		private const string _carriageReturn  = "\r";
+		private const string _escapeCarriageReturn = "--SchemaZenCR--";
+        private const string _lineFeed = "\n";
+        private const string _escapeLineFeed = "--SchemaZenLF--";
+        private const string _nullValue = "--SchemaZenNull--";
 	    private const string _dateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
 
         public const int RowsInBatch = 15000;
@@ -184,10 +187,11 @@ end
 								    data.Write(((DateTime) dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
 								else
 									data.Write(dr[c.Name].ToString()
-										.Replace(_fieldSeparator, _escapeFieldSeparator)
-										.Replace(_rowSeparator, _escapeRowSeparator));
+										.Replace(_tab, _escapeTab)
+                                        .Replace(_lineFeed, _escapeLineFeed)
+                                        .Replace(_carriageReturn, _escapeCarriageReturn));
 								if (c != cols.Last())
-									data.Write(_fieldSeparator);
+									data.Write(_tab);
 							}
 							data.WriteLine();
 						}
@@ -243,14 +247,14 @@ end
 						batch_rows++;
 
 						var row = dt.NewRow();
-						var fields = (new String(line.ToArray())).Split(new[] { _fieldSeparator }, StringSplitOptions.None);
+						var fields = (new String(line.ToArray())).Split(new[] { _tab }, StringSplitOptions.None);
 						if (fields.Length != dt.Columns.Count) {
 							throw new DataFileException("Incorrect number of columns", filename, linenumber);
 						}
 						for (var j = 0; j < fields.Length; j++) {
 							try {
 								row[j] = ConvertType(cols[j].Type,
-									fields[j].Replace(_escapeRowSeparator, _rowSeparator).Replace(_escapeFieldSeparator, _fieldSeparator));
+									fields[j].Replace(_escapeLineFeed, _lineFeed).Replace(_escapeCarriageReturn, _carriageReturn).Replace(_escapeTab, _tab));
 							} catch (FormatException ex) {
 								throw new DataFileException($"{ex.Message} at column {j + 1}", filename, linenumber);
 							}
