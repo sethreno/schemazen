@@ -33,17 +33,15 @@ This will create a database named db from the sql scripts in c:\somedir.
 	SchemaZen.exe compare --source "server=dev;database=db" --target "server=qa;database=db" --outFile diff.sql
 
 This will compare the databases named `db` between `dev` and `qa` and
-create a sql script called diff.sql that can be run on `qa` to make it's
+create a sql script called `diff.sql` that can be run on `qa` to make it's
 schema identical to `dev`.
 
 
 See ```SchemaZen.exe help [command]``` for more information and options on each command.
 
----
 ## download
 The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
----
 ## contributing
 Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.
 
