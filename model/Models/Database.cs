@@ -669,14 +669,17 @@ order by fk.name, fkc.constraint_column_id
 						object_schema_name(object_id) as TABLE_SCHEMA,
 						object_name(object_id) as TABLE_NAME,
 						name as COLUMN_NAME,
-						definition as DEFINITION
+						definition as DEFINITION,
+						is_persisted as PERSISTED
 					from sys.computed_columns cc
 					";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					t.Columns.Find((string)dr["COLUMN_NAME"]).ComputedDefinition = (string)dr["DEFINITION"];
-				}
+				    var column = t.Columns.Find((string) dr["COLUMN_NAME"]);
+                    column.ComputedDefinition = (string)dr["DEFINITION"];
+                    column.Persisted = (bool)dr["PERSISTED"];
+                }
 			}
 		}
 
