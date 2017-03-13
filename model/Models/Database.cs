@@ -122,19 +122,19 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public List<Table> FindTablesRegEx(string pattern, string excludePattern = null) {
-            return Tables.Where(t => FindTablesRegExPredicate(t, pattern, excludePattern)).ToList();
-        }
+			return Tables.Where(t => FindTablesRegExPredicate(t, pattern, excludePattern)).ToList();
+		}
 
-        private static bool FindTablesRegExPredicate(Table table, string pattern, string excludePattern) {
-            var include = string.IsNullOrEmpty(pattern) || Regex.IsMatch(table.Name, pattern);
-            var exclude = !string.IsNullOrEmpty(excludePattern) && Regex.IsMatch(table.Name, excludePattern);
+		private static bool FindTablesRegExPredicate(Table table, string pattern, string excludePattern) {
+			var include = string.IsNullOrEmpty(pattern) || Regex.IsMatch(table.Name, pattern);
+			var exclude = !string.IsNullOrEmpty(excludePattern) && Regex.IsMatch(table.Name, excludePattern);
 
-            return include && !exclude;
-        }
+			return include && !exclude;
+		}
 
-        #endregion
+		#endregion
 
-        private static readonly HashSet<string> _dirs = new HashSet<string> {
+		private static readonly HashSet<string> _dirs = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
 			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
 		};
@@ -546,7 +546,7 @@ from #ScriptedRoles
 					fk.OnUpdate = (string)dr["UPDATE_RULE"];
 					fk.OnDelete = (string)dr["DELETE_RULE"];
 					fk.Check = !(bool)dr["is_disabled"];
-				    fk.IsSystemNamed = (bool)dr["is_system_named"];
+					fk.IsSystemNamed = (bool)dr["is_system_named"];
 				}
 			}
 
@@ -676,10 +676,10 @@ order by fk.name, fkc.constraint_column_id
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-				    var column = t.Columns.Find((string) dr["COLUMN_NAME"]);
-                    column.ComputedDefinition = (string)dr["DEFINITION"];
-                    column.Persisted = (bool)dr["PERSISTED"];
-                }
+					var column = t.Columns.Find((string)dr["COLUMN_NAME"]);
+					column.ComputedDefinition = (string)dr["DEFINITION"];
+					column.Persisted = (bool)dr["PERSISTED"];
+				}
 			}
 		}
 

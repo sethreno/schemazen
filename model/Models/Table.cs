@@ -29,17 +29,17 @@ end
 	}
 
 	public class Table : INameable, IHasOwner, IScriptable {
-        private const string _rowSeparator = "\r\n";
-        private const string _tab = "\t";
+		private const string _rowSeparator = "\r\n";
+		private const string _tab = "\t";
 		private const string _escapeTab = "--SchemaZenTAB--";
-		private const string _carriageReturn  = "\r";
+		private const string _carriageReturn = "\r";
 		private const string _escapeCarriageReturn = "--SchemaZenCR--";
-        private const string _lineFeed = "\n";
-        private const string _escapeLineFeed = "--SchemaZenLF--";
-        private const string _nullValue = "--SchemaZenNull--";
-	    private const string _dateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
+		private const string _lineFeed = "\n";
+		private const string _escapeLineFeed = "--SchemaZenLF--";
+		private const string _nullValue = "--SchemaZenNull--";
+		private const string _dateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
 
-        public const int RowsInBatch = 15000;
+		public const int RowsInBatch = 15000;
 
 		public ColumnList Columns = new ColumnList();
 		private readonly List<Constraint> _constraints = new List<Constraint>();
@@ -183,13 +183,13 @@ end
 									data.Write(_nullValue);
 								else if (dr[c.Name] is byte[])
 									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
-                                else if (dr[c.Name] is DateTime)
-								    data.Write(((DateTime) dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
+								else if (dr[c.Name] is DateTime)
+									data.Write(((DateTime)dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
 								else
 									data.Write(dr[c.Name].ToString()
 										.Replace(_tab, _escapeTab)
-                                        .Replace(_lineFeed, _escapeLineFeed)
-                                        .Replace(_carriageReturn, _escapeCarriageReturn));
+										.Replace(_lineFeed, _escapeLineFeed)
+										.Replace(_carriageReturn, _escapeCarriageReturn));
 								if (c != cols.Last())
 									data.Write(_tab);
 							}

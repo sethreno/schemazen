@@ -6,8 +6,8 @@ using System.Text;
 namespace SchemaZen.Library.Models {
 	public class ForeignKey : INameable, IScriptable {
 		public bool Check { get; set; }
-        public bool IsSystemNamed { get; set; }
-        public List<string> Columns { get; set; } = new List<string>();
+		public bool IsSystemNamed { get; set; }
+		public List<string> Columns { get; set; } = new List<string>();
 		public string Name { get; set; }
 		public string OnDelete { get; set; }
 		public string OnUpdate { get; set; }
@@ -36,8 +36,8 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public string CheckText => Check ? "CHECK" : "NOCHECK";
-	    
-	    private void AssertArgNotNull(object arg, string argName) {
+
+		private void AssertArgNotNull(object arg, string argName) {
 			if (arg == null) {
 				throw new ArgumentNullException($"Unable to Script FK {Name} on table {Table.Owner}.{Table.Name}. {argName} must not be null.");
 			}
@@ -50,7 +50,7 @@ namespace SchemaZen.Library.Models {
 			AssertArgNotNull(RefColumns, "RefColumns");
 
 			var text = new StringBuilder();
-		    var constraintName = IsSystemNamed ? string.Empty : $"CONSTRAINT [{Name}]";
+			var constraintName = IsSystemNamed ? string.Empty : $"CONSTRAINT [{Name}]";
 			text.Append($"ALTER TABLE [{Table.Owner}].[{Table.Name}] WITH {CheckText} ADD {constraintName}\r\n");
 			text.Append($"   FOREIGN KEY([{string.Join("], [", Columns.ToArray())}]) REFERENCES [{RefTable.Owner}].[{RefTable.Name}] ([{string.Join("], [", RefColumns.ToArray())}])\r\n");
 			if (!string.IsNullOrEmpty(OnUpdate) && !_defaultRules.Split('|').Contains(OnUpdate)) {
@@ -59,10 +59,10 @@ namespace SchemaZen.Library.Models {
 			if (!string.IsNullOrEmpty(OnDelete) && !_defaultRules.Split('|').Contains(OnDelete)) {
 				text.Append($"   ON DELETE {OnDelete}\r\n");
 			}
-            if (!Check && !IsSystemNamed) {
-                text.Append($"   ALTER TABLE [{Table.Owner}].[{Table.Name}] NOCHECK CONSTRAINT [{Name}]\r\n");
-            }
-            return text.ToString();
+			if (!Check && !IsSystemNamed) {
+				text.Append($"   ALTER TABLE [{Table.Owner}].[{Table.Name}] NOCHECK CONSTRAINT [{Name}]\r\n");
+			}
+			return text.ToString();
 		}
 
 		public string ScriptDrop() {

@@ -21,11 +21,11 @@ namespace SchemaZen.console {
 				"dataTablesPattern=",
 				"A regular expression pattern that matches tables to export data from.",
 				o => DataTablesPattern = o);
-            HasOption(
-                "dataTablesExcludePattern=",
-                "A regular expression pattern that exclude tables to export data from.",
-                o => DataTablesExcludePattern = o);
-            HasOption(
+			HasOption(
+				"dataTablesExcludePattern=",
+				"A regular expression pattern that exclude tables to export data from.",
+				o => DataTablesExcludePattern = o);
+			HasOption(
 				"tableHint=",
 				"Table hint to use when exporting data.",
 				o => TableHint = o);
@@ -39,8 +39,8 @@ namespace SchemaZen.console {
 		protected string DataTables { get; set; }
 		protected string FilterTypes { get; set; }
 		protected string DataTablesPattern { get; set; }
-        protected string DataTablesExcludePattern { get; set; }
-        protected string TableHint { get; set; }
+		protected string DataTablesExcludePattern { get; set; }
+		protected string TableHint { get; set; }
 
 		public override int Run(string[] args) {
 			_logger = new Logger(Verbose);

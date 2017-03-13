@@ -67,19 +67,19 @@ namespace SchemaZen.Library.Models {
 				after +=
 						$"{Environment.NewLine}{(Disabled ? "DISABLE" : "ENABLE")} TRIGGER [{Owner}].[{Name}] ON [{RelatedTableSchema}].[{RelatedTableName}]{Environment.NewLine}GO{Environment.NewLine}";
 
-		    if (string.IsNullOrEmpty(definition))
-		        definition = $"/* missing definition for {RoutineType} [{Owner}].[{Name}] */";
-		    else
-		        definition = RemoveExtraNewLines(definition);
+			if (string.IsNullOrEmpty(definition))
+				definition = $"/* missing definition for {RoutineType} [{Owner}].[{Name}] */";
+			else
+				definition = RemoveExtraNewLines(definition);
 
 			return before + definition + after;
 		}
 
-	    private static string RemoveExtraNewLines(string definition) {
-	        return definition.Trim('\r', '\n');
-	    }
+		private static string RemoveExtraNewLines(string definition) {
+			return definition.Trim('\r', '\n');
+		}
 
-	    public string ScriptCreate() {
+		public string ScriptCreate() {
 			return ScriptBase(Db, Text);
 		}
 

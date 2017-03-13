@@ -57,21 +57,21 @@ namespace SchemaZen.Library.Models {
 			}
 		}
 
-    public string RowGuidColText => IsRowGuidCol ? " ROWGUIDCOL " : string.Empty;
-    
-    public bool Persisted { get; set; }
+		public string RowGuidColText => IsRowGuidCol ? " ROWGUIDCOL " : string.Empty;
 
-	    public ColumnDiff Compare(Column c) {
+		public bool Persisted { get; set; }
+
+		public ColumnDiff Compare(Column c) {
 			return new ColumnDiff(this, c);
 		}
 
 		private string ScriptBase(bool includeDefaultConstraint) {
-		    if (!string.IsNullOrEmpty(ComputedDefinition)) {
-		        var persistedSetting = Persisted ? " PERSISTED" : string.Empty;
-		        return $"[{Name}] AS {ComputedDefinition}{persistedSetting}";
-		    }
+			if (!string.IsNullOrEmpty(ComputedDefinition)) {
+				var persistedSetting = Persisted ? " PERSISTED" : string.Empty;
+				return $"[{Name}] AS {ComputedDefinition}{persistedSetting}";
+			}
 
-		    var val = new StringBuilder($"[{Name}] [{Type}]");
+			var val = new StringBuilder($"[{Name}] [{Type}]");
 
 			switch (Type) {
 				case "bigint":
@@ -177,7 +177,7 @@ namespace SchemaZen.Library.Models {
 								   Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision ||
 								   Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition || Source.Persisted != Target.Persisted;
 
-        public bool DefaultIsDiff => Source.DefaultText != Target.DefaultText;
+		public bool DefaultIsDiff => Source.DefaultText != Target.DefaultText;
 
 		public bool OnlyDefaultIsDiff => DefaultIsDiff && !IsDiffBase;
 
