@@ -3,7 +3,7 @@
 ## Submitting changes
 
 Please send a pull request with a clear list of what you've done (read
-more about [pull requests](http://help.github.com/pull-requests/)).
+more about [pull requests](https://help.github.com/articles/about-pull-requests/).
 Please follow our coding conventions (below) and make sure all of your
 commits are atomic (one feature per commit).
 
