@@ -16,10 +16,11 @@ fine for small changes, but bigger changes should look like this:
 
 ## Coding conventions
 
-The coding conventions are all defined in .editorconfig and Rebracer.xml
-so installing [EditorConig](http://editorconfig.org/) and
-[Rebracer](https://github.com/SLaks/Rebracer) will magically keep your
-changes consistent with the rest of the code.
+The coding conventions are all defined in [.editorconfig](.editorconfig)
+and [Rebracer.xml](Rebracer.xml) so installing the
+[EditorConig](http://editorconfig.org/) and
+[Rebracer](https://github.com/SLaks/Rebracer) plugins for visual studio
+will magically keep your changes consistent with the rest of the code.
 
 The existing code should provide all the guidance needed, but here's a
 brief summary:
