@@ -63,6 +63,7 @@
     <Compile Include="Models\Column.cs" />
     <Compile Include="Models\ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
+    <Compile Include="Models\Comparers\ForeignKeyComparer.cs" />
     <Compile Include="Models\Constraint.cs" />
     <Compile Include="Models\ConstraintColumn.cs" />
     <Compile Include="Models\Database.cs" />

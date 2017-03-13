@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using SchemaZen.Library.Models.Comparers;
 
 namespace SchemaZen.Library.Models {
 	public class Database {
@@ -1162,7 +1163,7 @@ where name = @dbname
 			text.AppendLine();
 			text.AppendLine("GO");
 
-			foreach (var fk in ForeignKeys) {
+			foreach (var fk in ForeignKeys.OrderBy(f => f, ForeignKeyComparer.Instance)) {
 				text.AppendLine(fk.ScriptCreate());
 			}
 			text.AppendLine();
@@ -1225,7 +1226,7 @@ where name = @dbname
 			WriteScriptDir("tables", Tables.ToArray(), log);
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
 			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
-			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x.Name).ToArray(), log);
+			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x, ForeignKeyComparer.Instance).ToArray(), log);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
 				WriteScriptDir(dir, routineType.ToArray(), log);
