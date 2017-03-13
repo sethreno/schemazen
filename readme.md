@@ -1,11 +1,10 @@
-Schema Zen - Script and create SQL Server objects quickly
---------------------------------------------------------
+# Schema Zen - Script and create SQL Server objects quickly
 
 [![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-Schema Zen has three main commands:
+## Schema Zen has three main commands:
 
-## script
+### script
 
     SchemaZen.exe script --server localhost --database db --scriptDir c:\somedir
 
@@ -22,20 +21,20 @@ c:\somedir\
 	schemas.sql
 ```
 
-## create
+### create
 
     SchemaZen.exe create --server localhost --database db --scriptDir c:\somedir
 
 This will create a database named db from the sql scripts in c:\somedir.
 
 
-## compare
+### compare
 
-	SchemaZen.exe compare --source "server=localhost;database=db" --target "server=localhost;database=db2" --outFile diff.sql
+	SchemaZen.exe compare --source "server=dev;database=db" --target "server=qa;database=db" --outFile diff.sql
 
-This will compare the databases named `db` and `db2` on
-localhost and create a sql script called diff.sql that can be
-run on `db2` to make it's schema identical to `db1`.
+This will compare the databases named `db` between `dev` and `qa` and
+create a sql script called diff.sql that can be run on `qa` to make it's
+schema identical to `dev`.
 
 
 See ```SchemaZen.exe help [command]``` for more information and options on each command.
