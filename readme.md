@@ -39,12 +39,12 @@ See ```SchemaZen.exe help [command]``` for more information and options on each 
 
 <br><br>
 
-## download
+## Download
 The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
-## contributing
+## Contributing
 Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.
 
-## chat
+## Chat
 [![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
