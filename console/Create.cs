@@ -24,7 +24,8 @@ namespace SchemaZen.console {
 				Server = Server,
 				User = User,
 				Logger = _logger,
-				Overwrite = Overwrite
+				Overwrite = Overwrite,
+                DataFileType = DataFileType
 			};
 
 			try {

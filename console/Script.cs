@@ -33,7 +33,7 @@ namespace SchemaZen.console {
 				"filterTypes=",
 				"A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
 				o => FilterTypes = o);
-		}
+        }
 
 		private Logger _logger;
 		protected string DataTables { get; set; }
@@ -42,7 +42,7 @@ namespace SchemaZen.console {
 		protected string DataTablesExcludePattern { get; set; }
 		protected string TableHint { get; set; }
 
-		public override int Run(string[] args) {
+        public override int Run(string[] args) {
 			_logger = new Logger(Verbose);
 
 			if (!Overwrite && Directory.Exists(ScriptDir)) {
@@ -58,7 +58,8 @@ namespace SchemaZen.console {
 				Server = Server,
 				User = User,
 				Logger = _logger,
-				Overwrite = Overwrite
+				Overwrite = Overwrite,
+                DataFileType = DataFileType
 			};
 
 			var filteredTypes = HandleFilteredTypes();

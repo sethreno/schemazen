@@ -29,7 +29,11 @@ namespace SchemaZen.console {
 				"f|databaseFilesPath=",
 				"Path to database data and log files.",
 				o => DatabaseFilesPath = o);
-		}
+            HasOption(
+                "t|dataFileType=",
+                "File type of the data file, tsv/json. (default is tsv).",
+                o => DataFileType = o);
+        }
 
 		protected string Server { get; set; }
 		protected string DbName { get; set; }
@@ -40,5 +44,7 @@ namespace SchemaZen.console {
 		protected bool Overwrite { get; set; }
 		protected bool Verbose { get; set; }
 		protected string DatabaseFilesPath { get; set; }
-	}
+        protected string DataFileType { get; set; }
+
+    }
 }

@@ -36,6 +36,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.9.0.1\lib\net35\Newtonsoft.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.configuration" />
     <Reference Include="System.Core">
@@ -52,11 +56,14 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AbstractDataImportExportHandler.cs" />
     <Compile Include="Command\BaseCommand.cs" />
+    <Compile Include="IDataImportExportHandler.cs" />
     <Compile Include="ILogger.cs" />
     <Compile Include="Command\CreateCommand.cs" />
     <Compile Include="Command\CompareCommand.cs" />
     <Compile Include="Command\ScriptCommand.cs" />
+    <Compile Include="JsonDataImportExportHandler.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Models\Assembly.cs" />
     <Compile Include="BatchSqlParser.cs" />
@@ -68,6 +75,7 @@
     <Compile Include="Models\ConstraintColumn.cs" />
     <Compile Include="Models\Database.cs" />
     <Compile Include="DBHelper.cs" />
+    <Compile Include="TsvDataImportExportHandler.cs" />
     <Compile Include="Models\DbProperty.cs" />
     <Compile Include="Models\Default.cs" />
     <Compile Include="Models\Exceptions.cs" />
@@ -84,6 +92,7 @@
     <Compile Include="StringUtil.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Schemazen.Library.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

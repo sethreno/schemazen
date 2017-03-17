@@ -13,8 +13,9 @@ namespace SchemaZen.Library.Command {
 		public string ScriptDir { get; set; }
 		public ILogger Logger { get; set; }
 		public bool Overwrite { get; set; }
+        public string DataFileType { get; set; }
 
-		public Database CreateDatabase(IList<string> filteredTypes = null) {
+        public Database CreateDatabase(IList<string> filteredTypes = null) {
 			filteredTypes = filteredTypes ?? new List<string>();
 
 			if (!string.IsNullOrEmpty(ConnectionString)) {
@@ -26,7 +27,8 @@ namespace SchemaZen.Library.Command {
 				}
 				return new Database(filteredTypes) {
 					Connection = ConnectionString,
-					Dir = ScriptDir
+					Dir = ScriptDir,
+                    ImportExportHandler = CreateImportExportHandler()
 				};
 			}
 			if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName)) {
@@ -47,11 +49,20 @@ namespace SchemaZen.Library.Command {
 			}
 			return new Database(filteredTypes) {
 				Connection = builder.ToString(),
-				Dir = ScriptDir
-			};
+				Dir = ScriptDir,
+                ImportExportHandler = CreateImportExportHandler()
+            };
 		}
 
-		public void AddDataTable(Database db, string name, string schema) {
+	    private IDataImportExportHandler CreateImportExportHandler() {
+	        if (DataFileType == "json") {
+	            return new JsonDataImportExportHandler();
+	        }
+
+	        return new TsvDataImportExportHandler();
+	    }
+
+	    public void AddDataTable(Database db, string name, string schema) {
 			var t = db.FindTable(name, schema);
 			if (t == null) {
 				Console.WriteLine($"warning: could not find data table {schema}.{name}");

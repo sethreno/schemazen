@@ -11,9 +11,9 @@ using SchemaZen.Library.Models.Comparers;
 
 namespace SchemaZen.Library.Models {
 	public class Database {
-		#region " Constructors "
+	    #region " Constructors "
 
-		public Database(IList<string> filteredTypes = null) {
+        public Database(IList<string> filteredTypes = null) {
 			Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
 			Props.Add(new DbProp("COLLATE", ""));
 			Props.Add(new DbProp("AUTO_CLOSE", ""));
@@ -80,8 +80,9 @@ namespace SchemaZen.Library.Models {
 		public List<Role> Roles { get; set; } = new List<Role>();
 		public List<SqlUser> Users { get; set; } = new List<SqlUser>();
 		public List<Constraint> ViewIndexes { get; set; } = new List<Constraint>();
+        public IDataImportExportHandler ImportExportHandler { get; set; } = new TsvDataImportExportHandler();
 
-		public DbProp FindProp(string name) {
+        public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p => string.Equals(p.Name, name, StringComparison.CurrentCultureIgnoreCase));
 		}
 
@@ -1313,11 +1314,12 @@ where name = @dbname
 			}
 			log?.Invoke(TraceLevel.Info, "Exporting data...");
 			var index = 0;
+            
 			foreach (var t in DataTables) {
 				log?.Invoke(TraceLevel.Verbose, $"Exporting data from {t.Owner + "." + t.Name} (table {++index} of {DataTables.Count})...");
-				var filePathAndName = dataDir + "/" + MakeFileName(t) + ".tsv";
+				var filePathAndName = dataDir + "/" + MakeFileName(t) + ImportExportHandler.FileExtension;
 				var sw = File.CreateText(filePathAndName);
-				t.ExportData(Connection, sw, tableHint);
+                ImportExportHandler.ExportData(t, Connection, sw, tableHint);
 
 				sw.Flush();
 				if (sw.BaseStream.Length == 0) {
@@ -1359,7 +1361,7 @@ where name = @dbname
 			log(TraceLevel.Verbose, "Database schema loaded.");
 			log(TraceLevel.Info, "Importing data...");
 
-			foreach (var f in Directory.GetFiles(dataDir)) {
+			foreach (var f in Directory.GetFiles(dataDir, "*" + ImportExportHandler.FileExtension)) {
 				var fi = new FileInfo(f);
 				var schema = "dbo";
 				var table = Path.GetFileNameWithoutExtension(fi.Name);
@@ -1374,7 +1376,7 @@ where name = @dbname
 				}
 				try {
 					log(TraceLevel.Verbose, $"Importing data for table {schema}.{table}...");
-					t.ImportData(Connection, fi.FullName);
+                    ImportExportHandler.ImportData(t, Connection, fi.FullName);
 				} catch (SqlBatchException ex) {
 					throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 				} catch (Exception ex) {

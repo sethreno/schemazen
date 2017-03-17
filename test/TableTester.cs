@@ -10,7 +10,9 @@ using SchemaZen.Library.Models;
 namespace SchemaZen.Tests {
 	[TestFixture]
 	public class TableTester {
-		private List<List<string>> TabDataToList(string data) {
+        private readonly IDataImportExportHandler _importExportHandler = new TsvDataImportExportHandler();
+
+        private List<List<string>> TabDataToList(string data) {
 			var lines = new List<List<string>>();
 			foreach (var line in data.Split('\t')) {
 				lines.Add(new List<string>());
@@ -115,10 +117,9 @@ namespace SchemaZen.Tests {
 			writer.Write(dataIn);
 			writer.Flush();
 			writer.Close();
-
-			t.ImportData(conn, filename);
+            _importExportHandler.ImportData(t, conn, filename);
 			var sw = new StringWriter();
-			t.ExportData(conn, sw);
+            _importExportHandler.ExportData(t, conn, sw);
 			Assert.AreEqual(dataIn, sw.ToString());
 
 			File.Delete(filename);
@@ -156,9 +157,9 @@ namespace SchemaZen.Tests {
 			writer.Close();
 
 			try {
-				t.ImportData(conn, filename);
+                _importExportHandler.ImportData(t, conn, filename);
 				var sw = new StringWriter();
-				t.ExportData(conn, sw);
+                _importExportHandler.ExportData(t, conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
@@ -193,9 +194,9 @@ namespace SchemaZen.Tests {
 			writer.Close();
 
 			try {
-				t.ImportData(conn, filename);
+                _importExportHandler.ImportData(t, conn, filename);
 				var sw = new StringWriter();
-				t.ExportData(conn, sw);
+                _importExportHandler.ExportData(t, conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
@@ -233,9 +234,9 @@ namespace SchemaZen.Tests {
 			writer.Close();
 
 			try {
-				t.ImportData(conn, filename);
+                _importExportHandler.ImportData(t, conn, filename);
 				var sw = new StringWriter();
-				t.ExportData(conn, sw);
+                _importExportHandler.ExportData(t, conn, sw);
 				Assert.AreEqual(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
@@ -267,7 +268,7 @@ namespace SchemaZen.Tests {
 			var writer = File.CreateText(filename);
 			StringBuilder sb = new StringBuilder();
 
-			for (var i = 0; i < Table.RowsInBatch * 4.2; i++) {
+			for (var i = 0; i < AbstractDataImportExportHandler.RowsInBatch * 4.2; i++) {
 				sb.AppendLine(i.ToString());
 				writer.WriteLine(i.ToString());
 			}
@@ -279,9 +280,9 @@ namespace SchemaZen.Tests {
 			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
 			try {
-				t.ImportData(conn, filename);
+                _importExportHandler.ImportData(t, conn, filename);
 				var sw = new StringWriter();
-				t.ExportData(conn, sw);
+                _importExportHandler.ExportData(t, conn, sw);
 
 				Assert.AreEqual(dataIn, sw.ToString());
 			} finally {
