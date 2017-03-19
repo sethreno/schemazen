@@ -330,11 +330,12 @@ namespace SchemaZen.Tests {
 		}
 
 		[Test]
-		[ExpectedException(typeof(NotSupportedException))]
 		public void TestScriptNonSupportedColumn() {
 			var t = new Table("dbo", "bla");
 			t.Columns.Add(new Column("a", "madeuptype", true, null));
-			t.ScriptCreate();
-		}
+            // To avoid [ExpectedException(typeof(NotSupportedException))] attribute with NUnit3
+            // see please http://techstruggle.net/how-to-resolve-the-expectedexception-compile-error-within-nunit-3/
+            Assert.Throws<NotSupportedException>(() => t.ScriptCreate());
+        }
 	}
 }
