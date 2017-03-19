@@ -89,11 +89,21 @@
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
-    <None Include="test_schemas\BOP_QUOTE.sql" />
-    <None Include="test_schemas\BOP_QUOTE_2.sql" />
-    <None Include="test_schemas\DFS_QUOTE.sql" />
-    <None Include="test_schemas\IMS_QUOTE.sql" />
-    <None Include="test_schemas\SANDBOX3_GBL.SQL" />
+    <None Include="test_schemas\BOP_QUOTE.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="test_schemas\BOP_QUOTE_2.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="test_schemas\DFS_QUOTE.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="test_schemas\IMS_QUOTE.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="test_schemas\SANDBOX3_GBL.SQL">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ConfigHelper.cs" />
@@ -130,7 +140,9 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="test_schemas\FK_REFS_NON_PK_COL.sql" />
+    <Content Include="test_schemas\FK_REFS_NON_PK_COL.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
