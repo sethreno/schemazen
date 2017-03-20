@@ -75,9 +75,6 @@ namespace SchemaZen.Library
                         {
                             if (reader.TokenType == JsonToken.PropertyName) {
                                 var propertyName = (string) reader.Value;
-                                if (propertyName == "factor") {
-                                    Console.WriteLine();
-                                }
                                 if (reader.Read()) {
                                     row[propertyName] = reader.Value ?? DBNull.Value;
                                 }
