@@ -10,6 +10,7 @@ namespace SchemaZen.Library
     public class JsonDataImportExportHandler : AbstractDataImportExportHandler
     {
         public override string FileExtension => ".json";
+        private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
 
         protected override void ExportData(SqlDataReader dr, Column[] cols, TextWriter data)
         {
@@ -38,12 +39,14 @@ namespace SchemaZen.Library
             writer.CloseOutput = false;
             writer.Indentation = 0;
             writer.Formatting = Formatting.Indented;
+            writer.DateFormatString = DateTimeFormat;
         }
 
 
         private static void Configure(JsonTextReader reader)
         {
             reader.FloatParseHandling = FloatParseHandling.Decimal;
+            reader.DateFormatString = DateTimeFormat;
         }
 
         protected override void ImportData(DataTable dt, Column[] cols, SqlBulkCopy bulk, string filename)
