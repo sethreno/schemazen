@@ -10,7 +10,7 @@ namespace SchemaZen.Library
     public class JsonDataImportExportHandler : AbstractDataImportExportHandler
     {
         public override string FileExtension => ".json";
-        private const string DateTimeFormat = "yyyy-MM-ddTHH:mm:ss.FFFFFFF";
+        private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
 
         protected override void ExportData(SqlDataReader dr, Column[] cols, TextWriter data)
         {
