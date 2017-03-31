@@ -142,7 +142,8 @@ namespace SchemaZen.Library.Models {
 				case "bit":
 					return typeof(bool);
 				case "datetime":
-				case "smalldatetime":
+                case "datetime2":
+                case "smalldatetime":
 					return typeof(DateTime);
 				case "int":
 					return typeof(int);
