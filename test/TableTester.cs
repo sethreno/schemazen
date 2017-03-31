@@ -172,7 +172,8 @@ namespace SchemaZen.Tests {
 			var t = new Table("dbo", "Dummy");
 			t.Columns.Add(new Column("id", "int", false, null));
 			t.Columns.Add(new Column("createdTime", "datetime", false, null));
-			t.Columns.Find("id").Identity = new Identity(1, 1);
+            t.Columns.Add(new Column("modifiedTime", "datetime2", false, null));
+            t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
 			var conn = TestHelper.GetConnString("TESTDB");
@@ -182,9 +183,9 @@ namespace SchemaZen.Tests {
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
 			var dataIn =
-				@"1	2017-02-21 11:20:30.1
-2	2017-02-22 11:20:30.12
-3	2017-02-23 11:20:30.123
+                @"1	2017-02-21 11:20:30.1	2017-02-21 11:20:30.1
+2	2017-02-22 11:20:30.12	2017-02-22 11:20:30.12
+3	2017-02-23 11:20:30.123	2017-02-23 11:20:30.123
 ";
 			var filename = Path.GetTempFileName();
 
@@ -299,7 +300,8 @@ namespace SchemaZen.Tests {
 			t.Columns.Add(new Column("c", "bit", false, null));
 			t.Columns.Add(new Column("d", "char", 10, false, null));
 			t.Columns.Add(new Column("e", "datetime", false, null));
-			t.Columns.Add(new Column("f", "decimal", 18, 0, false, null));
+            t.Columns.Add(new Column("e2", "datetime2", false, null));
+            t.Columns.Add(new Column("f", "decimal", 18, 0, false, null));
 			t.Columns.Add(new Column("g", "float", false, null));
 			t.Columns.Add(new Column("h", "image", false, null));
 			t.Columns.Add(new Column("i", "int", false, null));

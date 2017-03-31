@@ -76,11 +76,11 @@ namespace SchemaZen.Tests {
 			var fk = new ForeignKey(t2, "fk_ABCDEF", "c3,c2", t1, "c1,c2");
 			fk.IsSystemNamed = true;
 
-			var db = new Database("TESTDB");
+			var db = new Database("TESTDB2");
 			db.Tables.Add(t1);
 			db.Tables.Add(t2);
 			db.ForeignKeys.Add(fk);
-			db.Connection = TestHelper.GetConnString("TESTDB");
+			db.Connection = TestHelper.GetConnString("TESTDB2");
 			db.ExecCreate(true);
 			db.Load();
 
