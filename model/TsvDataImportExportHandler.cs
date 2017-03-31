@@ -117,6 +117,7 @@ namespace SchemaZen.Library {
                     if (val == "1") val = "True";
                     return bool.Parse(val);
                 case "datetime":
+                case "datetime2":
                 case "smalldatetime":
                     return DateTime.Parse(val, CultureInfo.InvariantCulture);
                 case "int":
