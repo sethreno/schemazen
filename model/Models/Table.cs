@@ -289,6 +289,10 @@ end
 					return DateTime.Parse(val, CultureInfo.InvariantCulture);
 				case "int":
 					return int.Parse(val);
+				case "float":
+					return Double.Parse(val, CultureInfo.InvariantCulture);
+				case "decimal":
+					return Decimal.Parse(val, CultureInfo.InvariantCulture);	
 				case "uniqueidentifier":
 					return new Guid(val);
 				case "binary":
