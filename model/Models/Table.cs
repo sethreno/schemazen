@@ -185,6 +185,8 @@ end
 									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
 								else if (dr[c.Name] is DateTime)
 									data.Write(((DateTime)dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
+								else if (dr[c.Name] is float || dr[c.Name] is Double || dr[c.Name] is Decimal)
+									data.Write(Convert.ToString(dr[c.Name],CultureInfo.InvariantCulture));
 								else
 									data.Write(dr[c.Name].ToString()
 										.Replace(_tab, _escapeTab)
