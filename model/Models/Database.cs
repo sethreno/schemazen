@@ -403,7 +403,6 @@ BEGIN
 		,dp.permission_name
 		,dp.class
 
-	SET @roleDesc = ''
 	select @roleDesc = @roleDesc + script from #ScriptTempTable
 
 	UPDATE #ScriptedRoles
