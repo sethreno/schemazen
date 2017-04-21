@@ -1,5 +1,6 @@
 ﻿using ManyConsole;
 using NDesk.Options;
+using System;
 
 namespace SchemaZen.console {
 	public abstract class BaseCommand : ConsoleCommand {
@@ -29,6 +30,10 @@ namespace SchemaZen.console {
 				"f|databaseFilesPath=",
 				"Path to database data and log files.",
 				o => DatabaseFilesPath = o);
+			HasOption(
+                "t|timeout=",
+                "SQL request timeout in seconds (default: 30s).",
+                o => Timeout = Convert.ToInt32(o));
 		}
 
 		protected string Server { get; set; }
@@ -40,5 +45,6 @@ namespace SchemaZen.console {
 		protected bool Overwrite { get; set; }
 		protected bool Verbose { get; set; }
 		protected string DatabaseFilesPath { get; set; }
+		protected int Timeout { get; set; }
 	}
 }

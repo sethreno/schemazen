@@ -158,7 +158,7 @@ end
 		}
 
 
-		public void ExportData(string conn, TextWriter data, string tableHint = null) {
+		public void ExportData(string conn, int Timeout, TextWriter data, string tableHint = null) {
 			if (IsType)
 				throw new InvalidOperationException();
 
@@ -175,6 +175,7 @@ end
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
+					cm.CommandTimeout = Timeout;
 					cm.CommandText = sql.ToString();
 					using (var dr = cm.ExecuteReader()) {
 						while (dr.Read()) {

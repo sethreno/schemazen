@@ -17,7 +17,7 @@ namespace SchemaZen.Library.Command {
 			var db = CreateDatabase(filteredTypes);
 
 			Logger.Log(TraceLevel.Verbose, "Loading database schema...");
-			db.Load();
+			db.Load(Timeout);
 			Logger.Log(TraceLevel.Verbose, "Database schema loaded.");
 
 			foreach (var nameAndSchema in namesAndSchemas) {
@@ -31,7 +31,7 @@ namespace SchemaZen.Library.Command {
 				}
 			}
 
-			db.ScriptToDir(tableHint, Logger.Log);
+			db.ScriptToDir(Timeout, tableHint, Logger.Log);
 
 			Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Snapshot successfully created at {db.Dir}");
 			var routinesWithWarnings = db.Routines.Select(r => new {

@@ -13,6 +13,7 @@ namespace SchemaZen.Library.Command {
 		public string ScriptDir { get; set; }
 		public ILogger Logger { get; set; }
 		public bool Overwrite { get; set; }
+		public int Timeout { get; set; } = 30;
 
 		public Database CreateDatabase(IList<string> filteredTypes = null) {
 			filteredTypes = filteredTypes ?? new List<string>();
@@ -31,6 +32,10 @@ namespace SchemaZen.Library.Command {
 			}
 			if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName)) {
 				throw new ArgumentException("You must provide a connection string, or a server and database name");
+			}
+
+			if(Timeout<0) {
+				throw new ArgumentException("You must provide a positive value for the timeout");
 			}
 
 			var builder = new SqlConnectionStringBuilder {
