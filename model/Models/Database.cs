@@ -216,17 +216,9 @@ namespace SchemaZen.Library.Models {
 
 		private void LoadRoles(SqlCommand cm) {
 			//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
+
+			//First read the Roles
 			cm.CommandText = @"
-CREATE TABLE #ScriptedRoles (
-	NAME NVARCHAR(255) NOT NULL
-	,script NVARCHAR(max)
-	)
-
-CREATE TABLE #ScriptTempTable (
-	script NVARCHAR(max)
-	)
-
-INSERT INTO #ScriptedRoles
 SELECT NAME
 	,NULL AS script
 FROM sys.database_principals
@@ -244,186 +236,159 @@ WHERE type = 'R'
 		,'db_securityadmin'
 		,'public'
 		)
-
-WHILE (
-		EXISTS (
-			SELECT 1
-			FROM #ScriptedRoles
-			WHERE script IS NULL
-			)
-		)
-BEGIN
-	DECLARE @RoleName VARCHAR(255)
-
-	SET @RoleName = (
-			SELECT TOP 1 NAME
-			FROM #ScriptedRoles
-			WHERE script IS NULL
-			)
-
-	-- Script out the Role
-	DECLARE @roleDesc VARCHAR(MAX)
-		,@crlf VARCHAR(2)
-
-	SET @crlf = CHAR(13) + CHAR(10)
-	SET @roleDesc = 'CREATE ROLE [' + @roleName + ']' + @crlf + 'GO' + @crlf + @crlf
-
-	DELETE FROM #ScriptTempTable
-
-	INSERT INTO #ScriptTempTable
-	SELECT CASE dp.STATE
-			WHEN 'D'
-				THEN 'DENY '
-			WHEN 'G'
-				THEN 'GRANT '
-			WHEN 'R'
-				THEN 'REVOKE '
-			WHEN 'W'
-				THEN 'GRANT '
-			END + dp.permission_name + ' ' + CASE dp.class
-			WHEN 0
-				THEN ''
-			WHEN 1
-				THEN --table or column subset on the table
-					CASE 
-						WHEN dp.major_id < 0
-							THEN + 'ON [sys].[' + OBJECT_NAME(dp.major_id) + '] '
-						ELSE + 'ON [' + (
-								SELECT SCHEMA_NAME(schema_id) + '].[' + NAME
-								FROM sys.objects
-								WHERE object_id = dp.major_id
-								) + -- optionally concatenate column names
-							CASE 
-								WHEN MAX(dp.minor_id) > 0
-									THEN '] ([' + REPLACE((
-												SELECT NAME + '], ['
-												FROM sys.columns
-												WHERE object_id = dp.major_id
-													AND column_id IN (
-														SELECT minor_id
-														FROM sys.database_permissions
-														WHERE major_id = dp.major_id
-															AND USER_NAME(grantee_principal_id) IN (@roleName)
-														)
-												FOR XML PATH('')
-												) --replace final square bracket pair
-											+ '])', ', []', '')
-								ELSE ']'
-								END + ' '
-						END
-			WHEN 3
-				THEN 'ON SCHEMA::[' + SCHEMA_NAME(dp.major_id) + '] '
-			WHEN 4
-				THEN 'ON ' + (
-						SELECT RIGHT(type_desc, 4) + '::[' + NAME
-						FROM sys.database_principals
-						WHERE principal_id = dp.major_id
-						) + '] '
-			WHEN 5
-				THEN 'ON ASSEMBLY::[' + (
-						SELECT NAME
-						FROM sys.assemblies
-						WHERE assembly_id = dp.major_id
-						) + '] '
-			WHEN 6
-				THEN 'ON TYPE::[' + (
-						SELECT NAME
-						FROM sys.types
-						WHERE user_type_id = dp.major_id
-						) + '] '
-			WHEN 10
-				THEN 'ON XML SCHEMA COLLECTION::[' + (
-						SELECT SCHEMA_NAME(schema_id) + '.' + NAME
-						FROM sys.xml_schema_collections
-						WHERE xml_collection_id = dp.major_id
-						) + '] '
-			WHEN 15
-				THEN 'ON MESSAGE TYPE::[' + (
-						SELECT NAME
-						FROM sys.service_message_types
-						WHERE message_type_id = dp.major_id
-						) + '] '
-			WHEN 16
-				THEN 'ON CONTRACT::[' + (
-						SELECT NAME
-						FROM sys.service_contracts
-						WHERE service_contract_id = dp.major_id
-						) + '] '
-			WHEN 17
-				THEN 'ON SERVICE::[' + (
-						SELECT NAME
-						FROM sys.services
-						WHERE service_id = dp.major_id
-						) + '] '
-			WHEN 18
-				THEN 'ON REMOTE SERVICE BINDING::[' + (
-						SELECT NAME
-						FROM sys.remote_service_bindings
-						WHERE remote_service_binding_id = dp.major_id
-						) + '] '
-			WHEN 19
-				THEN 'ON ROUTE::[' + (
-						SELECT NAME
-						FROM sys.routes
-						WHERE route_id = dp.major_id
-						) + '] '
-			WHEN 23
-				THEN 'ON FULLTEXT CATALOG::[' + (
-						SELECT NAME
-						FROM sys.fulltext_catalogs
-						WHERE fulltext_catalog_id = dp.major_id
-						) + '] '
-			WHEN 24
-				THEN 'ON SYMMETRIC KEY::[' + (
-						SELECT NAME
-						FROM sys.symmetric_keys
-						WHERE symmetric_key_id = dp.major_id
-						) + '] '
-			WHEN 25
-				THEN 'ON CERTIFICATE::[' + (
-						SELECT NAME
-						FROM sys.certificates
-						WHERE certificate_id = dp.major_id
-						) + '] '
-			WHEN 26
-				THEN 'ON ASYMMETRIC KEY::[' + (
-						SELECT NAME
-						FROM sys.asymmetric_keys
-						WHERE asymmetric_key_id = dp.major_id
-						) + '] '
-			END COLLATE SQL_Latin1_General_CP1_CI_AS + 'TO [' + @roleName + ']' + CASE dp.STATE
-			WHEN 'W'
-				THEN ' WITH GRANT OPTION'
-			ELSE ''
-			END + @crlf
-	FROM sys.database_permissions dp
-	WHERE USER_NAME(dp.grantee_principal_id) IN (@roleName)
-	GROUP BY dp.STATE
-		,dp.major_id
-		,dp.permission_name
-		,dp.class
-
-	select @roleDesc = @roleDesc + script from #ScriptTempTable
-
-	UPDATE #ScriptedRoles
-	SET script = @roleDesc
-	WHERE NAME = @RoleName
-END
-
-SELECT NAME
-	,script
-FROM #ScriptedRoles
 ";
-			Role r = null;
+			
+			List<Role> roles = new List<Role>();
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					r = new Role {
-						Name = (string)dr["name"],
-						Script = (string)dr["script"]
-					};
-					Roles.Add(r);
+					roles.Add(new Role((string)dr["name"]));
 				}
 			}
+
+			//Now for each role get the permissions
+			foreach (var role in roles) {
+
+				cm.CommandText = $@"
+SELECT CASE dp.STATE
+		WHEN 'D'
+			THEN 'DENY '
+		WHEN 'G'
+			THEN 'GRANT '
+		WHEN 'R'
+			THEN 'REVOKE '
+		WHEN 'W'
+			THEN 'GRANT '
+		END + dp.permission_name + ' ' + CASE dp.class
+		WHEN 0
+			THEN ''
+		WHEN 1
+			THEN --table or column subset on the table
+				CASE 
+					WHEN dp.major_id < 0
+						THEN + 'ON [sys].[' + OBJECT_NAME(dp.major_id) + '] '
+					ELSE + 'ON [' + (
+							SELECT SCHEMA_NAME(schema_id) + '].[' + NAME
+							FROM sys.objects
+							WHERE object_id = dp.major_id
+							) + -- optionally concatenate column names
+						CASE 
+							WHEN MAX(dp.minor_id) > 0
+								THEN '] ([' + REPLACE((
+											SELECT NAME + '], ['
+											FROM sys.columns
+											WHERE object_id = dp.major_id
+												AND column_id IN (
+													SELECT minor_id
+													FROM sys.database_permissions
+													WHERE major_id = dp.major_id
+														AND USER_NAME(grantee_principal_id) IN ('{role.Name}')
+													)
+											FOR XML PATH('')
+											) --replace final square bracket pair
+										+ '])', ', []', '')
+							ELSE ']'
+							END + ' '
+					END
+		WHEN 3
+			THEN 'ON SCHEMA::[' + SCHEMA_NAME(dp.major_id) + '] '
+		WHEN 4
+			THEN 'ON ' + (
+					SELECT RIGHT(type_desc, 4) + '::[' + NAME
+					FROM sys.database_principals
+					WHERE principal_id = dp.major_id
+					) + '] '
+		WHEN 5
+			THEN 'ON ASSEMBLY::[' + (
+					SELECT NAME
+					FROM sys.assemblies
+					WHERE assembly_id = dp.major_id
+					) + '] '
+		WHEN 6
+			THEN 'ON TYPE::[' + (
+					SELECT NAME
+					FROM sys.types
+					WHERE user_type_id = dp.major_id
+					) + '] '
+		WHEN 10
+			THEN 'ON XML SCHEMA COLLECTION::[' + (
+					SELECT SCHEMA_NAME(schema_id) + '.' + NAME
+					FROM sys.xml_schema_collections
+					WHERE xml_collection_id = dp.major_id
+					) + '] '
+		WHEN 15
+			THEN 'ON MESSAGE TYPE::[' + (
+					SELECT NAME
+					FROM sys.service_message_types
+					WHERE message_type_id = dp.major_id
+					) + '] '
+		WHEN 16
+			THEN 'ON CONTRACT::[' + (
+					SELECT NAME
+					FROM sys.service_contracts
+					WHERE service_contract_id = dp.major_id
+					) + '] '
+		WHEN 17
+			THEN 'ON SERVICE::[' + (
+					SELECT NAME
+					FROM sys.services
+					WHERE service_id = dp.major_id
+					) + '] '
+		WHEN 18
+			THEN 'ON REMOTE SERVICE BINDING::[' + (
+					SELECT NAME
+					FROM sys.remote_service_bindings
+					WHERE remote_service_binding_id = dp.major_id
+					) + '] '
+		WHEN 19
+			THEN 'ON ROUTE::[' + (
+					SELECT NAME
+					FROM sys.routes
+					WHERE route_id = dp.major_id
+					) + '] '
+		WHEN 23
+			THEN 'ON FULLTEXT CATALOG::[' + (
+					SELECT NAME
+					FROM sys.fulltext_catalogs
+					WHERE fulltext_catalog_id = dp.major_id
+					) + '] '
+		WHEN 24
+			THEN 'ON SYMMETRIC KEY::[' + (
+					SELECT NAME
+					FROM sys.symmetric_keys
+					WHERE symmetric_key_id = dp.major_id
+					) + '] '
+		WHEN 25
+			THEN 'ON CERTIFICATE::[' + (
+					SELECT NAME
+					FROM sys.certificates
+					WHERE certificate_id = dp.major_id
+					) + '] '
+		WHEN 26
+			THEN 'ON ASYMMETRIC KEY::[' + (
+					SELECT NAME
+					FROM sys.asymmetric_keys
+					WHERE asymmetric_key_id = dp.major_id
+					) + '] '
+		END COLLATE SQL_Latin1_General_CP1_CI_AS + 'TO [{role.Name}]' + CASE dp.STATE
+		WHEN 'W'
+			THEN ' WITH GRANT OPTION'
+		ELSE ''
+		END AS PERM
+FROM sys.database_permissions dp
+WHERE USER_NAME(dp.grantee_principal_id) IN ('{role.Name}')
+GROUP BY dp.STATE
+	,dp.major_id
+	,dp.permission_name
+	,dp.class
+";
+				using (var dr = cm.ExecuteReader()) {
+					while (dr.Read()) {
+						role.AddPermission((string)dr["PERM"]);
+					}
+				}
+				Roles.Add(role);
+			}	
+			
 		}
 
 		private void LoadUsersAndLogins(SqlCommand cm) {
