@@ -17,8 +17,8 @@ namespace SchemaZen.Library.Command {
 			var targetDb = new Database();
 			sourceDb.Connection = Source;
 			targetDb.Connection = Target;
-			sourceDb.Load();
-			targetDb.Load();
+			sourceDb.Load(Timeout);
+			targetDb.Load(Timeout);
 			var diff = sourceDb.Compare(targetDb);
 			if (diff.IsDiff) {
 				Console.WriteLine("Databases are different.");

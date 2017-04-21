@@ -159,7 +159,7 @@ namespace SchemaZen.Library.Models {
 
 		#region Load
 
-		public void Load(int Timeout=30) {
+		public void Load(int Timeout = 30) {
 			Tables.Clear();
 			TableTypes.Clear();
 			Routines.Clear();
@@ -1305,7 +1305,7 @@ where name = @dbname
 
 		#region Script
 
-		public void ScriptToDir(int Timeout, string tableHint = null, Action<TraceLevel, string> log = null) {
+		public void ScriptToDir(int timeout = 30, string tableHint = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
 			if (Directory.Exists(Dir)) {
@@ -1338,7 +1338,7 @@ where name = @dbname
 			WriteScriptDir("users", Users.ToArray(), log);
 			WriteScriptDir("synonyms", Synonyms.ToArray(), log);
 
-			ExportData(Timeout, tableHint, log);
+			ExportData(timeout, tableHint, log);
 		}
 
 		private void WritePropsScript(Action<TraceLevel, string> log) {
@@ -1415,7 +1415,7 @@ where name = @dbname
 				log?.Invoke(TraceLevel.Verbose, $"Exporting data from {t.Owner + "." + t.Name} (table {++index} of {DataTables.Count})...");
 				var filePathAndName = dataDir + "/" + MakeFileName(t) + ".tsv";
 				var sw = File.CreateText(filePathAndName);
-				t.ExportData(Connection, Timeout, sw, tableHint);
+				t.ExportData(Connection, sw, Timeout, tableHint);
 
 				sw.Flush();
 				if (sw.BaseStream.Length == 0) {
@@ -1443,7 +1443,7 @@ where name = @dbname
 
 		#region Create
 
-		public void ImportData(Action<TraceLevel, string> log = null) {
+		public void ImportData(int Timeout, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
 			var dataDir = Dir + "\\data";
@@ -1453,7 +1453,7 @@ where name = @dbname
 			}
 
 			log(TraceLevel.Verbose, "Loading database schema...");
-			Load(); // load the schema first so we can import data
+			Load(Timeout); // load the schema first so we can import data
 			log(TraceLevel.Verbose, "Database schema loaded.");
 			log(TraceLevel.Info, "Importing data...");
 
@@ -1482,7 +1482,7 @@ where name = @dbname
 			log(TraceLevel.Info, "Data imported successfully.");
 		}
 
-		public void CreateFromDir(bool overwrite, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
+		public void CreateFromDir(bool overwrite, int timeout = 30, string databaseFilesPath = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
 
 			if (DBHelper.DbExists(Connection)) {
@@ -1549,7 +1549,7 @@ where name = @dbname
 				log(TraceLevel.Info, errors.Any() ? $"{prevCount} errors unresolved. Details will follow later." : "All errors resolved, were probably dependency issues...");
 			log(TraceLevel.Info, string.Empty);
 
-			ImportData(log); // load data
+			ImportData(timeout, log); // load data
 
 			if (Directory.Exists(Dir + "/after_data")) {
 				log(TraceLevel.Verbose, "Executing after-data scripts...");

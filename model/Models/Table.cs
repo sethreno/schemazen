@@ -158,7 +158,7 @@ end
 		}
 
 
-		public void ExportData(string conn, int Timeout, TextWriter data, string tableHint = null) {
+		public void ExportData(string conn, TextWriter data, int Timeout = 30, string tableHint = null) {
 			if (IsType)
 				throw new InvalidOperationException();
 

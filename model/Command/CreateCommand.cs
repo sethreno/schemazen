@@ -16,7 +16,7 @@ namespace SchemaZen.Library.Command {
 				throw new InvalidOperationException(msg);
 			}
 
-			db.CreateFromDir(Overwrite, databaseFilesPath, Logger.Log);
+			db.CreateFromDir(Overwrite, Timeout, databaseFilesPath, Logger.Log);
 			Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Database created successfully.");
 		}
 	}
