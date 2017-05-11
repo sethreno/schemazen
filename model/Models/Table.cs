@@ -212,7 +212,7 @@ end
 
 			var linenumber = 0;
 			var batch_rows = 0;
-			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock)) {
+			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.KeepNulls | SqlBulkCopyOptions.TableLock)) {
 				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 					bulk.ColumnMappings.Add(colName, colName);
 				bulk.DestinationTableName = $"[{Owner}].[{Name}]";
