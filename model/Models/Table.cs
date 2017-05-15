@@ -172,6 +172,9 @@ end
 			sql.Append($" from [{Owner}].[{Name}]");
 			if (!string.IsNullOrEmpty(tableHint))
 				sql.Append($" WITH ({tableHint})");
+
+			AppendOrderBy(sql, cols);
+
 			using (var cn = new SqlConnection(conn)) {
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
@@ -298,6 +301,30 @@ end
 				default:
 					return val;
 			}
+		}
+
+		private void AppendOrderBy(StringBuilder sql, IEnumerable<Column> cols)
+		{
+			sql.Append(" ORDER BY ");
+
+			if (PrimaryKey != null)
+			{
+				var pkColumns = PrimaryKey.Columns.Select(c => $"[{c.ColumnName}]");
+				sql.Append(string.Join(",", pkColumns.ToArray()));
+				return;
+			}
+
+			var uk = Constraints.Where(c => c.Unique).OrderBy(c => c.Columns.Count).ThenBy(c => c.Name).FirstOrDefault();
+
+			if (uk != null)
+			{
+				var ukColumns = uk.Columns.Select(c => $"[{c.ColumnName}]");
+				sql.Append(string.Join(",", ukColumns.ToArray()));
+				return;
+			}
+
+			var allColumns = cols.Select(c => $"[{c.Name}]");
+			sql.Append(string.Join(",", allColumns.ToArray()));
 		}
 	}
 
