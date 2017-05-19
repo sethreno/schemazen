@@ -12,24 +12,28 @@ namespace SchemaZen.Library
         public override string FileExtension => ".json";
         private const string DateTimeFormat = "yyyy-MM-dd HH:mm:ss.FFFFFFF";
 
-        protected override void ExportData(SqlDataReader dr, Column[] cols, TextWriter data)
-        {
+        protected override void ExportData(SqlDataReader dr, Column[] cols, TextWriter data) {
             using (var writer = new JsonTextWriter(data)) {
                 Configure(writer);
 
-                writer.WriteStartArray();
+	            var hasData = dr.Read();
 
-                while (dr.Read())
-                {
-                    writer.WriteStartObject();
+	            if (!hasData) {
+		            return;
+	            }
 
-                    foreach (var c in cols)
-                    {
-                        writer.WritePropertyName(c.Name);
-                        writer.WriteValue(dr[c.Name]);
-                    }
-                    writer.WriteEndObject();
-                }
+	            writer.WriteStartArray();
+
+	            do {
+		            writer.WriteStartObject();
+
+		            foreach (var c in cols) {
+			            writer.WritePropertyName(c.Name);
+			            writer.WriteValue(dr[c.Name]);
+		            }
+		            writer.WriteEndObject();
+	            } while (dr.Read());
+
                 writer.WriteEndArray();
             }
         }
