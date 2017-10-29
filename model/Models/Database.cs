@@ -834,11 +834,13 @@ order by fk.name, fkc.constraint_column_id
 		private void LoadTables(SqlCommand cm) {
 			//get tables
 			cm.CommandText = @"
-				select 
-					TABLE_SCHEMA, 
-					TABLE_NAME 
-				from INFORMATION_SCHEMA.TABLES
-				where TABLE_TYPE = 'BASE TABLE'";
+                SELECT 
+                SCHEMA_NAME(schema_id) as TABLE_SCHEMA,
+                name as TABLE_NAME
+                ,create_date
+                ,modify_date
+                from sys.tables
+                where type_desc='USER_TABLE'";
 			using (var dr = cm.ExecuteReader()) {
 				LoadTablesBase(dr, false, Tables);
 			}
@@ -898,7 +900,7 @@ order by fk.name, fkc.constraint_column_id
 
 		private static void LoadTablesBase(SqlDataReader dr, bool areTableTypes, List<Table> tables) {
 			while (dr.Read()) {
-				tables.Add(new Table((string)dr["TABLE_SCHEMA"], (string)dr["TABLE_NAME"]) { IsType = areTableTypes });
+				tables.Add(new Table((string)dr["TABLE_SCHEMA"], (string)dr["TABLE_NAME"], (DateTime)dr["CREATE_DATE"], (DateTime)dr["MODIFY_DATE"]) { IsType = areTableTypes });
 			}
 		}
 
@@ -1274,6 +1276,12 @@ where name = @dbname
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
 				var script = o.ScriptCreate() + "\r\nGO\r\n";
 				File.AppendAllText(filePath, script);
+                if (o is Table)
+                {
+                    File.SetCreationTime(filePath, (o as Table).Create_Date);
+                    File.SetLastWriteTime(filePath, (o as Table).Modify_Date);
+
+                }
 			}
 		}
 

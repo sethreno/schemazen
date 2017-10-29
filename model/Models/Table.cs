@@ -12,7 +12,7 @@ namespace SchemaZen.Library.Models {
 	public class Schema : INameable, IHasOwner, IScriptable {
 		public string Name { get; set; }
 		public string Owner { get; set; }
-
+        
 		public Schema(string name, string owner) {
 			Owner = owner;
 			Name = name;
@@ -45,14 +45,24 @@ end
 		private readonly List<Constraint> _constraints = new List<Constraint>();
 		public string Name { get; set; }
 		public string Owner { get; set; }
+        public DateTime Create_Date { get; set; }
+        public DateTime Modify_Date { get; set; }
+
 		public bool IsType;
 
-		public Table(string owner, string name) {
+		public Table(string owner, string name,DateTime create_date,DateTime modify_date) {
 			Owner = owner;
 			Name = name;
+            Create_Date = create_date;
+            Modify_Date = modify_date;
 		}
+        public Table(string owner, string name)
+        {
+            Owner = owner;
+            Name = name;
+        }
 
-		public Constraint PrimaryKey {
+        public Constraint PrimaryKey {
 			get { return _constraints.FirstOrDefault(c => c.Type == "PRIMARY KEY"); }
 		}
 
