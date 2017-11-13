@@ -33,7 +33,11 @@ namespace SchemaZen.console {
 				"filterTypes=",
 				"A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
 				o => FilterTypes = o);
-		}
+            HasOption(
+                "oneFilePerObjectType=",
+                "Will generate a file for each object type if set to TRUE.",
+                o => OneFilePerObjectType = o);
+        }
 
 		private Logger _logger;
 		protected string DataTables { get; set; }
@@ -41,6 +45,7 @@ namespace SchemaZen.console {
 		protected string DataTablesPattern { get; set; }
 		protected string DataTablesExcludePattern { get; set; }
 		protected string TableHint { get; set; }
+        protected string OneFilePerObjectType { get; set; }
 
 		public override int Run(string[] args) {
 			_logger = new Logger(Verbose);
@@ -65,7 +70,7 @@ namespace SchemaZen.console {
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
-				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern, TableHint, filteredTypes);
+				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern, TableHint, filteredTypes, OneFilePerObjectType);
 			} catch (Exception ex) {
 				throw new ConsoleHelpAsException(ex.Message);
 			}

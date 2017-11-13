@@ -19,6 +19,10 @@ c:\somedir\
 	schemas.sql
 ```
 
+You can use Connection String too. Code below will result the same.
+
+    SchemaZen.exe script --connectionString "server=.;database=db;Integrated Security=true;" --scriptDir c:\somedir
+
 ### create
 
     SchemaZen.exe create --server localhost --database db --scriptDir c:\somedir
