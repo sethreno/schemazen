@@ -1207,7 +1207,7 @@ where name = @dbname
 
 		#region Script
 
-		public void ScriptToDir(string tableHint = null, Action<TraceLevel, string> log = null) {
+		public void ScriptToDir(string tableHint = null, Action<TraceLevel, string> log = null, bool oneFilePerObjectType=false) {
 			if (log == null) log = (tl, s) => { };
 
 			if (Directory.Exists(Dir)) {
@@ -1226,19 +1226,19 @@ where name = @dbname
 
 			WritePropsScript(log);
 			WriteSchemaScript(log);
-			WriteScriptDir("tables", Tables.ToArray(), log);
-			WriteScriptDir("table_types", TableTypes.ToArray(), log);
-			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
-			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x, ForeignKeyComparer.Instance).ToArray(), log);
+			WriteScriptDir("tables", Tables.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("table_types", TableTypes.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("foreign_keys", ForeignKeys.OrderBy(x => x, ForeignKeyComparer.Instance).ToArray(), log, oneFilePerObjectType);
 			foreach (var routineType in Routines.GroupBy(x => x.RoutineType)) {
 				var dir = routineType.Key.ToString().ToLower() + "s";
 				WriteScriptDir(dir, routineType.ToArray(), log);
 			}
-			WriteScriptDir("views", ViewIndexes.ToArray(), log);
-			WriteScriptDir("assemblies", Assemblies.ToArray(), log);
-			WriteScriptDir("roles", Roles.ToArray(), log);
-			WriteScriptDir("users", Users.ToArray(), log);
-			WriteScriptDir("synonyms", Synonyms.ToArray(), log);
+			WriteScriptDir("views", ViewIndexes.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("assemblies", Assemblies.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("roles", Roles.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("users", Users.ToArray(), log, oneFilePerObjectType);
+			WriteScriptDir("synonyms", Synonyms.ToArray(), log, oneFilePerObjectType);
 
 			ExportData(tableHint, log);
 		}
@@ -1263,17 +1263,20 @@ where name = @dbname
 			File.WriteAllText($"{Dir}/schemas.sql", text.ToString());
 		}
 
-		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log) {
+		private void WriteScriptDir(string name, ICollection<IScriptable> objects, Action<TraceLevel, string> log, bool oneFilePerObjectType = false) {
 			if (!objects.Any()) return;
 			if (!_dirs.Contains(name)) return;
-			var dir = Path.Combine(Dir, name);
-			Directory.CreateDirectory(dir);
+
+            string dir = !oneFilePerObjectType ? Path.Combine(Dir, name) : Dir;
+            Directory.CreateDirectory(dir);
+		
 			var index = 0;
 			foreach (var o in objects) {
 				log(TraceLevel.Verbose, $"Scripting {name} {++index} of {objects.Count}...{(index < objects.Count ? "\r" : string.Empty)}");
-				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
-				var script = o.ScriptCreate() + "\r\nGO\r\n";
-				File.AppendAllText(filePath, script);
+                string filename = oneFilePerObjectType ? name : MakeFileName(o);
+                var filePath = Path.Combine(dir, filename + ".sql");
+                var script = o.ScriptCreate() + "\r\nGO\r\n";
+                File.AppendAllText(filePath, script);
 			}
 		}
 
