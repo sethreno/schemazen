@@ -7,7 +7,7 @@ using System.Linq;
 namespace SchemaZen.Library.Command {
 	public class ScriptCommand : BaseCommand {
 
-		public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern, string dataTablesExcludePattern,
+		public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern, string dataTablesExcludePattern,int? rowLimit,
 			string tableHint, List<string> filteredTypes) {
 			if (!Overwrite && Directory.Exists(ScriptDir)) {
 				var message = $"{ScriptDir} already exists - you must set overwrite to true";
@@ -31,7 +31,7 @@ namespace SchemaZen.Library.Command {
 				}
 			}
 
-			db.ScriptToDir(tableHint, Logger.Log);
+			db.ScriptToDir(tableHint, Logger.Log,rowLimit);
 
 			Logger.Log(TraceLevel.Info, $"{Environment.NewLine}Snapshot successfully created at {db.Dir}");
 			var routinesWithWarnings = db.Routines.Select(r => new {

@@ -33,12 +33,17 @@ namespace SchemaZen.console {
 				"filterTypes=",
 				"A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
 				o => FilterTypes = o);
-		}
+            HasOption(
+                "rowLimit=",
+                "row amount limitation for each table that exports data",
+                o => RowLimit = Convert.ToInt32(o));
+        }
 
 		private Logger _logger;
 		protected string DataTables { get; set; }
 		protected string FilterTypes { get; set; }
 		protected string DataTablesPattern { get; set; }
+        protected int? RowLimit { get; set; }
 		protected string DataTablesExcludePattern { get; set; }
 		protected string TableHint { get; set; }
 
@@ -65,7 +70,7 @@ namespace SchemaZen.console {
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
-				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern, TableHint, filteredTypes);
+				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern,RowLimit, TableHint, filteredTypes);
 			} catch (Exception ex) {
 				throw new ConsoleHelpAsException(ex.Message);
 			}

@@ -158,12 +158,16 @@ end
 		}
 
 
-		public void ExportData(string conn, TextWriter data, string tableHint = null) {
+		public void ExportData(string conn, TextWriter data,  string tableHint = null,int? rowLimit = null) {
 			if (IsType)
 				throw new InvalidOperationException();
 
 			var sql = new StringBuilder();
 			sql.Append("select ");
+            if (rowLimit.HasValue)
+            {
+                sql.Append(" top " + rowLimit.Value + " ");
+            }
 			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
 			foreach (var c in cols) {
 				sql.Append($"[{c.Name}],");
