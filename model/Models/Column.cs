@@ -97,7 +97,8 @@ namespace SchemaZen.Library.Models {
 				case "tinyint":
 				case "uniqueidentifier":
 				case "geography":
-				case "xml":
+                case "geometry":
+                case "xml":
 				case "sysname":
 					val.Append($" {IsNullableText}");
 					if (includeDefaultConstraint) val.Append(DefaultText);
