@@ -66,7 +66,10 @@ namespace SchemaZen.console {
 				Overwrite = Overwrite
 			};
 
-			var filteredTypes = HandleFilteredTypes() ?? HandleOnlyTypes();
+			var filteredTypes = HandleFilteredTypes();
+			if (!filteredTypes.Any()) {
+				filteredTypes = HandleOnlyTypes();
+			}
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
