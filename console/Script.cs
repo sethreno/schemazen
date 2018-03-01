@@ -33,11 +33,16 @@ namespace SchemaZen.console {
 				"filterTypes=",
 				"A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
 				o => FilterTypes = o);
+			HasOption(
+				"onlyTypes=",
+				"A comma separated list of the types that will only be scripted. Valid types: " + Database.ValidTypes,
+				o => OnlyTypes = o);
 		}
 
 		private Logger _logger;
 		protected string DataTables { get; set; }
 		protected string FilterTypes { get; set; }
+		protected string OnlyTypes { get; set; }
 		protected string DataTablesPattern { get; set; }
 		protected string DataTablesExcludePattern { get; set; }
 		protected string TableHint { get; set; }
@@ -61,7 +66,7 @@ namespace SchemaZen.console {
 				Overwrite = Overwrite
 			};
 
-			var filteredTypes = HandleFilteredTypes();
+			var filteredTypes = HandleFilteredTypes() ?? HandleOnlyTypes();
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
@@ -88,6 +93,24 @@ namespace SchemaZen.console {
 			}
 
 			return filteredTypes;
+		}
+
+		private List<string> HandleOnlyTypes() {
+			var onlyTypes = OnlyTypes?.Split(',').ToList() ?? new List<string>(Database.Dirs);
+
+			var anyInvalidType = false;
+			foreach (var onlyType in onlyTypes) {
+				if (!Database.Dirs.Contains(onlyType)) {
+					_logger.Log(TraceLevel.Warning, $"{onlyType} is not a valid type.");
+					anyInvalidType = true;
+				}
+			}
+
+			if (anyInvalidType) {
+				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
+			}
+
+			return Database.Dirs.Except(onlyTypes);
 		}
 
 		private Dictionary<string, string> HandleDataTables(string tableNames) {
