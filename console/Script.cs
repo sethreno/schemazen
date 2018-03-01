@@ -110,7 +110,7 @@ namespace SchemaZen.console {
 				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
 			}
 
-			return Database.Dirs.Except(onlyTypes);
+			return Database.Dirs.Except(onlyTypes).ToList();
 		}
 
 		private Dictionary<string, string> HandleDataTables(string tableNames) {
