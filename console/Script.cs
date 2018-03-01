@@ -67,9 +67,6 @@ namespace SchemaZen.console {
 			};
 
 			var filteredTypes = HandleFilteredTypes();
-			if (!filteredTypes.Any()) {
-				filteredTypes = HandleOnlyTypes();
-			}
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
@@ -81,39 +78,24 @@ namespace SchemaZen.console {
 		}
 
 		private List<string> HandleFilteredTypes() {
-			var filteredTypes = FilterTypes?.Split(',').ToList() ?? new List<string>();
+			var removeTypes = FilterTypes?.Split(',').ToList() ?? new List<string>();
+			var keepTypes = OnlyTypes?.Split(',').ToList() ?? new List<string>(Database.Dirs);
 
-			var anyInvalidType = false;
-			foreach (var filterType in filteredTypes) {
-				if (!Database.Dirs.Contains(filterType)) {
-					_logger.Log(TraceLevel.Warning, $"{filterType} is not a valid type.");
-					anyInvalidType = true;
-				}
+			var invalidTypes = removeTypes.Union(keepTypes).Except(Database.Dirs).ToList();
+			if (invalidTypes.Any()) {
+				var msg = invalidTypes.Count() > 1 ? " are not valid types." : " is not a valid type.";
+				_logger.Log(TraceLevel.Warning, String.Join(", ", invalidTypes.ToArray()) + msg);
+				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
 			}
 
-			if (anyInvalidType) {
-				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
+			var filteredTypes = new List<string>();
+			foreach (var dir in Database.Dirs) {
+				if (removeTypes.Contains(dir) || !keepTypes.Contains(dir)) {
+					filteredTypes.Add(dir);
+				}
 			}
 
 			return filteredTypes;
-		}
-
-		private List<string> HandleOnlyTypes() {
-			var onlyTypes = OnlyTypes?.Split(',').ToList() ?? new List<string>(Database.Dirs);
-
-			var anyInvalidType = false;
-			foreach (var onlyType in onlyTypes) {
-				if (!Database.Dirs.Contains(onlyType)) {
-					_logger.Log(TraceLevel.Warning, $"{onlyType} is not a valid type.");
-					anyInvalidType = true;
-				}
-			}
-
-			if (anyInvalidType) {
-				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
-			}
-
-			return Database.Dirs.Except(onlyTypes).ToList();
 		}
 
 		private Dictionary<string, string> HandleDataTables(string tableNames) {
