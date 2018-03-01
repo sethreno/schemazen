@@ -88,14 +88,7 @@ namespace SchemaZen.console {
 				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
 			}
 
-			var filteredTypes = new List<string>();
-			foreach (var dir in Database.Dirs) {
-				if (removeTypes.Contains(dir) || !keepTypes.Contains(dir)) {
-					filteredTypes.Add(dir);
-				}
-			}
-
-			return filteredTypes;
+			return Database.Dirs.Except(keepTypes.Except(removeTypes)).ToList();
 		}
 
 		private Dictionary<string, string> HandleDataTables(string tableNames) {
