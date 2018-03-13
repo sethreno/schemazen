@@ -1,7 +1,9 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Types;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
+using System.Data.SqlTypes;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -299,6 +301,10 @@ end
 				case "varbinary":
 				case "image":
 					return SoapHexBinary.Parse(val).Value;
+				case "geography":
+					return SqlGeography.STGeomFromText(new SqlChars(val), 4326);
+				case "geometry":
+					return SqlGeometry.STGeomFromText(new SqlChars(val), 4326);
 				default:
 					return val;
 			}

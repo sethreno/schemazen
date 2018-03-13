@@ -924,7 +924,7 @@ order by fk.name, fkc.constraint_column_id
 			// query schema for database properties
 			cm.CommandText = @"
 select
-	[compatibility_level],
+	'{80|90|100|110|120}' as compatibility_level,
 	[collation_name],
 	[is_auto_close_on],
 	[is_auto_shrink_on],
@@ -1361,6 +1361,9 @@ where name = @dbname
 
 			foreach (var f in Directory.GetFiles(dataDir)) {
 				var fi = new FileInfo(f);
+				if (fi.Name == "F_GD_S.tsv") {
+					int i = 0;
+				}
 				var schema = "dbo";
 				var table = Path.GetFileNameWithoutExtension(fi.Name);
 				if (table.Contains(".")) {

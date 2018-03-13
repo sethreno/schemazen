@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.SqlServer.Types;
+using System;
 using System.Text;
 
 namespace SchemaZen.Library.Models {
@@ -153,6 +154,10 @@ namespace SchemaZen.Library.Models {
 				case "varbinary":
 				case "image":
 					return typeof(byte[]);
+				case "geography":
+					return typeof(SqlGeography);
+				case "geometry":
+					return typeof(SqlGeometry);
 				default:
 					return typeof(string);
 			}
