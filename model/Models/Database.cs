@@ -924,7 +924,7 @@ order by fk.name, fkc.constraint_column_id
 			// query schema for database properties
 			cm.CommandText = @"
 select
-	'{80|90|100|110|120}' as compatibility_level,
+	[compatibility_level],
 	[collation_name],
 	[is_auto_close_on],
 	[is_auto_shrink_on],
