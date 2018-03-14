@@ -212,3 +212,4 @@ pip-log.txt
 
 #Mr Developer
 .mr.developer.cfg
+/.vs/SchemaZen/v15/Server/sqlite3
