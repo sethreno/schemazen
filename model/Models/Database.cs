@@ -159,7 +159,7 @@ namespace SchemaZen.Library.Models {
 
 		#region Load
 
-		public void Load() {
+		public void clear() {
 			Tables.Clear();
 			TableTypes.Clear();
 			Routines.Clear();
@@ -170,6 +170,9 @@ namespace SchemaZen.Library.Models {
 			Users.Clear();
 			Synonyms.Clear();
 			Roles.Clear();
+		}
+
+		public void Load() {
 
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
@@ -501,13 +504,16 @@ from #ScriptedRoles
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var constraint = Constraint.CreateCheckedConstraint(
-						(string)dr["CONSTRAINT_NAME"],
-						Convert.ToBoolean(dr["NotForReplication"]),
-						(string)dr["CHECK_CLAUSE"]
-						);
+					if (t != null)
+					{
+						var constraint = Constraint.CreateCheckedConstraint(
+							(string)dr["CONSTRAINT_NAME"],
+							Convert.ToBoolean(dr["NotForReplication"]),
+							(string)dr["CHECK_CLAUSE"]
+							);
 
-					t.AddConstraint(constraint);
+						t.AddConstraint(constraint);
+					}
 				}
 			}
 		}
@@ -523,9 +529,12 @@ from #ScriptedRoles
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var fk = new ForeignKey((string)dr["CONSTRAINT_NAME"]);
-					fk.Table = t;
-					ForeignKeys.Add(fk);
+					if (t != null)
+					{
+						var fk = new ForeignKey((string)dr["CONSTRAINT_NAME"]);
+						fk.Table = t;
+						ForeignKeys.Add(fk);
+					}
 				}
 			}
 
@@ -543,10 +552,13 @@ from #ScriptedRoles
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var fk = FindForeignKey((string)dr["CONSTRAINT_NAME"], (string)dr["TABLE_SCHEMA"]);
-					fk.OnUpdate = (string)dr["UPDATE_RULE"];
-					fk.OnDelete = (string)dr["DELETE_RULE"];
-					fk.Check = !(bool)dr["is_disabled"];
-					fk.IsSystemNamed = (bool)dr["is_system_named"];
+					if (fk != null)
+					{
+						fk.OnUpdate = (string)dr["UPDATE_RULE"];
+						fk.OnDelete = (string)dr["DELETE_RULE"];
+						fk.Check = !(bool)dr["is_disabled"];
+						fk.IsSystemNamed = (bool)dr["is_system_named"];
+					}
 				}
 			}
 
@@ -630,6 +642,9 @@ order by fk.name, fkc.constraint_column_id
 					var t = isView
 						? new Table(schemaName, tableName)
 						: FindTable(tableName, schemaName, (string)dr["baseType"] == "TVT");
+					if (t == null) {
+						continue;
+					}
 					var c = t.FindConstraint(indexName);
 
 					if (c == null) {
@@ -676,9 +691,12 @@ order by fk.name, fkc.constraint_column_id
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var column = t.Columns.Find((string)dr["COLUMN_NAME"]);
-					column.ComputedDefinition = (string)dr["DEFINITION"];
-					column.Persisted = (bool)dr["PERSISTED"];
+					if (t != null)
+					{
+						var column = t.Columns.Find((string)dr["COLUMN_NAME"]);
+						column.ComputedDefinition = (string)dr["DEFINITION"];
+						column.Persisted = (bool)dr["PERSISTED"];
+					}
 				}
 			}
 		}
@@ -701,8 +719,11 @@ order by fk.name, fkc.constraint_column_id
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
 					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default((string)dr["DEFAULT_NAME"],
-						(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+					if (t != null)
+					{
+						t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default((string)dr["DEFAULT_NAME"],
+							(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+					}
 				}
 			}
 		}
@@ -724,10 +745,13 @@ order by fk.name, fkc.constraint_column_id
 				while (dr.Read()) {
 					try {
 						var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-						var c = t.Columns.Find((string)dr["COLUMN_NAME"]);
-						var seed = dr["SEED_VALUE"].ToString();
-						var increment = dr["INCREMENT_VALUE"].ToString();
-						c.Identity = new Identity(seed, increment);
+						if (t != null)
+						{
+							var c = t.Columns.Find((string)dr["COLUMN_NAME"]);
+							var seed = dr["SEED_VALUE"].ToString();
+							var increment = dr["INCREMENT_VALUE"].ToString();
+							c.Identity = new Identity(seed, increment);
+						}
 					} catch (Exception ex) {
 						throw new ApplicationException(
 							string.Format("{0}.{1} : {2}", dr["TABLE_SCHEMA"], dr["TABLE_NAME"], ex.Message), ex);
@@ -799,8 +823,10 @@ order by fk.name, fkc.constraint_column_id
 		private static void LoadColumnsBase(IDataReader dr, List<Table> tables) {
 			Table table = null;
 
-			while (dr.Read()) {
-				var c = new Column {
+			while (dr.Read())
+			{
+				var c = new Column
+				{
 					Name = (string)dr["COLUMN_NAME"],
 					Type = (string)dr["DATA_TYPE"],
 					IsNullable = (string)dr["IS_NULLABLE"] == "YES",
@@ -808,7 +834,8 @@ order by fk.name, fkc.constraint_column_id
 					IsRowGuidCol = (string)dr["IS_ROW_GUID_COL"] == "YES"
 				};
 
-				switch (c.Type) {
+				switch (c.Type)
+				{
 					case "binary":
 					case "char":
 					case "nchar":
@@ -827,18 +854,40 @@ order by fk.name, fkc.constraint_column_id
 				if (table == null || table.Name != (string)dr["TABLE_NAME"] || table.Owner != (string)dr["TABLE_SCHEMA"])
 					// only do a lookup if the table we have isn't already the relevant one
 					table = FindTableBase(tables, (string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-				table.Columns.Add(c);
+				if (table != null)
+				{
+					table.Columns.Add(c);
+				}
 			}
 		}
 
 		private void LoadTables(SqlCommand cm) {
+			StringBuilder strWhere = new StringBuilder();
+			//filter tables
+			foreach (Table t in DataTables)
+			{
+				strWhere.Append("(");
+				strWhere.Append("TABLE_SCHEMA='");
+				strWhere.Append(t.Owner);
+				strWhere.Append("' and ");
+				strWhere.Append("TABLE_NAME='");
+				strWhere.Append(t.Name);
+				strWhere.Append("') or ");
+			}
+			string where = strWhere.ToString();
+			if (!string.IsNullOrEmpty(where)) {
+				where = " and(" + where.TrimEnd(" or ".ToCharArray()) + ")";
+			}
+
 			//get tables
 			cm.CommandText = @"
 				select 
 					TABLE_SCHEMA, 
 					TABLE_NAME 
 				from INFORMATION_SCHEMA.TABLES
-				where TABLE_TYPE = 'BASE TABLE'";
+				where TABLE_TYPE = 'BASE TABLE'" + where;
+
+
 			using (var dr = cm.ExecuteReader()) {
 				LoadTablesBase(dr, false, Tables);
 			}

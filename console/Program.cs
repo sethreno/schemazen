@@ -19,6 +19,7 @@ namespace SchemaZen.console {
 				return -1;
 			} finally {
 #if DEBUG
+				Console.WriteLine("Debug");
 				if (Debugger.IsAttached)
 					ConsoleQuestion.WaitForKeyPress();
 #endif

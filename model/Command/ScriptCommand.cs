@@ -15,12 +15,22 @@ namespace SchemaZen.Library.Command {
 			}
 
 			var db = CreateDatabase(filteredTypes);
+			db.clear();
+
+			foreach (var nameAndSchema in namesAndSchemas)
+			{
+				AddDataTable1(db, nameAndSchema.Key, nameAndSchema.Value);
+			}
 
 			Logger.Log(TraceLevel.Verbose, "Loading database schema...");
 			db.Load();
 			Logger.Log(TraceLevel.Verbose, "Database schema loaded.");
 
-			foreach (var nameAndSchema in namesAndSchemas) {
+
+			db.DataTables.Clear();
+
+			foreach (var nameAndSchema in namesAndSchemas)
+			{
 				AddDataTable(db, nameAndSchema.Key, nameAndSchema.Value);
 			}
 
