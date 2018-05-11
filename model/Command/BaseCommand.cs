@@ -59,5 +59,12 @@ namespace SchemaZen.Library.Command {
 			if (db.DataTables.Contains(t)) return;
 			db.DataTables.Add(t);
 		}
+
+		public void AddDataTable1(Database db, string name, string schema)
+		{
+			var tb = db.DataTables.Find(t => t.Name == name && t.Owner == schema);
+			if (tb==null) 
+			db.DataTables.Add(new Table(schema,name));
+		}
 	}
 }
