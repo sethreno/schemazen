@@ -1411,6 +1411,18 @@ where name = @dbname
 				DBHelper.ClearPool(Connection);
 			}
 
+			// users
+			if (Directory.Exists(Dir + "/users")) {
+				log(TraceLevel.Info, "Adding users...");
+				foreach (var f in Directory.GetFiles(Dir + "/users", "*.sql")) {
+					try {
+						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					} catch (SqlBatchException ex) {
+						throw new SqlFileException(f, ex);
+					}
+				}
+			}
+
 			if (File.Exists(Dir + "/schemas.sql")) {
 				log(TraceLevel.Verbose, "Creating database schemas...");
 				try {
@@ -1487,7 +1499,7 @@ where name = @dbname
 		private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
-				var dirPath in _dirs.Where(dir => dir != "foreign_keys").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
+				var dirPath in _dirs.Where(dir => dir != "foreign_keys" && dir != "users").Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
 			return scripts;

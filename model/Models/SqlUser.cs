@@ -24,7 +24,7 @@ namespace SchemaZen.Library.Models {
 				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + new SoapHexBinary(PasswordHash)} HASHED END
 ";
 
-			return login + $"CREATE USER [{Name}] {(PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name)} {(string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ")}{Owner}"
+			return login + $"CREATE USER [{Name}] {(PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + Name)} {(string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ")}[{Owner}]"
 				   + "\r\n" +
 				   string.Join("\r\n",
 					   DatabaseRoles.Select(
