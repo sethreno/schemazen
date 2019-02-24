@@ -388,9 +388,11 @@ from #ScriptedRoles
 				SqlAssembly a = null;
 				using (var dr = cm.ExecuteReader()) {
 					while (dr.Read()) {
-						if (a == null || a.Name != (string)dr["AssemblyName"])
+						if (a == null || a.Name != (string)dr["AssemblyName"]) {
 							a = new SqlAssembly((string)dr["permission_set_desc"],
 								(string)dr["AssemblyName"]);
+						}
+
 						a.Files.Add(new KeyValuePair<string, byte[]>((string)dr["FileName"],
 							(byte[])dr["content"]));
 						if (!Assemblies.Contains(a))
@@ -844,8 +846,11 @@ order by fk.name, fkc.constraint_column_id
 				if (table == null || table.Name != (string)dr["TABLE_NAME"] ||
 						table.Owner != (string)dr["TABLE_SCHEMA"])
 					// only do a lookup if the table we have isn't already the relevant one
+				{
 					table = FindTableBase(tables, (string)dr["TABLE_NAME"],
 						(string)dr["TABLE_SCHEMA"]);
+				}
+
 				table.Columns.Add(c);
 			}
 		}
@@ -1505,10 +1510,12 @@ where name = @dbname
 				}
 			}
 
-			if (prevCount > 0)
+			if (prevCount > 0) {
 				log(TraceLevel.Info,
 					errors.Any() ? $"{prevCount} errors unresolved. Details will follow later." :
 						"All errors resolved, were probably dependency issues...");
+			}
+
 			log(TraceLevel.Info, string.Empty);
 
 			ImportData(log); // load data

@@ -190,10 +190,10 @@ end
 									data.Write(_nullValue);
 								else if (dr[c.Name] is byte[])
 									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
-								else if (dr[c.Name] is DateTime)
+								else if (dr[c.Name] is DateTime) {
 									data.Write(((DateTime)dr[c.Name]).ToString(_dateTimeFormat,
 										CultureInfo.InvariantCulture));
-								else {
+								} else {
 									data.Write(dr[c.Name].ToString()
 										.Replace(_tab, _escapeTab)
 										.Replace(_lineFeed, _escapeLineFeed)
