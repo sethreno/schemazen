@@ -18,6 +18,7 @@ namespace SchemaZen.Tests {
 					lines[lines.Count - 1].Add(field);
 				}
 			}
+
 			////remove the \r from the end of the last field of each line
 			//foreach (List<string> line in lines) {
 			//    if (line.Count == 0) continue;
@@ -28,7 +29,6 @@ namespace SchemaZen.Tests {
 
 		[Test]
 		public void CompareConstraints() {
-
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
 			var diff = default(TableDiff);
@@ -36,14 +36,15 @@ namespace SchemaZen.Tests {
 			//test equal
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
 			t2.Columns.Add(new Column("first", "varchar", 30, false, null));
-			t1.AddConstraint(Constraint.CreateCheckedConstraint("IsTomorrow", true, "fnTomorrow()"));
-			t2.AddConstraint(Constraint.CreateCheckedConstraint("IsTomorrow", false, "Tomorrow <> 1"));
+			t1.AddConstraint(
+				Constraint.CreateCheckedConstraint("IsTomorrow", true, "fnTomorrow()"));
+			t2.AddConstraint(
+				Constraint.CreateCheckedConstraint("IsTomorrow", false, "Tomorrow <> 1"));
 
 			diff = t1.Compare(t2);
 			Assert.AreEqual(1, diff.ConstraintsChanged.Count);
 			Assert.IsNotNull(diff);
 			Assert.IsTrue(diff.IsDiff);
-
 		}
 
 		[Test]
@@ -165,7 +166,6 @@ namespace SchemaZen.Tests {
 			}
 		}
 
-
 		[Test]
 		public void TestImportAndExportDateTimeWithoutLosePrecision() {
 			var t = new Table("dbo", "Dummy");
@@ -201,7 +201,6 @@ namespace SchemaZen.Tests {
 				File.Delete(filename);
 			}
 		}
-
 
 		[Test]
 		public void TestImportAndExportNonDefaultSchema() {
@@ -265,7 +264,7 @@ namespace SchemaZen.Tests {
 			var filename = Path.GetTempFileName();
 
 			var writer = File.CreateText(filename);
-			StringBuilder sb = new StringBuilder();
+			var sb = new StringBuilder();
 
 			for (var i = 0; i < Table.RowsInBatch * 4.2; i++) {
 				sb.AppendLine(i.ToString());
@@ -276,7 +275,9 @@ namespace SchemaZen.Tests {
 			writer.Close();
 
 			var dataIn = sb.ToString();
-			Assert.AreEqual(dataIn, File.ReadAllText(filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
+			Assert.AreEqual(dataIn,
+				File.ReadAllText(
+					filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
 			try {
 				t.ImportData(conn, filename);
@@ -319,7 +320,8 @@ namespace SchemaZen.Tests {
 			t.Columns.Add(new Column("x", "uniqueidentifier", false, null));
 			t.Columns.Add(new Column("y", "varbinary", 50, false, null));
 			t.Columns.Add(new Column("z", "varbinary", -1, false, null));
-			t.Columns.Add(new Column("aa", "varchar", 50, true, new Default("DF_AllTypesTest_aa", "'asdf'", false)));
+			t.Columns.Add(new Column("aa", "varchar", 50, true,
+				new Default("DF_AllTypesTest_aa", "'asdf'", false)));
 			t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 			t.Columns.Add(new Column("cc", "xml", true, null));
 			t.Columns.Add(new Column("dd", "hierarchyid", false, null));
