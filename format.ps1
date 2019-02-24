@@ -10,8 +10,7 @@ param(
 if ($failOnDiff){
 	git diff --exit-code
 	if ($LastExitCode -ne 0){
-		Write-Host "code formatter produced the following diff"
-		git diff
+		Write-Error "code formatter produced a diff"
 		exit 1;
 	}
 }
