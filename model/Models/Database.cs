@@ -54,6 +54,8 @@ namespace SchemaZen.Library.Models {
 
 		#endregion
 
+		#region " Properties "
+
 		public const string SqlWhitespaceOrCommentRegex = @"(?>(?:\s+|--.*?(?:\r|\n)|/\*.*?\*/))";
 		public const string SqlEnclosedIdentifierRegex = @"\[.+?\]";
 		public const string SqlQuotedIdentifierRegex = "\".+?\"";
@@ -61,7 +63,6 @@ namespace SchemaZen.Library.Models {
 		public const string SqlRegularIdentifierRegex = @"(?!\d)[\w@$#]+";
 		// see rules for regular identifiers here https://msdn.microsoft.com/en-us/library/ms175874.aspx
 
-		#region " Properties "
 
 		public List<SqlAssembly> Assemblies { get; set; } = new List<SqlAssembly>();
 		public string Connection { get; set; } = "";
@@ -132,8 +133,6 @@ namespace SchemaZen.Library.Models {
 			return include && !exclude;
 		}
 
-		#endregion
-
 		private static readonly HashSet<string> _dirs = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
 			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
@@ -156,6 +155,8 @@ namespace SchemaZen.Library.Models {
 				FindProp(propName).Value = dbVal.ToString();
 			}
 		}
+
+		#endregion
 
 		#region Load
 
@@ -997,6 +998,8 @@ where name = @dbname
 
 		#endregion
 
+		#region Compare
+
 		public DatabaseDiff Compare(Database db) {
 			var diff = new DatabaseDiff {
 				Db = db
@@ -1137,6 +1140,10 @@ where name = @dbname
 			return diff;
 		}
 
+		#endregion
+
+		#region Script
+
 		public string ScriptCreate() {
 			var text = new StringBuilder();
 
@@ -1204,8 +1211,6 @@ where name = @dbname
 
 			return text.ToString();
 		}
-
-		#region Script
 
 		public void ScriptToDir(string tableHint = null, Action<TraceLevel, string> log = null) {
 			if (log == null) log = (tl, s) => { };
