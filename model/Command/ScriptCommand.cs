@@ -42,14 +42,9 @@ namespace SchemaZen.Library.Command {
 			}).Where(r => r.Warnings.Any()).ToList();
 			if (routinesWithWarnings.Any()) {
 				Logger.Log(TraceLevel.Info, "With the following warnings:");
-				foreach (
-					var warning in
-					routinesWithWarnings.SelectMany(
-						r =>
-							r.Warnings.Select(
-								w =>
-									$"- {r.Routine.RoutineType} [{r.Routine.Owner}].[{r.Routine.Name}]: {w}"))
-				) {
+				var warnings = routinesWithWarnings.SelectMany(r => r.Warnings.Select(
+					w => $"- {r.Routine.RoutineType} [{r.Routine.Owner}].[{r.Routine.Name}]: {w}"));
+				foreach (var warning in warnings) {
 					Logger.Log(TraceLevel.Warning, warning);
 				}
 			}
