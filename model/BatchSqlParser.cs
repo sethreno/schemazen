@@ -9,7 +9,7 @@ namespace SchemaZen.Library {
 		InMultiLineComment,
 		InBrackets,
 		InQuotes,
-		InDoubleQuotes,
+		InDoubleQuotes
 	}
 
 	public class BatchSqlParser {
@@ -81,6 +81,7 @@ namespace SchemaZen.Library {
 							commentDepth = 0;
 							state = State.Searching;
 						}
+
 						break;
 
 					case State.InBrackets:
@@ -113,7 +114,8 @@ namespace SchemaZen.Library {
 			}
 
 			// return scripts that contain non-whitespace
-			return scripts.Where(s => Regex.Match(s, "\\S", RegexOptions.Multiline).Success).ToArray();
+			return scripts.Where(s => Regex.Match(s, "\\S", RegexOptions.Multiline).Success)
+				.ToArray();
 		}
 	}
 }
