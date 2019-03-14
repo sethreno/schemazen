@@ -25,16 +25,12 @@ namespace SchemaZen.Library.Models {
 		public Database Db { get; set; }
 
 		private const string _sqlCreateRegex =
-			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" +
-			Database.SqlWhitespaceOrCommentRegex;
+			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" + Database.SqlWhitespaceOrCommentRegex;
 
 		private const string _sqlCreateWithNameRegex =
-			_sqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
-			Database.SqlEnclosedIdentifierRegex +
-			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" +
-			Database.SqlEnclosedIdentifierRegex + @"|" +
-			Database.SqlRegularIdentifierRegex + @"))(?:\(|" +
-			Database.SqlWhitespaceOrCommentRegex + @")";
+			_sqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" + Database.SqlEnclosedIdentifierRegex +
+			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" + Database.SqlEnclosedIdentifierRegex + @"|" +
+			Database.SqlRegularIdentifierRegex + @"))(?:\(|" + Database.SqlWhitespaceOrCommentRegex + @")";
 
 		public Routine(string owner, string name, Database db) {
 			Owner = owner;
@@ -48,22 +44,16 @@ namespace SchemaZen.Library.Models {
 			if (db?.FindProp("QUOTED_IDENTIFIER") != null) {
 				defaultQuotedId = db.FindProp("QUOTED_IDENTIFIER").Value == "ON";
 			}
-
 			if (defaultQuotedId != QuotedId) {
-				script +=
-					$"SET QUOTED_IDENTIFIER {(databaseDefaults ? defaultQuotedId : QuotedId ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+				script += $"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
-
 			var defaultAnsiNulls = !AnsiNull;
 			if (db?.FindProp("ANSI_NULLS") != null) {
 				defaultAnsiNulls = db.FindProp("ANSI_NULLS").Value == "ON";
 			}
-
 			if (defaultAnsiNulls != AnsiNull) {
-				script +=
-					$"SET ANSI_NULLS {(databaseDefaults ? defaultAnsiNulls : AnsiNull ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+				script += $"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
-
 			return script;
 		}
 
@@ -73,10 +63,9 @@ namespace SchemaZen.Library.Models {
 			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
-			if (RoutineType == RoutineKind.Trigger) {
+			if (RoutineType == RoutineKind.Trigger)
 				after +=
-					$"{Environment.NewLine}{(Disabled ? "DISABLE" : "ENABLE")} TRIGGER [{Owner}].[{Name}] ON [{RelatedTableSchema}].[{RelatedTableName}]{Environment.NewLine}GO{Environment.NewLine}";
-			}
+						$"{Environment.NewLine}{(Disabled ? "DISABLE" : "ENABLE")} TRIGGER [{Owner}].[{Name}] ON [{RelatedTableSchema}].[{RelatedTableName}]{Environment.NewLine}GO{Environment.NewLine}";
 
 			if (string.IsNullOrEmpty(definition))
 				definition = $"/* missing definition for {RoutineType} [{Owner}].[{Name}] */";
@@ -104,14 +93,14 @@ namespace SchemaZen.Library.Models {
 		public string GetSQLType() {
 			var text = RoutineType.ToString();
 			return string.Join(string.Empty, text.AsEnumerable().Select(
-				(c, i) => char.IsUpper(c) || i == 0 ? " " + char.ToUpper(c).ToString() :
-					c.ToString()
-			).ToArray()).Trim();
+				(c, i) => ((char.IsUpper(c) || i == 0) ? " " + char.ToUpper(c).ToString() : c.ToString())
+				).ToArray()).Trim();
 		}
 
 		public string ScriptDrop() {
 			return $"DROP {GetSQLType()} [{Owner}].[{Name}]";
 		}
+
 
 		public string ScriptAlter(Database db) {
 			if (RoutineType != RoutineKind.XmlSchemaCollection) {
@@ -119,12 +108,9 @@ namespace SchemaZen.Library.Models {
 				var match = regex.Match(Text);
 				var group = match.Groups[1];
 				if (group.Success) {
-					return ScriptBase(db,
-						Text.Substring(0, group.Index) + "ALTER" +
-						Text.Substring(group.Index + group.Length));
+					return ScriptBase(db, Text.Substring(0, group.Index) + "ALTER" + Text.Substring(group.Index + group.Length));
 				}
 			}
-
 			throw new Exception($"Unable to script routine {RoutineType} {Owner}.{Name} as ALTER");
 		}
 
@@ -148,8 +134,7 @@ namespace SchemaZen.Library.Models {
 					name = name.Substring(1, name.Length - 2);
 
 				if (string.Compare(Name, name, StringComparison.InvariantCultureIgnoreCase) != 0) {
-					yield return
-						$"Name from script definition '{name}' does not match expected value from sys.objects.name '{Name}'. This can be corrected by dropping and recreating the object.";
+					yield return $"Name from script definition '{name}' does not match expected value from sys.objects.name '{Name}'. This can be corrected by dropping and recreating the object.";
 				}
 			}
 		}

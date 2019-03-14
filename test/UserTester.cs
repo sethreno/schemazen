@@ -3,7 +3,7 @@ using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
 	[TestFixture]
-	internal class UserTester {
+	class UserTester {
 		[Test]
 		public void TestUserNameShouldBeEscaped() {
 			var user = new SqlUser("foo.bar", "dbo");

@@ -22,19 +22,15 @@ namespace SchemaZen.Library.Command {
 					!string.IsNullOrEmpty(DbName) ||
 					!string.IsNullOrEmpty(User) ||
 					!string.IsNullOrEmpty(Pass)) {
-					throw new ArgumentException(
-						"You must not provide both a connection string and a server/db/user/password");
+					throw new ArgumentException("You must not provide both a connection string and a server/db/user/password");
 				}
-
 				return new Database(filteredTypes) {
 					Connection = ConnectionString,
 					Dir = ScriptDir
 				};
 			}
-
 			if (string.IsNullOrEmpty(Server) || string.IsNullOrEmpty(DbName)) {
-				throw new ArgumentException(
-					"You must provide a connection string, or a server and database name");
+				throw new ArgumentException("You must provide a connection string, or a server and database name");
 			}
 
 			var builder = new SqlConnectionStringBuilder {
@@ -49,7 +45,6 @@ namespace SchemaZen.Library.Command {
 				builder.UserID = User;
 				builder.Password = Pass;
 			}
-
 			return new Database(filteredTypes) {
 				Connection = builder.ToString(),
 				Dir = ScriptDir
@@ -61,7 +56,6 @@ namespace SchemaZen.Library.Command {
 			if (t == null) {
 				Console.WriteLine($"warning: could not find data table {schema}.{name}");
 			}
-
 			if (db.DataTables.Contains(t)) return;
 			db.DataTables.Add(t);
 		}

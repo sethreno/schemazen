@@ -22,12 +22,9 @@ namespace SchemaZen.Library.Models {
 		public string ScriptCreate() {
 			var commands = Files.Select((kvp, index) => {
 				if (index == 0) {
-					return
-						$"CREATE ASSEMBLY [{Name}]\r\n{string.Empty}FROM {"0x" + new SoapHexBinary(kvp.Value).ToString()}\r\n{"WITH PERMISSION_SET = " + PermissionSet}";
+					return $"CREATE ASSEMBLY [{Name}]\r\n{string.Empty}FROM {"0x" + new SoapHexBinary(kvp.Value).ToString()}\r\n{"WITH PERMISSION_SET = " + PermissionSet}";
 				}
-
-				return
-					$"ALTER ASSEMBLY [{Name}]\r\nADD FILE FROM {"0x" + new SoapHexBinary(kvp.Value).ToString()}\r\nAS N\'{kvp.Key}\'";
+				return $"ALTER ASSEMBLY [{Name}]\r\nADD FILE FROM {"0x" + new SoapHexBinary(kvp.Value).ToString()}\r\nAS N\'{kvp.Key}\'";
 			});
 
 			var script = string.Join("\r\nGO\r\n", commands.ToArray());

@@ -16,8 +16,7 @@ BAR";
 
 		[Test]
 		public void CanParseCommentWithQuoteChar() {
-			const string script =
-				@"/* Add the Url column to the subtext_Log table if it doesn't exist */
+			const string script = @"/* Add the Url column to the subtext_Log table if it doesn't exist */
 		ADD [Url] VARCHAR(255) NULL
 GO
 				AND             COLUMN_NAME = 'BlogGroup') IS NULL";
@@ -27,8 +26,7 @@ GO
 
 		[Test]
 		public void CanParseDashDashCommentWithQuoteChar() {
-			const string script =
-				@"-- Add the Url column to the subtext_Log table if it doesn't exist
+			const string script = @"-- Add the Url column to the subtext_Log table if it doesn't exist
 SELECT * FROM BLAH
 GO
 PRINT 'FOO'";
@@ -103,10 +101,10 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotBeSplitByGoKeyword() {
 			var script = "PRINT '" + Environment.NewLine
-				+ "GO" + Environment.NewLine
-				+ "SELECT * FROM BLAH" + Environment.NewLine
-				+ "GO" + Environment.NewLine
-				+ "'";
+						 + "GO" + Environment.NewLine
+						 + "SELECT * FROM BLAH" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 
@@ -117,11 +115,11 @@ GO";
 		[Test]
 		public void MultiLineQuoteShouldNotIgnoreDoubleQuote() {
 			var script = "PRINT '" + Environment.NewLine
-				+ "''" + Environment.NewLine
-				+ "GO" + Environment.NewLine
-				+ "/*" + Environment.NewLine
-				+ "GO"
-				+ "'";
+						 + "''" + Environment.NewLine
+						 + "GO" + Environment.NewLine
+						 + "/*" + Environment.NewLine
+						 + "GO"
+						 + "'";
 
 			var scripts = BatchSqlParser.SplitBatch(script);
 

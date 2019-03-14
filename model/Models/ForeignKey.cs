@@ -21,12 +21,10 @@ namespace SchemaZen.Library.Models {
 			Name = name;
 		}
 
-		public ForeignKey(Table table, string name, string columns, Table refTable,
-			string refColumns)
+		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns)
 			: this(table, name, columns, refTable, refColumns, "", "") { }
 
-		public ForeignKey(Table table, string name, string columns, Table refTable,
-			string refColumns, string onUpdate,
+		public ForeignKey(Table table, string name, string columns, Table refTable, string refColumns, string onUpdate,
 			string onDelete) {
 			Table = table;
 			Name = name;
@@ -41,8 +39,7 @@ namespace SchemaZen.Library.Models {
 
 		private void AssertArgNotNull(object arg, string argName) {
 			if (arg == null) {
-				throw new ArgumentNullException(
-					$"Unable to Script FK {Name} on table {Table.Owner}.{Table.Name}. {argName} must not be null.");
+				throw new ArgumentNullException($"Unable to Script FK {Name} on table {Table.Owner}.{Table.Name}. {argName} must not be null.");
 			}
 		}
 
@@ -54,23 +51,17 @@ namespace SchemaZen.Library.Models {
 
 			var text = new StringBuilder();
 			var constraintName = IsSystemNamed ? string.Empty : $"CONSTRAINT [{Name}]";
-			text.Append(
-				$"ALTER TABLE [{Table.Owner}].[{Table.Name}] WITH {CheckText} ADD {constraintName}\r\n");
-			text.Append(
-				$"   FOREIGN KEY([{string.Join("], [", Columns.ToArray())}]) REFERENCES [{RefTable.Owner}].[{RefTable.Name}] ([{string.Join("], [", RefColumns.ToArray())}])\r\n");
+			text.Append($"ALTER TABLE [{Table.Owner}].[{Table.Name}] WITH {CheckText} ADD {constraintName}\r\n");
+			text.Append($"   FOREIGN KEY([{string.Join("], [", Columns.ToArray())}]) REFERENCES [{RefTable.Owner}].[{RefTable.Name}] ([{string.Join("], [", RefColumns.ToArray())}])\r\n");
 			if (!string.IsNullOrEmpty(OnUpdate) && !_defaultRules.Split('|').Contains(OnUpdate)) {
 				text.Append($"   ON UPDATE {OnUpdate}\r\n");
 			}
-
 			if (!string.IsNullOrEmpty(OnDelete) && !_defaultRules.Split('|').Contains(OnDelete)) {
 				text.Append($"   ON DELETE {OnDelete}\r\n");
 			}
-
 			if (!Check && !IsSystemNamed) {
-				text.Append(
-					$"   ALTER TABLE [{Table.Owner}].[{Table.Name}] NOCHECK CONSTRAINT [{Name}]\r\n");
+				text.Append($"   ALTER TABLE [{Table.Owner}].[{Table.Name}] NOCHECK CONSTRAINT [{Name}]\r\n");
 			}
-
 			return text.ToString();
 		}
 

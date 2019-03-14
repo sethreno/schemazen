@@ -31,8 +31,7 @@ namespace SchemaZen.console {
 				o => TableHint = o);
 			HasOption(
 				"filterTypes=",
-				"A comma separated list of the types that will not be scripted. Valid types: " +
-				Database.ValidTypes,
+				"A comma separated list of the types that will not be scripted. Valid types: " + Database.ValidTypes,
 				o => FilterTypes = o);
 		}
 
@@ -47,8 +46,7 @@ namespace SchemaZen.console {
 			_logger = new Logger(Verbose);
 
 			if (!Overwrite && Directory.Exists(ScriptDir)) {
-				if (!ConsoleQuestion.AskYN(
-					$"{ScriptDir} already exists - do you want to replace it"))
+				if (!ConsoleQuestion.AskYN($"{ScriptDir} already exists - do you want to replace it"))
 					return 1;
 			}
 
@@ -67,12 +65,10 @@ namespace SchemaZen.console {
 			var namesAndSchemas = HandleDataTables(DataTables);
 
 			try {
-				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern,
-					TableHint, filteredTypes);
+				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern, TableHint, filteredTypes);
 			} catch (Exception ex) {
 				throw new ConsoleHelpAsException(ex.Message);
 			}
-
 			return 0;
 		}
 

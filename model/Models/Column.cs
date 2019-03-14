@@ -3,6 +3,7 @@ using System.Text;
 
 namespace SchemaZen.Library.Models {
 	public class Column {
+
 		public Default Default { get; set; }
 		public Identity Identity { get; set; }
 		public bool IsNullable { get; set; }
@@ -29,8 +30,7 @@ namespace SchemaZen.Library.Models {
 			Length = length;
 		}
 
-		public Column(string name, string type, byte precision, int scale, bool nullable,
-			Default defaultValue)
+		public Column(string name, string type, byte precision, int scale, bool nullable, Default defaultValue)
 			: this(name, type, nullable, defaultValue) {
 			Precision = precision;
 			Scale = scale;
@@ -125,8 +125,7 @@ namespace SchemaZen.Library.Models {
 					return val.ToString();
 
 				default:
-					throw new NotSupportedException("Error scripting column " + Name +
-						". SQL data type " + Type + " is not supported.");
+					throw new NotSupportedException("Error scripting column " + Name + ". SQL data type " + Type + " is not supported.");
 			}
 		}
 
@@ -174,13 +173,9 @@ namespace SchemaZen.Library.Models {
 
 		public bool IsDiff => IsDiffBase || DefaultIsDiff;
 
-		private bool IsDiffBase => Source.IsNullable != Target.IsNullable ||
-			Source.Length != Target.Length ||
-			Source.Position != Target.Position || Source.Type != Target.Type ||
-			Source.Precision != Target.Precision ||
-			Source.Scale != Target.Scale ||
-			Source.ComputedDefinition != Target.ComputedDefinition ||
-			Source.Persisted != Target.Persisted;
+		private bool IsDiffBase => Source.IsNullable != Target.IsNullable || Source.Length != Target.Length ||
+								   Source.Position != Target.Position || Source.Type != Target.Type || Source.Precision != Target.Precision ||
+								   Source.Scale != Target.Scale || Source.ComputedDefinition != Target.ComputedDefinition || Source.Persisted != Target.Persisted;
 
 		public bool DefaultIsDiff => Source.DefaultText != Target.DefaultText;
 

@@ -1,7 +1,7 @@
 ﻿namespace SchemaZen.Library.Models {
 	public class ConstraintColumn {
-		public string ColumnName { get; }
-		public bool Desc { get; }
+		public string ColumnName { get; private set; }
+		public bool Desc { get; private set; }
 
 		public ConstraintColumn(string columnName, bool desc) {
 			ColumnName = columnName;

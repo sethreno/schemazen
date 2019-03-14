@@ -16,8 +16,7 @@
 						: $"EXEC('ALTER DATABASE [' + @DB + '] COLLATE {Value}')";
 
 				case "COMPATIBILITY_LEVEL":
-					return string.IsNullOrEmpty(Value) ? string.Empty :
-						$"EXEC dbo.sp_dbcmptlevel @DB, {Value}";
+					return string.IsNullOrEmpty(Value) ? string.Empty : $"EXEC dbo.sp_dbcmptlevel @DB, {Value}";
 
 				default:
 					return string.IsNullOrEmpty(Value)

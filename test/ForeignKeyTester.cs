@@ -52,8 +52,7 @@ namespace SchemaZen.Tests {
 			address.Columns.Find("id").Identity = new Identity(1, 1);
 			address.AddConstraint(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "",
-				"CASCADE");
+			var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
 
 			TestHelper.ExecSql(person.ScriptCreate(), "");
 			TestHelper.ExecSql(address.ScriptCreate(), "");

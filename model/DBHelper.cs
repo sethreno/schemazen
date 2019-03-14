@@ -47,8 +47,7 @@ namespace SchemaZen.Library {
 
 			if (DbExists(cnBuilder.ToString())) {
 				cnBuilder.InitialCatalog = "master";
-				ExecSql(cnBuilder.ToString(),
-					"ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
+				ExecSql(cnBuilder.ToString(), "ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
 				ExecSql(cnBuilder.ToString(), "drop database " + dbName);
 
 				cnBuilder.InitialCatalog = initialCatalog;
@@ -70,7 +69,6 @@ LOG ON
 (NAME = '{dbName}_log',
     FILENAME =  '{databaseFilesPath}\{dbName + Guid.NewGuid()}.ldf')";
 			}
-
 			ExecSql(cnBuilder.ToString(), "CREATE DATABASE [" + dbName + "] " + files);
 		}
 
@@ -84,7 +82,7 @@ LOG ON
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = "select db_id('" + dbName + "')";
-					exists = !ReferenceEquals(cm.ExecuteScalar(), DBNull.Value);
+					exists = (!ReferenceEquals(cm.ExecuteScalar(), DBNull.Value));
 				}
 			}
 

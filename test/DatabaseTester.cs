@@ -77,9 +77,7 @@ namespace SchemaZen.Tests {
 			};
 			db.Load();
 			var result = db.ScriptCreate();
-			Assert.That(result,
-				Is.StringContaining(
-					"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)"));
+			Assert.That(result, Is.StringContaining("CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)"));
 
 			TestHelper.DropDb("test");
 		}
@@ -116,9 +114,7 @@ namespace SchemaZen.Tests {
 			TestHelper.ExecSql("CREATE DATABASE TEST", "");
 
 			TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, EndDate datetime)", "TEST");
-			TestHelper.ExecSql(
-				@"CREATE NONCLUSTERED INDEX MyIndex ON MyTable (Id) WHERE (EndDate) IS NULL",
-				"TEST");
+			TestHelper.ExecSql(@"CREATE NONCLUSTERED INDEX MyIndex ON MyTable (Id) WHERE (EndDate) IS NULL", "TEST");
 
 			var db = new Database("TEST") {
 				Connection = TestHelper.GetConnString("TEST")
@@ -127,9 +123,7 @@ namespace SchemaZen.Tests {
 			var result = db.ScriptCreate();
 			TestHelper.DropDb("TEST");
 
-			Assert.That(result,
-				Is.StringContaining(
-					"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
+			Assert.That(result, Is.StringContaining("CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
 		}
 
 		[Test]
@@ -137,13 +131,9 @@ namespace SchemaZen.Tests {
 			TestHelper.DropDb("TEST");
 			TestHelper.ExecSql("CREATE DATABASE TEST", "");
 
-			TestHelper.ExecSql(
-				@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)", "TEST");
-			TestHelper.ExecSql(
-				@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t",
-				"TEST");
-			TestHelper.ExecSql(@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)",
-				"TEST");
+			TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)", "TEST");
+			TestHelper.ExecSql(@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t", "TEST");
+			TestHelper.ExecSql(@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)", "TEST");
 
 			var db = new Database("TEST") {
 				Connection = TestHelper.GetConnString("TEST")
@@ -152,9 +142,7 @@ namespace SchemaZen.Tests {
 			var result = db.ScriptCreate();
 			TestHelper.DropDb("TEST");
 
-			Assert.That(result,
-				Is.StringContaining(
-					"CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])"));
+			Assert.That(result, Is.StringContaining("CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])"));
 		}
 
 		[Test]
@@ -185,10 +173,8 @@ namespace SchemaZen.Tests {
 			TestHelper.ExecBatchSql(diff.Script(), "TEST_SOURCE");
 
 			//compare the dbs to make sure they are the same
-			var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}",
-				ConfigHelper.SqlDbDiffPath,
-				"localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y",
-				"localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y",
+			var cmd = string.Format("/c {0}\\SQLDBDiffConsole.exe {1} {2} {0}\\{3}", ConfigHelper.SqlDbDiffPath,
+				"localhost\\SQLEXPRESS TEST_COPY   NULL NULL Y", "localhost\\SQLEXPRESS TEST_SOURCE NULL NULL Y",
 				"SqlDbDiff.XML CompareResult.txt null");
 			var proc = new Process {
 				StartInfo = {
@@ -218,6 +204,7 @@ namespace SchemaZen.Tests {
 			Assert.AreEqual(3, db.FindTablesRegEx(null, "^cmic").Count);
 			Assert.AreEqual(5, db.FindTablesRegEx(null, "Location").Count);
 		}
+
 
 		[Test]
 		public void TestFindTableRegEx_BothIncludeExclude() {
@@ -309,11 +296,12 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 			Assert.AreEqual(250, db.TableTypes[0].Columns.Items[0].Length);
 			Assert.AreEqual(1, db.TableTypes[0].Columns.Items[1].Scale);
 			Assert.AreEqual(5, db.TableTypes[0].Columns.Items[1].Precision);
-			Assert.AreEqual(-1,
-				db.TableTypes[0].Columns.Items[2].Length); //nvarchar(max) is encoded as -1
+			Assert.AreEqual(-1, db.TableTypes[0].Columns.Items[2].Length); //nvarchar(max) is encoded as -1
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+
 		}
+
 
 		[Test]
 		public void TestScriptTableTypePrimaryKey() {
@@ -349,8 +337,8 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 
-			Assert.IsTrue(File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql")
-				.Contains("PRIMARY KEY"));
+			Assert.IsTrue(File.ReadAllText(db.Name + "\\table_types\\TYPE_MyTableType.sql").Contains("PRIMARY KEY"));
+
 		}
 
 		[Test]
@@ -449,13 +437,14 @@ CREATE TRIGGER [dbo].[TR_v1] ON [dbo].[v1] INSTEAD OF DELETE AS
 			// Required in order to expose the exception
 			db.ScriptToDir();
 
-			var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger)
-				.ToList();
+			var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger).ToList();
 
 			Assert.AreEqual(1, triggers.Count());
 			Assert.AreEqual("TR_v1", triggers[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\triggers\\TR_v1.sql"));
+
 		}
+
 
 		[Test]
 		public void TestScriptTriggerWithNoSets() {
@@ -501,6 +490,7 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 			var script = File.ReadAllText(db.Name + "\\triggers\\TR_1.sql");
 
 			StringAssert.DoesNotContain("INSERTEDENABLE", script);
+
 		}
 
 		[Test]
@@ -550,13 +540,11 @@ select * from Table1
 				IndexType = "CLUSTERED",
 				Unique = true
 			});
-			formType.AddConstraint(
-				Constraint.CreateCheckedConstraint("CK_FormType", false, "([code]<(5))"));
+			formType.AddConstraint(Constraint.CreateCheckedConstraint("CK_FormType", false, "([code]<(5))"));
 
 			var categoryType = new Table("dbo", "CategoryType");
 			categoryType.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
-			categoryType.Columns.Add(new Column("Category", "varchar", 10, false, null)
-				{ Position = 2 });
+			categoryType.Columns.Add(new Column("Category", "varchar", 10, false, null) { Position = 2 });
 			categoryType.AddConstraint(new Constraint("PK_CategoryType", "PRIMARY KEY", "id") {
 				IndexType = "CLUSTERED",
 				Unique = true
@@ -596,8 +584,7 @@ select * from Table1
 			var tt_codedesc = new Table("dbo", "CodeDesc");
 			tt_codedesc.IsType = true;
 			tt_codedesc.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
-			tt_codedesc.Columns.Add(new Column("desc", "varchar", 10, false, null)
-				{ Position = 2 });
+			tt_codedesc.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
 			tt_codedesc.AddConstraint(new Constraint("PK_CodeDesc", "PRIMARY KEY", "code") {
 				IndexType = "NONCLUSTERED"
 			});
@@ -667,14 +654,13 @@ select * from Table1
 					Assert.IsTrue(File.Exists(db.Name + "\\data\\" + t.Name + ".tsv"));
 				}
 			}
-
 			foreach (var t in db.Tables) {
 				var tblFile = db.Name + "\\tables\\" + t.Name + ".sql";
 				Assert.IsTrue(File.Exists(tblFile));
 
 				// Test that the constraints are ordered in the file
-				var script = File.ReadAllText(tblFile);
-				var cindex = -1;
+				string script = File.ReadAllText(tblFile);
+				int cindex = -1;
 
 				foreach (var ckobject in t.Constraints.OrderBy(x => x.Name)) {
 					var thisindex = script.IndexOf(ckobject.ScriptCreate());
@@ -682,39 +668,38 @@ select * from Table1
 
 					cindex = thisindex;
 				}
-			}
 
+
+			}
 			foreach (var t in db.TableTypes) {
 				Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_" + t.Name + ".sql"));
 			}
-
-			foreach (var expected in db.ForeignKeys.Select(fk =>
-				db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
+			foreach (var expected in db.ForeignKeys.Select(fk => db.Name + "\\foreign_keys\\" + fk.Table.Name + ".sql")) {
 				Assert.IsTrue(File.Exists(expected), "File does not exist" + expected);
 			}
+
 
 			// Test that the foreign keys are ordered in the file
 			foreach (var t in db.Tables) {
 				var fksFile = db.Name + "\\foreign_keys\\" + t.Name + ".sql";
 
 				if (File.Exists(fksFile)) {
-					var script = File.ReadAllText(fksFile);
-					var fkindex = -1;
+					string script = File.ReadAllText(fksFile);
+					int fkindex = -1;
 
-					foreach (var fkobject in db.ForeignKeys.Where(x => x.Table == t)
-						.OrderBy(x => x.Name)) {
+					foreach (var fkobject in db.ForeignKeys.Where(x => x.Table == t).OrderBy(x => x.Name)) {
 						var thisindex = script.IndexOf(fkobject.ScriptCreate());
 						Assert.Greater(thisindex, fkindex, "Foreign keys are not ordered.");
 
 						fkindex = thisindex;
 					}
 				}
+
 			}
 
 			var copy = new Database("ScriptToDirTestCopy");
 			copy.Dir = db.Dir;
-			copy.Connection =
-				ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
+			copy.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
 			copy.CreateFromDir(true);
 			copy.Load();
 			TestCompare(db, copy);
@@ -731,8 +716,7 @@ select * from Table1
 			db.Dir = db.Name;
 			db.Load();
 
-			if (Directory.Exists(db.Dir)
-			) // if the directory exists, delete it to make it a fair test
+			if (Directory.Exists(db.Dir)) // if the directory exists, delete it to make it a fair test
 			{
 				Directory.Delete(db.Dir, true);
 			}
@@ -761,7 +745,6 @@ select * from Table1
 				var dir = routineType.ToLower() + "s";
 				Assert.IsFalse(Directory.Exists(db.Name + "\\" + dir));
 			}
-
 			Assert.IsFalse(Directory.Exists(db.Name + "\\synonyms"));
 			Assert.IsFalse(Directory.Exists(db.Name + "\\tables"));
 			Assert.IsFalse(Directory.Exists(db.Name + "\\table_types"));
