@@ -18,7 +18,7 @@ fine for small changes, but bigger changes should look like this:
 
 The coding conventions are all defined in [.editorconfig](.editorconfig)
 and [Rebracer.xml](Rebracer.xml) so installing the
-[EditorConig](http://editorconfig.org/) and
+[EditorConfig](http://editorconfig.org/) and
 [Rebracer](https://github.com/SLaks/Rebracer) plugins for visual studio
 will magically keep your changes consistent with the rest of the code.
 

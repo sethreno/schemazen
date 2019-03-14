@@ -1,8 +1,5 @@
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library.Command {
@@ -26,14 +23,19 @@ namespace SchemaZen.Library.Command {
 				if (!string.IsNullOrEmpty(OutDiff)) {
 					Console.WriteLine();
 					if (!Overwrite && File.Exists(OutDiff)) {
-						var message = $"{OutDiff} already exists - set overwrite to true if you want to delete it";
+						var message =
+							$"{OutDiff} already exists - set overwrite to true if you want to delete it";
 						throw new InvalidOperationException(message);
 					}
+
 					File.WriteAllText(OutDiff, diff.Script());
-					Console.WriteLine($"Script to make the databases identical has been created at {Path.GetFullPath(OutDiff)}");
+					Console.WriteLine(
+						$"Script to make the databases identical has been created at {Path.GetFullPath(OutDiff)}");
 				}
+
 				return true;
 			}
+
 			Console.WriteLine("Databases are identical.");
 			return false;
 		}
