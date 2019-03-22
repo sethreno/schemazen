@@ -1,12 +1,8 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 
 namespace SchemaZen.Library.Models {
-
 	public class UserDefinedType : INameable, IHasOwner, IScriptable {
-
 		public string Name { get; set; }
 
 		public string Owner { get; set; }
@@ -29,6 +25,7 @@ namespace SchemaZen.Library.Models {
 				}
 			}
 		}
+
 		private readonly short _maxLength;
 
 		private bool HasMaxLength() {
@@ -71,10 +68,10 @@ namespace SchemaZen.Library.Models {
 		private readonly bool _nullable;
 
 		public UserDefinedType(string owner,
-							   string name,
-							   string baseTypeName,
-							   short maxLength,
-							   bool nullable) {
+			string name,
+			string baseTypeName,
+			short maxLength,
+			bool nullable) {
 			Owner = owner;
 			Name = name;
 			BaseTypeName = baseTypeName;
@@ -95,7 +92,5 @@ namespace SchemaZen.Library.Models {
 
 			return text.ToString();
 		}
-
 	}
-
 }
