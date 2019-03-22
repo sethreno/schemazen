@@ -53,7 +53,8 @@ namespace SchemaZen.console {
 				Source = _source,
 				Target = _target,
 				Verbose = _verbose,
-				OutDiff = _outDiff
+				OutDiff = _outDiff,
+				Overwrite = _overwrite
 			};
 
 			try {

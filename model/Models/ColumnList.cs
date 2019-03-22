@@ -31,6 +31,7 @@ namespace SchemaZen.Library.Models {
 					text.AppendLine();
 				}
 			}
+
 			return text.ToString();
 		}
 	}
