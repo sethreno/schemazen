@@ -4,6 +4,7 @@ using System.Diagnostics;
 namespace SchemaZen.Library {
 	public class Logger : ILogger {
 		private readonly bool _verbose;
+
 		public Logger(bool verbose) {
 			_verbose = verbose;
 		}
