@@ -138,8 +138,8 @@ namespace SchemaZen.Library.Models {
 
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
-			"triggers",
-			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types"
+			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
+			"table_types", "schemas", "props"
 		};
 
 		public static string ValidTypes {
@@ -1290,6 +1290,7 @@ where name = @dbname
 		}
 
 		private void WritePropsScript(Action<TraceLevel, string> log) {
+			if (!_dirs.Contains("props")) return;
 			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
 			text.Append(ScriptPropList(Props));
@@ -1299,6 +1300,7 @@ where name = @dbname
 		}
 
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
+			if (!_dirs.Contains("schemas")) return;
 			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
 			foreach (var schema in Schemas) {
