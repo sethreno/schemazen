@@ -80,6 +80,7 @@ namespace SchemaZen.Library.Models {
 		public List<Role> Roles { get; set; } = new List<Role>();
 		public List<SqlUser> Users { get; set; } = new List<SqlUser>();
 		public List<Constraint> ViewIndexes { get; set; } = new List<Constraint>();
+		public List<Permission> Permissions { get; set; } = new List<Permission>();
 
 		public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p =>
@@ -122,6 +123,9 @@ namespace SchemaZen.Library.Models {
 		public Synonym FindSynonym(string name, string schema) {
 			return Synonyms.FirstOrDefault(s => s.Name == name && s.Owner == schema);
 		}
+		public Permission FindPermission(string name) {
+			return Permissions.FirstOrDefault(g => g.Name == name);
+		}
 
 		public List<Table> FindTablesRegEx(string pattern, string excludePattern = null) {
 			return Tables.Where(t => FindTablesRegExPredicate(t, pattern, excludePattern)).ToList();
@@ -139,7 +143,7 @@ namespace SchemaZen.Library.Models {
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
 			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
-			"table_types", "schemas", "props"
+			"table_types", "schemas", "props", "permissions"
 		};
 
 		public static string ValidTypes {
@@ -173,6 +177,7 @@ namespace SchemaZen.Library.Models {
 			Users.Clear();
 			Synonyms.Clear();
 			Roles.Clear();
+			Permissions.Clear();
 
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
@@ -194,6 +199,7 @@ namespace SchemaZen.Library.Models {
 					LoadUsersAndLogins(cm);
 					LoadSynonyms(cm);
 					LoadRoles(cm);
+					LoadPermissions(cm);
 				}
 			}
 		}
@@ -217,6 +223,29 @@ namespace SchemaZen.Library.Models {
 			}
 		}
 
+		private void LoadPermissions(SqlCommand cm) {
+			try {
+				// get permissions
+				// based on http://sql-articles.com/scripts/script-to-retrieve-security-information-sql-server-2005-and-above/
+				cm.CommandText = @"
+						select 
+								U.name as user_name, 
+								O.name as object_name,  
+								permission_name as permission
+						from sys.database_permissions
+						join sys.sysusers U on grantee_principal_id = uid 
+						join sys.sysobjects O on major_id = id ";
+				using (var dr = cm.ExecuteReader()) {
+					while (dr.Read()) {
+						var permission = new Permission((string)dr["user_name"], (string)dr["object_name"], (string)dr["permission"]);
+						Permissions.Add(permission);
+					}
+				}
+			}
+			catch (SqlException) {
+				// SQL server version doesn't support synonyms, nothing to do here
+			}
+		}
 		private void LoadRoles(SqlCommand cm) {
 			//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
 			cm.CommandText = @"
@@ -1173,6 +1202,22 @@ where name = @dbname
 				diff.SynonymsDeleted.Add(s);
 			}
 
+			//get added and compare permissions
+			foreach (var p in Permissions) {
+				var p2 = db.FindPermission(p.Name);
+				if (p2 == null) {
+					diff.PermissionsAdded.Add(p);
+				} else {
+					if (p.ScriptCreate() != p2.ScriptCreate()) {
+						diff.PermissionsDiff.Add(p);
+					}
+				}
+			}
+			//get deleted permissions
+			foreach (var p in db.Permissions.Where(p => FindPermission(p.Name) == null)) {
+				diff.PermissionsDeleted.Add(p);
+			}
+
 			return diff;
 		}
 
@@ -1285,6 +1330,7 @@ where name = @dbname
 			WriteScriptDir("roles", Roles.ToArray(), log);
 			WriteScriptDir("users", Users.ToArray(), log);
 			WriteScriptDir("synonyms", Synonyms.ToArray(), log);
+			WriteScriptDir("permissions", Permissions.ToArray(), log);
 
 			ExportData(tableHint, log);
 		}
@@ -1622,6 +1668,9 @@ where name = @dbname
 		public List<Constraint> ViewIndexesAdded = new List<Constraint>();
 		public List<Constraint> ViewIndexesDeleted = new List<Constraint>();
 		public List<Constraint> ViewIndexesDiff = new List<Constraint>();
+		public List<Permission> PermissionsAdded = new List<Permission>();
+		public List<Permission> PermissionsDeleted = new List<Permission>();
+		public List<Permission> PermissionsDiff = new List<Permission>();
 
 		public bool IsDiff => PropsChanged.Count > 0
 			|| TablesAdded.Count > 0
@@ -1645,7 +1694,10 @@ where name = @dbname
 			|| ViewIndexesDeleted.Count > 0
 			|| SynonymsAdded.Count > 0
 			|| SynonymsDiff.Count > 0
-			|| SynonymsDeleted.Count > 0;
+			|| SynonymsDeleted.Count > 0
+			|| PermissionsAdded.Count > 0
+			|| PermissionsDiff.Count > 0
+			|| PermissionsDeleted.Count > 0;
 
 		private static string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
@@ -1720,6 +1772,15 @@ where name = @dbname
 			sb.Append(Summarize(includeNames,
 				SynonymsDiff.Select(o => $"{o.Owner}.{o.Name}").ToList(),
 				"synonyms altered"));
+			sb.Append(Summarize(includeNames,
+				PermissionsAdded.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				"permissions in source but not in target"));
+			sb.Append(Summarize(includeNames,
+				PermissionsDeleted.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				"permissions not in source but in target"));
+			sb.Append(Summarize(includeNames,
+				PermissionsDiff.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				"permissions altered"));
 			return sb.ToString();
 		}
 
@@ -1829,6 +1890,25 @@ where name = @dbname
 
 			foreach (var s in SynonymsDeleted) {
 				text.AppendLine(s.ScriptDrop());
+				text.AppendLine("GO");
+			}
+
+			//add & delete permissions
+			foreach (var p in PermissionsAdded)
+			{
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+			foreach (var p in PermissionsDiff)
+			{
+				text.AppendLine(p.ScriptDrop());
+				text.AppendLine("GO");
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+			foreach (var p in PermissionsDeleted)
+			{
+				text.AppendLine(p.ScriptDrop());
 				text.AppendLine("GO");
 			}
 
