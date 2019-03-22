@@ -55,6 +55,7 @@ namespace SchemaZen.console {
 				if (!ConsoleQuestion.AskYN(
 					$"{ScriptDir} already exists - do you want to replace it"))
 					return 1;
+				Overwrite = true;
 			}
 
 			var scriptCommand = new ScriptCommand {
