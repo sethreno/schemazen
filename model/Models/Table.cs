@@ -108,6 +108,7 @@ end
 						}
 					}
 				}
+
 				//get deleted constraints
 				foreach (var c in t.Constraints.Where(c => FindConstraint(c.Name) == null)) {
 					diff.ConstraintsDeleted.Add(c);
@@ -118,9 +119,10 @@ end
 				var src = t.Constraints.ToList();
 
 				var j = from c1 in dest
-						join c2 in src on c1.ScriptCreate() equals c2.ScriptCreate() into match //new { c1.Type, c1.Unique, c1.Clustered, Columns = string.Join(",", c1.Columns.ToArray()), IncludedColumns = string.Join(",", c1.IncludedColumns.ToArray()) } equals new { c2.Type, c2.Unique, c2.Clustered, Columns = string.Join(",", c2.Columns.ToArray()), IncludedColumns = string.Join(",", c2.IncludedColumns.ToArray()) } into match
-						from m in match.DefaultIfEmpty()
-						select new { c1, m };
+					join c2 in src on c1.ScriptCreate() equals c2.ScriptCreate() into
+						match //new { c1.Type, c1.Unique, c1.Clustered, Columns = string.Join(",", c1.Columns.ToArray()), IncludedColumns = string.Join(",", c1.IncludedColumns.ToArray()) } equals new { c2.Type, c2.Unique, c2.Clustered, Columns = string.Join(",", c2.Columns.ToArray()), IncludedColumns = string.Join(",", c2.IncludedColumns.ToArray()) } into match
+					from m in match.DefaultIfEmpty()
+					select new { c1, m };
 
 				foreach (var c in j) {
 					if (c.m == null) {
@@ -129,6 +131,7 @@ end
 						src.Remove(c.m);
 					}
 				}
+
 				foreach (var c in src) {
 					diff.ConstraintsDeleted.Add(c);
 				}
@@ -139,17 +142,20 @@ end
 
 		public string ScriptCreate() {
 			var text = new StringBuilder();
-			text.Append($"CREATE {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}] {(IsType ? "AS TABLE " : string.Empty)}(\r\n");
+			text.Append(
+				$"CREATE {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}] {(IsType ? "AS TABLE " : string.Empty)}(\r\n");
 			text.Append(Columns.Script());
 			if (_constraints.Count > 0) text.AppendLine();
 			foreach (var c in _constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
 				text.AppendLine("   ," + c.ScriptCreate());
 			}
+
 			text.AppendLine(")");
 			text.AppendLine();
 			foreach (var c in _constraints.Where(c => c.Type == "INDEX")) {
 				text.AppendLine(c.ScriptCreate());
 			}
+
 			return text.ToString();
 		}
 
@@ -157,17 +163,18 @@ end
 			return $"DROP {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}]";
 		}
 
-
 		public void ExportData(string conn, TextWriter data, string tableHint = null) {
 			if (IsType)
 				throw new InvalidOperationException();
 
 			var sql = new StringBuilder();
 			sql.Append("select ");
-			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
+			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))
+				.ToArray();
 			foreach (var c in cols) {
 				sql.Append($"[{c.Name}],");
 			}
+
 			sql.Remove(sql.Length - 1, 1);
 			sql.Append($" from [{Owner}].[{Name}]");
 			if (!string.IsNullOrEmpty(tableHint))
@@ -183,16 +190,20 @@ end
 									data.Write(_nullValue);
 								else if (dr[c.Name] is byte[])
 									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
-								else if (dr[c.Name] is DateTime)
-									data.Write(((DateTime)dr[c.Name]).ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
-								else
+								else if (dr[c.Name] is DateTime) {
+									data.Write(((DateTime)dr[c.Name]).ToString(_dateTimeFormat,
+										CultureInfo.InvariantCulture));
+								} else {
 									data.Write(dr[c.Name].ToString()
 										.Replace(_tab, _escapeTab)
 										.Replace(_lineFeed, _escapeLineFeed)
 										.Replace(_carriageReturn, _escapeCarriageReturn));
+								}
+
 								if (c != cols.Last())
 									data.Write(_tab);
 							}
+
 							data.WriteLine();
 						}
 					}
@@ -205,14 +216,16 @@ end
 				throw new InvalidOperationException();
 
 			var dt = new DataTable();
-			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition)).ToArray();
+			var cols = Columns.Items.Where(c => string.IsNullOrEmpty(c.ComputedDefinition))
+				.ToArray();
 			foreach (var c in cols) {
 				dt.Columns.Add(new DataColumn(c.Name, c.SqlTypeToNativeType()));
 			}
 
 			var linenumber = 0;
 			var batch_rows = 0;
-			using (var bulk = new SqlBulkCopy(conn, SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock)) {
+			using (var bulk = new SqlBulkCopy(conn,
+				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.TableLock)) {
 				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 					bulk.ColumnMappings.Add(colName, colName);
 				bulk.DestinationTableName = $"[{Owner}].[{Name}]";
@@ -234,10 +247,12 @@ end
 
 							if (rowsep_cnt == _rowSeparator.Length) {
 								// Remove rowseparator from line
-								line.RemoveRange(line.Count - _rowSeparator.Length, _rowSeparator.Length);
+								line.RemoveRange(line.Count - _rowSeparator.Length,
+									_rowSeparator.Length);
 								break;
 							}
 						}
+
 						linenumber++;
 
 						// Skip empty lines
@@ -247,18 +262,26 @@ end
 						batch_rows++;
 
 						var row = dt.NewRow();
-						var fields = (new String(line.ToArray())).Split(new[] { _tab }, StringSplitOptions.None);
+						var fields =
+							new String(line.ToArray()).Split(new[] { _tab },
+								StringSplitOptions.None);
 						if (fields.Length != dt.Columns.Count) {
-							throw new DataFileException("Incorrect number of columns", filename, linenumber);
+							throw new DataFileException("Incorrect number of columns", filename,
+								linenumber);
 						}
+
 						for (var j = 0; j < fields.Length; j++) {
 							try {
 								row[j] = ConvertType(cols[j].Type,
-									fields[j].Replace(_escapeLineFeed, _lineFeed).Replace(_escapeCarriageReturn, _carriageReturn).Replace(_escapeTab, _tab));
+									fields[j].Replace(_escapeLineFeed, _lineFeed)
+										.Replace(_escapeCarriageReturn, _carriageReturn)
+										.Replace(_escapeTab, _tab));
 							} catch (FormatException ex) {
-								throw new DataFileException($"{ex.Message} at column {j + 1}", filename, linenumber);
+								throw new DataFileException($"{ex.Message} at column {j + 1}",
+									filename, linenumber);
 							}
 						}
+
 						dt.Rows.Add(row);
 
 						if (batch_rows == RowsInBatch) {
@@ -312,8 +335,9 @@ end
 		public string Name;
 		public string Owner;
 
-		public bool IsDiff => ColumnsAdded.Count + ColumnsDropped.Count + ColumnsDiff.Count + ConstraintsAdded.Count +
-							  ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
+		public bool IsDiff => ColumnsAdded.Count + ColumnsDropped.Count + ColumnsDiff.Count +
+			ConstraintsAdded.Count +
+			ConstraintsChanged.Count + ConstraintsDeleted.Count > 0;
 
 		public string Script() {
 			var text = new StringBuilder();
@@ -329,14 +353,19 @@ end
 			foreach (var c in ColumnsDiff) {
 				if (c.DefaultIsDiff) {
 					if (c.Source.Default != null) {
-						text.Append($"ALTER TABLE [{Owner}].[{Name}] {c.Source.Default.ScriptDrop()}\r\n");
+						text.Append(
+							$"ALTER TABLE [{Owner}].[{Name}] {c.Source.Default.ScriptDrop()}\r\n");
 					}
+
 					if (c.Target.Default != null) {
-						text.Append($"ALTER TABLE [{Owner}].[{Name}] {c.Target.Default.ScriptCreate(c.Target)}\r\n");
+						text.Append(
+							$"ALTER TABLE [{Owner}].[{Name}] {c.Target.Default.ScriptCreate(c.Target)}\r\n");
 					}
 				}
+
 				if (!c.OnlyDefaultIsDiff) {
-					text.Append($"ALTER TABLE [{Owner}].[{Name}] ALTER COLUMN {c.Target.ScriptAlter()}\r\n");
+					text.Append(
+						$"ALTER TABLE [{Owner}].[{Name}] ALTER COLUMN {c.Target.ScriptAlter()}\r\n");
 				}
 			}
 

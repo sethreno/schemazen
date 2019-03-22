@@ -2,7 +2,6 @@
 using System.Data.SqlClient;
 using NUnit.Framework;
 using SchemaZen.Library;
-using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
 	[SetUpFixture]
@@ -24,6 +23,7 @@ namespace SchemaZen.Tests {
 				if (!string.IsNullOrEmpty(dbName)) {
 					cn.ConnectionString = GetConnString(dbName);
 				}
+
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = sql;
@@ -41,15 +41,18 @@ namespace SchemaZen.Tests {
 			using (var cn = new SqlConnection(ConfigHelper.TestDB)) {
 				connString = cn.ConnectionString;
 				if (!string.IsNullOrEmpty(dbName)) {
-					connString = cn.ConnectionString.Replace("database=" + cn.Database, "database=" + dbName);
+					connString = cn.ConnectionString.Replace("database=" + cn.Database,
+						"database=" + dbName);
 				}
 			}
+
 			return connString;
 		}
 
 		public static void DropDb(string dbName) {
 			if (DbExists(dbName)) {
-				ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE", "");
+				ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
+					"");
 				ExecSql("drop database " + dbName, "");
 				ClearPool(dbName);
 			}
@@ -61,7 +64,7 @@ namespace SchemaZen.Tests {
 				cn.Open();
 				using (var cm = cn.CreateCommand()) {
 					cm.CommandText = "select db_id('" + dbName + "')";
-					exists = (!ReferenceEquals(cm.ExecuteScalar(), DBNull.Value));
+					exists = !ReferenceEquals(cm.ExecuteScalar(), DBNull.Value);
 				}
 			}
 
