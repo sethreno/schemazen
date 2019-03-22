@@ -1336,7 +1336,7 @@ where name = @dbname
 		}
 
 		private void WritePropsScript(Action<TraceLevel, string> log) {
-			if (!_dirs.Contains("props")) return;
+			if (!Dirs.Contains("props")) return;
 			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
 			text.Append(ScriptPropList(Props));
@@ -1346,7 +1346,7 @@ where name = @dbname
 		}
 
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
-			if (!_dirs.Contains("schemas")) return;
+			if (!Dirs.Contains("schemas")) return;
 			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
 			foreach (var schema in Schemas) {
