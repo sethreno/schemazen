@@ -2,13 +2,10 @@
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
-
 	[TestFixture]
 	public class ConstraintTester {
-
 		[TestFixture]
 		public class ScriptCreate {
-
 			private static Constraint SetUp() {
 				return new Constraint("test", "INDEX", "a,b") {
 					Table = new Table("dbo", "test")
