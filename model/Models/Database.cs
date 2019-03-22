@@ -142,9 +142,8 @@ namespace SchemaZen.Library.Models {
 
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
-			"triggers",
-			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types",
-			"permissions"
+			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
+			"table_types", "schemas", "props", "permissions"
 		};
 
 		public static string ValidTypes {
@@ -369,8 +368,8 @@ from #ScriptedRoles
 				select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
 				from sys.database_principals dp
 				left outer join sys.database_role_members drm on dp.principal_id = drm.member_principal_id
-				where dp.type_desc = 'SQL_USER'
-				and dp.sid not in (0x00, 0x01) --ignore guest and dbo
+				where (dp.type_desc = 'SQL_USER' or dp.type_desc = 'WINDOWS_USER')
+				and dp.sid not in (0x00, 0x01) and dp.name not in ('dbo', 'guest')
 				and dp.is_fixed_role = 0
 				order by dp.name";
 			SqlUser u = null;
@@ -1337,6 +1336,7 @@ where name = @dbname
 		}
 
 		private void WritePropsScript(Action<TraceLevel, string> log) {
+			if (!_dirs.Contains("props")) return;
 			log(TraceLevel.Verbose, "Scripting database properties...");
 			var text = new StringBuilder();
 			text.Append(ScriptPropList(Props));
@@ -1346,6 +1346,7 @@ where name = @dbname
 		}
 
 		private void WriteSchemaScript(Action<TraceLevel, string> log) {
+			if (!_dirs.Contains("schemas")) return;
 			log(TraceLevel.Verbose, "Scripting database schemas...");
 			var text = new StringBuilder();
 			foreach (var schema in Schemas) {
@@ -1518,6 +1519,18 @@ where name = @dbname
 				DBHelper.ClearPool(Connection);
 			}
 
+			// users
+			if (Directory.Exists(Dir + "/users")) {
+				log(TraceLevel.Info, "Adding users...");
+				foreach (var f in Directory.GetFiles(Dir + "/users", "*.sql")) {
+					try {
+						DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
+					} catch (SqlBatchException ex) {
+						throw new SqlFileException(f, ex);
+					}
+				}
+			}
+
 			if (File.Exists(Dir + "/schemas.sql")) {
 				log(TraceLevel.Verbose, "Creating database schemas...");
 				try {
@@ -1602,7 +1615,7 @@ where name = @dbname
 		private List<string> GetScripts() {
 			var scripts = new List<string>();
 			foreach (
-				var dirPath in Dirs.Where(dir => dir != "foreign_keys")
+				var dirPath in Dirs.Where(dir => dir != "foreign_keys" && dir != "users")
 					.Select(dir => Dir + "/" + dir).Where(Directory.Exists)) {
 				scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
 			}
