@@ -137,8 +137,9 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
-			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures", "triggers",
-			"views", "xmlschemacollections", "data", "roles", "users", "synonyms", "table_types", "schemas", "props"
+			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
+			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
+			"table_types", "schemas", "props"
 		};
 
 		public static string ValidTypes {
