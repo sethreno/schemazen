@@ -51,7 +51,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultQuotedId != QuotedId) {
 				script +=
-					$"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET QUOTED_IDENTIFIER {(databaseDefaults ? defaultQuotedId : QuotedId ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			var defaultAnsiNulls = !AnsiNull;
@@ -61,7 +61,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultAnsiNulls != AnsiNull) {
 				script +=
-					$"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET ANSI_NULLS {(databaseDefaults ? defaultAnsiNulls : AnsiNull ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			return script;

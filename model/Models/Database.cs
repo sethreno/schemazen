@@ -123,6 +123,7 @@ namespace SchemaZen.Library.Models {
 		public Synonym FindSynonym(string name, string schema) {
 			return Synonyms.FirstOrDefault(s => s.Name == name && s.Owner == schema);
 		}
+
 		public Permission FindPermission(string name) {
 			return Permissions.FirstOrDefault(g => g.Name == name);
 		}
@@ -237,15 +238,16 @@ namespace SchemaZen.Library.Models {
 						join sys.sysobjects O on major_id = id ";
 				using (var dr = cm.ExecuteReader()) {
 					while (dr.Read()) {
-						var permission = new Permission((string)dr["user_name"], (string)dr["object_name"], (string)dr["permission"]);
+						var permission = new Permission((string)dr["user_name"],
+							(string)dr["object_name"], (string)dr["permission"]);
 						Permissions.Add(permission);
 					}
 				}
-			}
-			catch (SqlException) {
+			} catch (SqlException) {
 				// SQL server version doesn't support synonyms, nothing to do here
 			}
 		}
+
 		private void LoadRoles(SqlCommand cm) {
 			//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
 			cm.CommandText = @"
@@ -1213,6 +1215,7 @@ where name = @dbname
 					}
 				}
 			}
+
 			//get deleted permissions
 			foreach (var p in db.Permissions.Where(p => FindPermission(p.Name) == null)) {
 				diff.PermissionsDeleted.Add(p);
@@ -1773,13 +1776,16 @@ where name = @dbname
 				SynonymsDiff.Select(o => $"{o.Owner}.{o.Name}").ToList(),
 				"synonyms altered"));
 			sb.Append(Summarize(includeNames,
-				PermissionsAdded.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				PermissionsAdded.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}")
+					.ToList(),
 				"permissions in source but not in target"));
 			sb.Append(Summarize(includeNames,
-				PermissionsDeleted.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				PermissionsDeleted
+					.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
 				"permissions not in source but in target"));
 			sb.Append(Summarize(includeNames,
-				PermissionsDiff.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}").ToList(),
+				PermissionsDiff.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}")
+					.ToList(),
 				"permissions altered"));
 			return sb.ToString();
 		}
@@ -1894,20 +1900,19 @@ where name = @dbname
 			}
 
 			//add & delete permissions
-			foreach (var p in PermissionsAdded)
-			{
+			foreach (var p in PermissionsAdded) {
 				text.AppendLine(p.ScriptCreate());
 				text.AppendLine("GO");
 			}
-			foreach (var p in PermissionsDiff)
-			{
+
+			foreach (var p in PermissionsDiff) {
 				text.AppendLine(p.ScriptDrop());
 				text.AppendLine("GO");
 				text.AppendLine(p.ScriptCreate());
 				text.AppendLine("GO");
 			}
-			foreach (var p in PermissionsDeleted)
-			{
+
+			foreach (var p in PermissionsDeleted) {
 				text.AppendLine(p.ScriptDrop());
 				text.AppendLine("GO");
 			}

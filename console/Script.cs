@@ -36,7 +36,8 @@ namespace SchemaZen.console {
 				o => FilterTypes = o);
 			HasOption(
 				"onlyTypes=",
-				"A comma separated list of the types that will only be scripted. Valid types: " + Database.ValidTypes,
+				"A comma separated list of the types that will only be scripted. Valid types: " +
+				Database.ValidTypes,
 				o => OnlyTypes = o);
 		}
 
@@ -88,8 +89,9 @@ namespace SchemaZen.console {
 
 			var invalidTypes = removeTypes.Union(keepTypes).Except(Database.Dirs).ToList();
 			if (invalidTypes.Any()) {
-				var msg = invalidTypes.Count() > 1 ? " are not valid types." : " is not a valid type.";
-				_logger.Log(TraceLevel.Warning, String.Join(", ", invalidTypes.ToArray()) + msg);
+				var msg = invalidTypes.Count() > 1 ? " are not valid types." :
+					" is not a valid type.";
+				_logger.Log(TraceLevel.Warning, string.Join(", ", invalidTypes.ToArray()) + msg);
 				_logger.Log(TraceLevel.Warning, $"Valid types: {Database.ValidTypes}");
 			}
 

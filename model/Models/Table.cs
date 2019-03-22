@@ -196,9 +196,11 @@ end
 								else if (dr[c.Name] is DateTime) {
 									data.Write(
 										((DateTime)dr[c.Name])
-											.ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
-								} else if (dr[c.Name] is float || dr[c.Name] is Double || dr[c.Name] is Decimal) {
-									data.Write(Convert.ToString(dr[c.Name], CultureInfo.InvariantCulture));
+										.ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
+								} else if (dr[c.Name] is float || dr[c.Name] is Double ||
+									dr[c.Name] is Decimal) {
+									data.Write(Convert.ToString(dr[c.Name],
+										CultureInfo.InvariantCulture));
 								} else {
 									data.Write(dr[c.Name].ToString()
 										.Replace(_tab, _escapeTab)
@@ -231,7 +233,8 @@ end
 			var linenumber = 0;
 			var batch_rows = 0;
 			using (var bulk = new SqlBulkCopy(conn,
-       SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.KeepNulls | SqlBulkCopyOptions.TableLock)) {
+				SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.KeepNulls |
+				SqlBulkCopyOptions.TableLock)) {
 				foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 					bulk.ColumnMappings.Add(colName, colName);
 				bulk.DestinationTableName = $"[{Owner}].[{Name}]";
@@ -319,9 +322,9 @@ end
 				case "int":
 					return int.Parse(val);
 				case "float":
-					return Double.Parse(val, CultureInfo.InvariantCulture);
+					return double.Parse(val, CultureInfo.InvariantCulture);
 				case "decimal":
-					return Decimal.Parse(val, CultureInfo.InvariantCulture);	
+					return decimal.Parse(val, CultureInfo.InvariantCulture);
 				case "uniqueidentifier":
 					return new Guid(val);
 				case "binary":
@@ -333,21 +336,19 @@ end
 			}
 		}
 
-		private void AppendOrderBy(StringBuilder sql, IEnumerable<Column> cols)
-		{
+		private void AppendOrderBy(StringBuilder sql, IEnumerable<Column> cols) {
 			sql.Append(" ORDER BY ");
 
-			if (PrimaryKey != null)
-			{
+			if (PrimaryKey != null) {
 				var pkColumns = PrimaryKey.Columns.Select(c => $"[{c.ColumnName}]");
 				sql.Append(string.Join(",", pkColumns.ToArray()));
 				return;
 			}
 
-			var uk = Constraints.Where(c => c.Unique).OrderBy(c => c.Columns.Count).ThenBy(c => c.Name).FirstOrDefault();
+			var uk = Constraints.Where(c => c.Unique).OrderBy(c => c.Columns.Count)
+				.ThenBy(c => c.Name).FirstOrDefault();
 
-			if (uk != null)
-			{
+			if (uk != null) {
 				var ukColumns = uk.Columns.Select(c => $"[{c.ColumnName}]");
 				sql.Append(string.Join(",", ukColumns.ToArray()));
 				return;
