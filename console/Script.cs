@@ -39,10 +39,15 @@ namespace SchemaZen.console {
 				"A comma separated list of the types that will only be scripted. Valid types: " +
 				Database.ValidTypes,
 				o => OnlyTypes = o);
+			HasOption(
+				"reformat=",
+				"Reformat Sql (style controlled by app settings). Default: true ",
+				o => Reformat=o) ;			
 		}
 
 		private Logger _logger;
 		protected string DataTables { get; set; }
+		protected string Reformat { get; set; } = "true";
 		protected string FilterTypes { get; set; }
 		protected string OnlyTypes { get; set; }
 		protected string DataTablesPattern { get; set; }
@@ -58,7 +63,8 @@ namespace SchemaZen.console {
 					return 1;
 				Overwrite = true;
 			}
-
+			bool reformat = false;
+			bool.TryParse(Reformat, out reformat);
 			var scriptCommand = new ScriptCommand {
 				ConnectionString = ConnectionString,
 				DbName = DbName,
@@ -67,7 +73,8 @@ namespace SchemaZen.console {
 				Server = Server,
 				User = User,
 				Logger = _logger,
-				Overwrite = Overwrite
+				Overwrite = Overwrite,
+				Reformat = reformat
 			};
 
 			var filteredTypes = HandleFilteredTypes();
@@ -79,7 +86,7 @@ namespace SchemaZen.console {
 			} catch (Exception ex) {
 				throw new ConsoleHelpAsException(ex.Message);
 			}
-
+			
 			return 0;
 		}
 

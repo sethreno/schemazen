@@ -13,6 +13,7 @@ namespace SchemaZen.Library.Command {
 		public string ScriptDir { get; set; }
 		public ILogger Logger { get; set; }
 		public bool Overwrite { get; set; }
+		public bool Reformat { get; set; }
 
 		public Database CreateDatabase(IList<string> filteredTypes = null) {
 			filteredTypes = filteredTypes ?? new List<string>();

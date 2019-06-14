@@ -15,7 +15,7 @@ namespace SchemaZen.Library.Command {
 			}
 
 			var db = CreateDatabase(filteredTypes);
-
+			db.Reformat = this.Reformat;
 			Logger.Log(TraceLevel.Verbose, "Loading database schema...");
 			db.Load();
 			Logger.Log(TraceLevel.Verbose, "Database schema loaded.");

@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using SchemaZen.Library.Models.Comparers;
+using Microsoft.SqlServer.TransactSql.ScriptDom;
+using Newtonsoft.Json;
 
 namespace SchemaZen.Library.Models {
 	public class Database {
@@ -44,17 +46,34 @@ namespace SchemaZen.Library.Models {
 			filteredTypes = filteredTypes ?? new List<string>();
 			foreach (var filteredType in filteredTypes) {
 				Dirs.Remove(filteredType);
-			}
+			}			
 		}
 
 		public Database(string name, IList<string> filteredTypes = null)
 			: this(filteredTypes) {
 			Name = name;
+			
 		}
-
+		const string REFORMATOPTIONS = "sqlformat.json";
+		private void ReadReformatOptions()
+		{
+			if (File.Exists(REFORMATOPTIONS))
+			{
+				var json = File.ReadAllText(REFORMATOPTIONS);
+				scrGen = (Sql110ScriptGenerator)JsonConvert.DeserializeObject(json, typeof(Sql110ScriptGenerator));
+			}
+			else
+			{
+				var json = JsonConvert.SerializeObject(scrGen);
+				File.WriteAllText(REFORMATOPTIONS, json);
+			}
+		}
 		#endregion
 
 		#region " Properties "
+		private TSql110Parser parser = new TSql110Parser(true);
+		private Sql110ScriptGenerator scrGen = new Sql110ScriptGenerator();
+		public bool Reformat { get; set; } = false;
 
 		public const string SqlWhitespaceOrCommentRegex = @"(?>(?:\s+|--.*?(?:\r|\n)|/\*.*?\*/))";
 		public const string SqlEnclosedIdentifierRegex = @"\[.+?\]";
@@ -1363,6 +1382,7 @@ where name = @dbname
 
 		private void WriteScriptDir(string name, ICollection<IScriptable> objects,
 			Action<TraceLevel, string> log) {
+			IList<ParseError> errors = null;
 			if (!objects.Any()) return;
 			if (!Dirs.Contains(name)) return;
 			var dir = Path.Combine(Dir, name);
@@ -1372,9 +1392,25 @@ where name = @dbname
 				log(TraceLevel.Verbose,
 					$"Scripting {name} {++index} of {objects.Count}...{(index < objects.Count ? "\r" : string.Empty)}");
 				var filePath = Path.Combine(dir, MakeFileName(o) + ".sql");
-				var script = o.ScriptCreate() + "\r\nGO\r\n";
+				string script = (o.ScriptCreate() + "\r\nGO\r\n");
+				if (Reformat)
+				{
+					TextReader rdr = new StringReader(script);
+					TSqlFragment tree = parser.Parse(rdr, out errors);
+					foreach (ParseError err in errors)
+					{
+						Console.WriteLine(err.Message);
+					}
+					script = null;
+					scrGen.GenerateScript(tree, out script);
+					// Remove double blank lines, but keep single blank lines
+					while (script.Contains("\r\n\r\n\r\n"))
+					{
+						script = script.Replace("\r\n\r\n\r\n", "\r\n\r\n");
+					}
+				}
 				File.AppendAllText(filePath, script);
-			}
+			}		
 		}
 
 		private static string MakeFileName(object o) {
