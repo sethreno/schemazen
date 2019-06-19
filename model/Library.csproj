@@ -72,6 +72,7 @@
     <Compile Include="Models\Default.cs" />
     <Compile Include="Models\Exceptions.cs" />
     <Compile Include="Models\ForeignKey.cs" />
+    <Compile Include="Models\Permission.cs" />
     <Compile Include="Models\Identity.cs" />
     <Compile Include="Models\Interfaces.cs" />
     <Compile Include="Models\UserDefinedType.cs" />

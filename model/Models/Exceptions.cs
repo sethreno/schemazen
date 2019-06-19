@@ -29,20 +29,18 @@ namespace SchemaZen.Library.Models {
 	}
 
 	public class DataFileException : Exception {
-		private readonly string _fileName;
-		private readonly int _lineNumber;
 		private readonly string _message;
 
 		public DataFileException(string message, string fileName, int lineNumber) {
 			_message = message;
-			_fileName = fileName;
-			_lineNumber = lineNumber;
+			FileName = fileName;
+			LineNumber = lineNumber;
 		}
 
-		public override string Message => _message + $" - in file named {_fileName}:{_lineNumber}";
+		public override string Message => _message + $" - in file named {FileName}:{LineNumber}";
 
-		public string FileName => _fileName;
+		public string FileName { get; }
 
-		public int LineNumber => _lineNumber;
+		public int LineNumber { get; }
 	}
 }
