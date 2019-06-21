@@ -80,6 +80,7 @@
     <Compile Include="ColumnTester.cs" />
     <Compile Include="ConstraintTester.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RoutineTester.cs" />
     <Compile Include="UserTester.cs" />
   </ItemGroup>
   <ItemGroup>

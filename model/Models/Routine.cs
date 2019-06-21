@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -29,7 +30,19 @@ namespace SchemaZen.Library.Models {
 			Database.SqlWhitespaceOrCommentRegex;
 
 		private const string _sqlCreateWithNameRegex =
-			_sqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
+			_sqlCreateRegex + @"{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
+			Database.SqlEnclosedIdentifierRegex +
+			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" +
+			Database.SqlEnclosedIdentifierRegex + @"|" +
+			Database.SqlRegularIdentifierRegex + @"))(?:\(|" +
+			Database.SqlWhitespaceOrCommentRegex + @")";
+
+		private const string _sqlAlterRegex =
+			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(ALTER)" +
+			Database.SqlWhitespaceOrCommentRegex;
+
+		private const string _sqlAlterWithNameRegex =
+			_sqlAlterRegex + @"{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
 			Database.SqlEnclosedIdentifierRegex +
 			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" +
 			Database.SqlEnclosedIdentifierRegex + @"|" +
@@ -51,7 +64,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultQuotedId != QuotedId) {
 				script +=
-					$"SET QUOTED_IDENTIFIER {(databaseDefaults ? defaultQuotedId : QuotedId ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			var defaultAnsiNulls = !AnsiNull;
@@ -61,7 +74,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultAnsiNulls != AnsiNull) {
 				script +=
-					$"SET ANSI_NULLS {(databaseDefaults ? defaultAnsiNulls : AnsiNull ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			return script;
@@ -70,6 +83,14 @@ namespace SchemaZen.Library.Models {
 		private string ScriptBase(Database db, string definition) {
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
+
+			var regex = new Regex(_sqlAlterWithNameRegex, RegexOptions.IgnoreCase);
+			var match = regex.Match(definition);
+			var group = match.Groups[1];
+			if (group.Success) {
+				definition = Text.Substring(0, group.Index) + "CREATE" + Text.Substring(group.Index + group.Length);
+			}
+
 			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
