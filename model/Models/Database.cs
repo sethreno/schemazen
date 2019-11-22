@@ -735,20 +735,31 @@ order by fk.name, fkc.constraint_column_id
 			//get column defaults
 			cm.CommandText = @"
 					select 
-						s.name as TABLE_SCHEMA,
-						t.name as TABLE_NAME, 
+						case 
+							when s.name ='sys' 
+							then 'dbo' 
+							else s.name 
+						end as TABLE_SCHEMA,	
+						isnull(st.name,ty.name) as TABLE_NAME,
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
 						d.definition as DEFAULT_VALUE,
-                        d.is_system_named as IS_SYSTEM_NAMED
-					from sys.tables t 
+						d.is_system_named as IS_SYSTEM_NAMED,
+						convert(bit, case when ty.type_table_object_id is not null then 1 else 0 end) as table_type 
+					from sys.objects t 
+						left join sys.table_types as ty ON	
+							ty.type_table_object_id = t.object_id
+						left join sys.tables as st on 
+							st.object_id = t.object_id
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
 							and d.parent_object_id = c.object_id
-						inner join sys.schemas s on s.schema_id = t.schema_id";
+						inner join sys.schemas s on s.schema_id = t.schema_id
+					where
+						( st.is_ms_shipped = 0 or st.is_ms_shipped is null )";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["table_type"]);
 					t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default(
 						(string)dr["DEFAULT_NAME"],
 						(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
