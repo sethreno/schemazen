@@ -52,6 +52,8 @@ namespace SchemaZen.console {
 					if (!ConsoleQuestion.AskYN(question)) {
 						return 1;
 					}
+
+					_overwrite = true;
 				}
 			}
 
