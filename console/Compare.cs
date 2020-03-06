@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using ManyConsole;
 using NDesk.Options;
@@ -44,7 +45,7 @@ namespace SchemaZen.console {
 		}
 
 		public override int Run(string[] remainingArguments) {
-			if (_debug) System.Diagnostics.Debugger.Launch();
+			if (_debug) Debugger.Launch();
 			if (!string.IsNullOrEmpty(_outDiff)) {
 				Console.WriteLine();
 				if (!_overwrite && File.Exists(_outDiff)) {

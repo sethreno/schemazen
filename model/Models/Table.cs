@@ -404,8 +404,7 @@ end
 				}
 			}
 
-			void ScriptUnspported(Constraint c)
-			{
+			void ScriptUnspported(Constraint c) {
 				text.AppendLine("-- constraint added that SchemaZen doesn't support yet");
 				text.AppendLine("/*");
 				text.AppendLine(c.ScriptCreate());
