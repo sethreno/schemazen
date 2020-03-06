@@ -404,18 +404,51 @@ end
 				}
 			}
 
-			foreach (var c in ConstraintsAdded.Where(c => c.Type == "CHECK")) {
-				text.Append($"ALTER TABLE [{Owner}].[{Name}] ADD {c.ScriptCreate()}\r\n");
+			void ScriptUnspported(Constraint c)
+			{
+				text.AppendLine("-- constraint added that SchemaZen doesn't support yet");
+				text.AppendLine("/*");
+				text.AppendLine(c.ScriptCreate());
+				text.AppendLine("*/");
 			}
 
-			foreach (var c in ConstraintsChanged.Where(c => c.Type == "CHECK")) {
-				text.Append($"-- Check constraint {c.Name} changed\r\n");
-				text.Append($"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n");
-				text.Append($"ALTER TABLE [{Owner}].[{Name}] ADD {c.ScriptCreate()}\r\n");
+			foreach (var c in ConstraintsAdded) {
+				switch (c.Type) {
+					case "CHECK":
+					case "INDEX":
+						text.Append($"ALTER TABLE [{Owner}].[{Name}] ADD {c.ScriptCreate()}\r\n");
+						break;
+
+					default:
+						ScriptUnspported(c);
+						break;
+				}
 			}
 
-			foreach (var c in ConstraintsDeleted.Where(c => c.Type == "CHECK")) {
-				text.Append($"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n");
+			foreach (var c in ConstraintsChanged) {
+				switch (c.Type) {
+					case "CHECK":
+						text.Append($"-- Check constraint {c.Name} changed\r\n");
+						text.Append($"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n");
+						text.Append($"ALTER TABLE [{Owner}].[{Name}] ADD {c.ScriptCreate()}\r\n");
+						break;
+
+					case "INDEX":
+						text.Append($"-- Index {c.Name} changed\r\n");
+						text.Append($"DROP INDEX {c.Name} ON [{Owner}].[{Name}]\r\n");
+						text.Append($"{c.ScriptCreate()}\r\n");
+						break;
+
+					default:
+						ScriptUnspported(c);
+						break;
+				}
+			}
+
+			foreach (var c in ConstraintsDeleted) {
+				text.Append(c.Type != "INDEX" ?
+					$"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n" :
+					$"DROP INDEX {c.Name} ON [{Owner}].[{Name}]\r\n");
 			}
 
 			return text.ToString();
