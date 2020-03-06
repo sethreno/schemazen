@@ -11,6 +11,7 @@ namespace SchemaZen.console {
 		private string _outDiff;
 		private bool _overwrite;
 		private bool _verbose;
+		private bool _debug;
 
 		public Compare() {
 			IsCommand("Compare", "CreateDiff two databases.");
@@ -36,9 +37,14 @@ namespace SchemaZen.console {
 				"v|verbose",
 				"Enable verbose mode (show detailed changes).",
 				o => _verbose = o != null);
+			HasOption(
+				"debug",
+				"Launch the debugger",
+				o => _debug = o != null);
 		}
 
 		public override int Run(string[] remainingArguments) {
+			if (_debug) System.Diagnostics.Debugger.Launch();
 			if (!string.IsNullOrEmpty(_outDiff)) {
 				Console.WriteLine();
 				if (!_overwrite && File.Exists(_outDiff)) {
