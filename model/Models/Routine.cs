@@ -51,7 +51,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultQuotedId != QuotedId) {
 				script +=
-					$"SET QUOTED_IDENTIFIER {(databaseDefaults ? defaultQuotedId : QuotedId ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET QUOTED_IDENTIFIER {((databaseDefaults ? defaultQuotedId : QuotedId) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			var defaultAnsiNulls = !AnsiNull;
@@ -61,7 +61,7 @@ namespace SchemaZen.Library.Models {
 
 			if (defaultAnsiNulls != AnsiNull) {
 				script +=
-					$"SET ANSI_NULLS {(databaseDefaults ? defaultAnsiNulls : AnsiNull ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
+					$"SET ANSI_NULLS {((databaseDefaults ? defaultAnsiNulls : AnsiNull) ? "ON" : "OFF")} {Environment.NewLine}GO{Environment.NewLine}";
 			}
 
 			return script;
@@ -104,7 +104,7 @@ namespace SchemaZen.Library.Models {
 		public string GetSQLType() {
 			var text = RoutineType.ToString();
 			return string.Join(string.Empty, text.AsEnumerable().Select(
-				(c, i) => char.IsUpper(c) || i == 0 ? " " + char.ToUpper(c).ToString() :
+				(c, i) => char.IsUpper(c) || i == 0 ? " " + char.ToUpper(c) :
 					c.ToString()
 			).ToArray()).Trim();
 		}

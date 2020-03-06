@@ -3,7 +3,7 @@ param(
 )
 
 # format c# code
-.\packages\JetBrains.ReSharper.CommandLineTools.2018.3.3\tools\cleanupcode.exe `
+.\packages\JetBrains.ReSharper.CommandLineTools.2020.1.0-eap02\tools\cleanupcode.exe `
 	SchemaZen.sln -dsl=GlobalAll -dsl=SolutionPersonal -dsl=ProjectPersonal `
 	--exclude="**\*.config"
 
