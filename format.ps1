@@ -1,18 +1,20 @@
+# intended to be run from the root dir of the solution
+
 param(
-	[switch] $failOnDiff
+    [switch] $modified,
+    [switch] $staged
 )
 
-# format c# code
-.\packages\JetBrains.ReSharper.CommandLineTools.2020.1.0-eap02\tools\cleanupcode.exe `
-	SchemaZen.sln -dsl=GlobalAll -dsl=SolutionPersonal -dsl=ProjectPersonal `
-	--exclude="**\*.config"
+# make sure ReGitLint is present
+nuget install regitlint -version 1.5.0 -outputDirectory packages
 
-if ($failOnDiff){
-	git diff --exit-code
-	if ($LastExitCode -ne 0){
-		Write-Error "code formatter produced a diff"
-		exit 1;
-	}
+if (!$modified -and !$staged) {
+    packages/ReGitLint.1.5.0/tools/ReGitLint.exe -s SchemaZen.sln
+}
+if ($modified) {
+    packages/ReGitLint.1.5.0/tools/ReGitLint.exe -s SchemaZen.sln -f Modified -d
+}
+if ($staged) {
+    packages/ReGitLint.1.5.0/tools/ReGitLint.exe -s SchemaZen.sln -f Staged -d
 }
 
-exit 0;
