@@ -48,3 +48,7 @@ Pull requests are welcome and appreciated. See [contributing.md](contributing.md
 ## Chat
 [![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
+----
+If you've found Schema Zen helpful you can
+[buy me a coffee](https://www.buymeacoffee.com/sethreno) to say thanks.
+Cheers!
