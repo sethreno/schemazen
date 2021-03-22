@@ -354,6 +354,36 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 		}
 
 		[Test]
+		public void TestScriptTableTypeComputedColumn() {
+			var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[Value1] [int] NOT NULL,
+	[Value2] [int] NOT NULL,
+	[ComputedValue] AS ([VALUE1]+[VALUE2])
+)
+";
+			var db = new Database("TestScriptTableTypeComputedColumn");
+
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+			db.ExecCreate(true);
+
+			DBHelper.ExecSql(db.Connection, setupSQL1);
+
+			db.Dir = db.Name;
+			db.Load();
+
+			db.ScriptToDir();
+
+			Assert.AreEqual(1, db.TableTypes.Count());
+			Assert.AreEqual(3, db.TableTypes[0].Columns.Items.Count());
+			Assert.AreEqual("ComputedValue", db.TableTypes[0].Columns.Items[2].Name);
+			Assert.AreEqual("([VALUE1]+[VALUE2])", db.TableTypes[0].Columns.Items[2].ComputedDefinition);
+			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+		}
+
+		[Test]
 		public void TestScriptFKSameName() {
 			var setupSQL = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
