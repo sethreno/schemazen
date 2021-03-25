@@ -517,38 +517,48 @@ from #ScriptedRoles
 
 		private void LoadCheckConstraints(SqlCommand cm) {
 			cm.CommandText = @"
-
-				WITH SysObjectCheckConstraints AS
-				(
-					SELECT OBJECT_NAME(OBJECT_ID) AS ConstraintName
-						,SCHEMA_NAME(schema_id) AS SchemaName
-						,OBJECT_NAME(parent_object_id) AS TableName
-						,objectproperty(object_id, 'CnstIsNotRepl') AS NotForReplication
-					FROM sys.objects
-					WHERE type_desc = 'CHECK_CONSTRAINT'
-				)
-
-				SELECT CONSTRAINT_CATALOG AS TABLE_CATALOG, CONSTRAINT_SCHEMA AS TABLE_SCHEMA, 
-						NotForReplication,
-						TableName AS TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE 
-				FROM INFORMATION_SCHEMA.CHECK_CONSTRAINTS
-				INNER JOIN SysObjectCheckConstraints ON 
-				SysObjectCheckConstraints.SchemaName = CHECK_CONSTRAINTS.CONSTRAINT_SCHEMA AND
-				SysObjectCheckConstraints.ConstraintName = CHECK_CONSTRAINTS.CONSTRAINT_NAME 
-
- 
-			";
+				SELECT 
+					OBJECT_NAME(o.OBJECT_ID) AS CONSTRAINT_NAME,
+					SCHEMA_NAME(t.schema_id) AS TABLE_SCHEMA,
+					OBJECT_NAME(o.parent_object_id) AS TABLE_NAME,
+					CAST(0 AS bit) AS IS_TYPE,
+					objectproperty(o.object_id, 'CnstIsNotRepl') AS NotForReplication,
+					'CHECK' AS ConstraintType,
+					cc.definition as CHECK_CLAUSE,
+					cc.is_system_named
+				FROM sys.objects o
+					inner join sys.check_constraints cc on cc.object_id = o.object_id
+					inner join sys.tables t on t.object_id = o.parent_object_id
+					WHERE o.type_desc = 'CHECK_CONSTRAINT'
+				UNION ALL
+				SELECT 
+					OBJECT_NAME(o.OBJECT_ID) AS CONSTRAINT_NAME,
+					SCHEMA_NAME(tt.schema_id) AS TABLE_SCHEMA,
+					tt.name AS TABLE_NAME,
+					CAST(1 AS bit) AS IS_TYPE,
+					objectproperty(o.object_id, 'CnstIsNotRepl') AS NotForReplication,
+					'CHECK' AS ConstraintType,
+					cc.definition as CHECK_CLAUSE,
+					cc.is_system_named
+				FROM sys.objects o
+					inner join sys.check_constraints cc on cc.object_id = o.object_id
+					inner join sys.table_types tt on tt.type_table_object_id = o.parent_object_id
+					WHERE o.type_desc = 'CHECK_CONSTRAINT'
+				ORDER BY TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME
+				";
 
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var constraint = Constraint.CreateCheckedConstraint(
-						(string)dr["CONSTRAINT_NAME"],
-						Convert.ToBoolean(dr["NotForReplication"]),
-						(string)dr["CHECK_CLAUSE"]
-					);
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["IS_TYPE"]);
+					if (t != null) {
+						var constraint = Constraint.CreateCheckedConstraint(
+							(string)dr["CONSTRAINT_NAME"],
+							Convert.ToBoolean(dr["NotForReplication"]),
+							(string)dr["CHECK_CLAUSE"]
+						);
 
-					t.AddConstraint(constraint);
+						t.AddConstraint(constraint);
+					}
 				}
 			}
 		}

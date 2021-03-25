@@ -13,7 +13,7 @@ namespace SchemaZen.Library.Models {
 		public string Filter { get; set; }
 		public bool Unique { get; set; }
 		private bool _isNotForReplication;
-		private string _checkConstraintExpression;
+		public string CheckConstraintExpression { get; private set; }
 
 		public Constraint(string name, string type, string columns) {
 			Name = name;
@@ -28,7 +28,7 @@ namespace SchemaZen.Library.Models {
 			string checkConstraintExpression) {
 			var constraint = new Constraint(name, "CHECK", "") {
 				_isNotForReplication = isNotForReplication,
-				_checkConstraintExpression = checkConstraintExpression
+				CheckConstraintExpression = checkConstraintExpression
 			};
 			return constraint;
 		}
@@ -40,7 +40,7 @@ namespace SchemaZen.Library.Models {
 				case "CHECK":
 					var notForReplicationOption = _isNotForReplication ? "NOT FOR REPLICATION" : "";
 					return
-						$"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {_checkConstraintExpression}";
+						$"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {CheckConstraintExpression}";
 				case "INDEX":
 					var sql =
 						$"CREATE{UniqueText}{IndexType.Space()} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";

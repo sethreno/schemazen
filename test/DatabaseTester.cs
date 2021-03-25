@@ -384,6 +384,36 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 		}
 
 		[Test]
+		public void TestScriptTableTypeColumnCheckConstraint() {
+			var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[ID] [nvarchar](250) NULL,
+	[Value] [numeric](5, 1) NULL CHECK([Value]>(0)),
+	[LongNVarchar] [nvarchar](max) NULL
+)
+";
+			var db = new Database("TestScriptTableTypeColumnCheckConstraint");
+
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+			db.ExecCreate(true);
+
+			DBHelper.ExecSql(db.Connection, setupSQL1);
+
+			db.Dir = db.Name;
+			db.Load();
+
+			db.ScriptToDir();
+
+			Assert.AreEqual(1, db.TableTypes.Count());
+			Assert.AreEqual(1, db.TableTypes[0].Constraints.Count());
+			var constraint = db.TableTypes[0].Constraints.First();
+			Assert.AreEqual("([Value]>(0))", constraint.CheckConstraintExpression);
+			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+		}
+
+		[Test]
 		public void TestScriptFKSameName() {
 			var setupSQL = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
