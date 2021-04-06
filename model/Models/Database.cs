@@ -144,7 +144,7 @@ namespace SchemaZen.Library.Models {
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
 			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
-			"table_types", "schemas", "props", "permissions"
+			"table_types", "schemas", "props", "permissions", "check_constraints", "defaults"
 		};
 
 		public static string ValidTypes {
@@ -554,6 +554,7 @@ from #ScriptedRoles
 						var constraint = Constraint.CreateCheckedConstraint(
 							(string)dr["CONSTRAINT_NAME"],
 							Convert.ToBoolean(dr["NotForReplication"]),
+							Convert.ToBoolean(dr["is_system_named"]),
 							(string)dr["CHECK_CLAUSE"]
 						);
 
@@ -768,18 +769,37 @@ order by fk.name, fkc.constraint_column_id
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
 						d.definition as DEFAULT_VALUE,
-                        d.is_system_named as IS_SYSTEM_NAMED
+						d.is_system_named as IS_SYSTEM_NAMED,
+						cast(0 AS bit) AS IS_TYPE
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
 							and d.parent_object_id = c.object_id
-						inner join sys.schemas s on s.schema_id = t.schema_id";
+						inner join sys.schemas s on s.schema_id = t.schema_id
+					UNION ALL
+					select 
+						s.name as TABLE_SCHEMA,
+						tt.name as TABLE_NAME, 
+						c.name as COLUMN_NAME, 
+						d.name as DEFAULT_NAME, 
+						d.definition as DEFAULT_VALUE,
+						d.is_system_named as IS_SYSTEM_NAMED,
+						cast(1 AS bit) AS IS_TYPE
+					from sys.table_types tt 
+						inner join sys.columns c on c.object_id = tt.type_table_object_id
+						inner join sys.default_constraints d on c.column_id = d.parent_column_id
+							and d.parent_object_id = c.object_id
+						inner join sys.schemas s on s.schema_id = tt.schema_id
+";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default(
-						(string)dr["DEFAULT_NAME"],
-						(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["IS_TYPE"]);
+					if (t != null) {
+						var c = t.Columns.Find((string)dr["COLUMN_NAME"]);
+						if (c != null) {
+							c.Default = new Default(t, c, (string)dr["DEFAULT_NAME"], (string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+						}
+					}
 				}
 			}
 		}
@@ -1281,6 +1301,19 @@ where name = @dbname
 
 			foreach (var t in Tables.Concat(TableTypes)) {
 				text.AppendLine(t.ScriptCreate());
+
+				foreach (var constraint in t.Constraints.Where(c => c.Type == "CHECK" && !c.ScriptInline)) {
+					text.AppendLine(constraint.ScriptCreate());
+				}
+
+				var defaults = (
+					from c in t.Columns.Items
+					where c.Default != null
+					select c.Default)
+				.ToArray();
+				foreach (var def in defaults) {
+					text.AppendLine(def.ScriptCreate());
+				}
 			}
 
 			text.AppendLine();
@@ -1347,6 +1380,17 @@ where name = @dbname
 			WritePropsScript(log);
 			WriteSchemaScript(log);
 			WriteScriptDir("tables", Tables.ToArray(), log);
+			foreach (var table in Tables) {
+				WriteScriptDir("check_constraints", table.Constraints.Where(c => c.Type == "CHECK").ToArray(), log);
+
+				var defaults = (from c in table.Columns.Items
+								where c.Default != null
+								select c.Default).ToArray();
+
+				if (defaults.Any()) {
+					WriteScriptDir("defaults", defaults, log);
+				}
+			}
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
 			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
 			WriteScriptDir("foreign_keys",
@@ -1409,6 +1453,16 @@ where name = @dbname
 			// combine foreign keys into one script per table
 			var fk = o as ForeignKey;
 			if (fk != null) return MakeFileName(fk.Table);
+
+			// combine defaults into one script per table
+			if (o is Default) {
+				return MakeFileName((o as Default).Table);
+			}
+
+			// combine check constraints into one script per table
+			if (o is Constraint && (o as Constraint).Type == "CHECK") {
+				return MakeFileName((o as Constraint).Table);
+			}
 
 			var schema = o as IHasOwner == null ? "" : (o as IHasOwner).Owner;
 			var name = o as INameable == null ? "" : (o as INameable).Name;

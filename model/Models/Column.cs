@@ -17,24 +17,26 @@ namespace SchemaZen.Library.Models {
 
 		public Column() { }
 
-		public Column(string name, string type, bool nullable, Default defaultValue) {
+				public Column(string name, string type, bool nullable, Default defaultValue) {
 			Name = name;
 			Type = type;
 			Default = defaultValue;
 			IsNullable = nullable;
 		}
 
-		public Column(string name, string type, int length, bool nullable, Default defaultValue)
+				public Column(string name, string type, int length, bool nullable, Default defaultValue)
 			: this(name, type, nullable, defaultValue) {
 			Length = length;
 		}
 
-		public Column(string name, string type, byte precision, int scale, bool nullable,
+				public Column(string name, string type, byte precision, int scale, bool nullable,
 			Default defaultValue)
 			: this(name, type, nullable, defaultValue) {
 			Precision = precision;
 			Scale = scale;
 		}
+
+		public bool IncludeDefaultConstraint => Default != null && Default.ScriptInline;
 
 		private string IsNullableText {
 			get {
@@ -46,7 +48,7 @@ namespace SchemaZen.Library.Models {
 		public string DefaultText {
 			get {
 				if (Default == null || !string.IsNullOrEmpty(ComputedDefinition)) return "";
-				return "\r\n      " + Default.ScriptAsPartOfColumnDefinition();
+				return "\r\n      " + Default.ScriptCreate();
 			}
 		}
 
@@ -65,7 +67,7 @@ namespace SchemaZen.Library.Models {
 			return new ColumnDiff(this, c);
 		}
 
-		private string ScriptBase(bool includeDefaultConstraint) {
+		private string ScriptBase() {
 			if (!string.IsNullOrEmpty(ComputedDefinition)) {
 				var persistedSetting = Persisted ? " PERSISTED" : string.Empty;
 				return $"[{Name}] AS {ComputedDefinition}{persistedSetting}";
@@ -100,7 +102,7 @@ namespace SchemaZen.Library.Models {
 				case "xml":
 				case "sysname":
 					val.Append($" {IsNullableText}");
-					if (includeDefaultConstraint) val.Append(DefaultText);
+					if (IncludeDefaultConstraint) val.Append(DefaultText);
 					if (Identity != null) val.Append(IdentityText);
 					if (IsRowGuidCol) val.Append(RowGuidColText);
 					return val.ToString();
@@ -114,13 +116,13 @@ namespace SchemaZen.Library.Models {
 					var lengthString = Length.ToString();
 					if (lengthString == "-1") lengthString = "max";
 					val.Append($"({lengthString}) {IsNullableText}");
-					if (includeDefaultConstraint) val.Append(DefaultText);
+					if (IncludeDefaultConstraint) val.Append(DefaultText);
 					return val.ToString();
 
 				case "decimal":
 				case "numeric":
 					val.Append($"({Precision},{Scale}) {IsNullableText}");
-					if (includeDefaultConstraint) val.Append(DefaultText);
+					if (IncludeDefaultConstraint) val.Append(DefaultText);
 					if (Identity != null) val.Append(IdentityText);
 					return val.ToString();
 
@@ -131,11 +133,11 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public string ScriptCreate() {
-			return ScriptBase(true);
+			return ScriptBase();
 		}
 
 		public string ScriptAlter() {
-			return ScriptBase(false);
+			return ScriptBase();
 		}
 
 		internal static Type SqlTypeToNativeType(string sqlType) {

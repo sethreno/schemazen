@@ -250,11 +250,16 @@ namespace SchemaZen.Tests {
 
 			var t2 = new Table("dbo", "t2");
 			t2.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
-			t2.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
+
+			var col2 = new Column("col2", "int", false, null) { Position = 2 };
+			col2.Default = new Default(t2, col2, "df_col2", "((0))", false);
+			t2.Columns.Add(col2);
+
 			t2.Columns.Add(new Column("col3", "int", false, null) { Position = 3 });
 			t2.AddConstraint(new Constraint("pk_t2", "PRIMARY KEY", "col1") {
 				IndexType = "CLUSTERED"
 			});
+			t2.AddConstraint(Constraint.CreateCheckedConstraint("ck_col2", true, false, "([col2]>(0))"));
 			t2.AddConstraint(new Constraint("IX_col3", "UNIQUE", "col3") {
 				IndexType = "NONCLUSTERED"
 			});
@@ -409,6 +414,36 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 			Assert.AreEqual(1, db.TableTypes[0].Constraints.Count());
 			var constraint = db.TableTypes[0].Constraints.First();
 			Assert.AreEqual("([Value]>(0))", constraint.CheckConstraintExpression);
+			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
+		}
+
+		[Test]
+		public void TestScriptTableTypeColumnDefaultConstraint() {
+			var setupSQL1 = @"
+CREATE TYPE [dbo].[MyTableType] AS TABLE(
+	[ID] [nvarchar](250) NULL,
+	[Value] [numeric](5, 1) NULL DEFAULT 0,
+	[LongNVarchar] [nvarchar](max) NULL
+)
+";
+			var db = new Database("TestScriptTableTypeColumnDefaultConstraint");
+
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+			db.ExecCreate(true);
+
+			DBHelper.ExecSql(db.Connection, setupSQL1);
+
+			db.Dir = db.Name;
+			db.Load();
+
+			db.ScriptToDir();
+
+			Assert.AreEqual(1, db.TableTypes.Count());
+			Assert.IsNotNull(db.TableTypes[0].Columns.Items[1].Default);
+			Assert.AreEqual(" DEFAULT ((0))", db.TableTypes[0].Columns.Items[1].Default.ScriptCreate());
+
 			Assert.AreEqual("MyTableType", db.TableTypes[0].Name);
 			Assert.IsTrue(File.Exists(db.Name + "\\table_types\\TYPE_MyTableType.sql"));
 		}
@@ -611,7 +646,7 @@ select * from Table1
 				Unique = true
 			});
 			formType.AddConstraint(
-				Constraint.CreateCheckedConstraint("CK_FormType", false, "([code]<(5))"));
+				Constraint.CreateCheckedConstraint("CK_FormType", false, false, "([code]<(5))"));
 
 			var categoryType = new Table("dbo", "CategoryType");
 			categoryType.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
@@ -736,7 +771,7 @@ select * from Table1
 				var script = File.ReadAllText(tblFile);
 				var cindex = -1;
 
-				foreach (var ckobject in t.Constraints.OrderBy(x => x.Name)) {
+				foreach (var ckobject in t.Constraints.Where(c=>c.Type != "CHECK").OrderBy(x => x.Name)) {
 					var thisindex = script.IndexOf(ckobject.ScriptCreate());
 					Assert.Greater(thisindex, cindex, "Constraints are not ordered.");
 
