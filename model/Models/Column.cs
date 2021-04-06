@@ -17,19 +17,19 @@ namespace SchemaZen.Library.Models {
 
 		public Column() { }
 
-				public Column(string name, string type, bool nullable, Default defaultValue) {
+		public Column(string name, string type, bool nullable, Default defaultValue) {
 			Name = name;
 			Type = type;
 			Default = defaultValue;
 			IsNullable = nullable;
 		}
 
-				public Column(string name, string type, int length, bool nullable, Default defaultValue)
+		public Column(string name, string type, int length, bool nullable, Default defaultValue)
 			: this(name, type, nullable, defaultValue) {
 			Length = length;
 		}
 
-				public Column(string name, string type, byte precision, int scale, bool nullable,
+		public Column(string name, string type, byte precision, int scale, bool nullable,
 			Default defaultValue)
 			: this(name, type, nullable, defaultValue) {
 			Precision = precision;
