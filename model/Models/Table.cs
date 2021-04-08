@@ -146,10 +146,15 @@ end
 				$"CREATE {(IsType ? "TYPE" : "TABLE")} [{Owner}].[{Name}] {(IsType ? "AS TABLE " : string.Empty)}(\r\n");
 			text.Append(Columns.Script());
 			if (_constraints.Count > 0) text.AppendLine();
-			foreach (var c in _constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
-				text.AppendLine("   ," + c.ScriptCreate());
+			if (!IsType) {
+				foreach (var c in _constraints.OrderBy(x => x.Name).Where(c => c.Type == "PRIMARY KEY" || c.Type == "UNIQUE")) {
+					text.AppendLine("   ," + c.ScriptCreate());
+				}
+			} else {
+				foreach (var c in _constraints.OrderBy(x => x.Name).Where(c => c.Type != "INDEX")) {
+					text.AppendLine("   ," + c.ScriptCreate());
+				}
 			}
-
 			text.AppendLine(")");
 			text.AppendLine();
 			foreach (var c in _constraints.Where(c => c.Type == "INDEX")) {

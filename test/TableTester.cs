@@ -37,9 +37,9 @@ namespace SchemaZen.Tests {
 			t1.Columns.Add(new Column("first", "varchar", 30, false, null));
 			t2.Columns.Add(new Column("first", "varchar", 30, false, null));
 			t1.AddConstraint(
-				Constraint.CreateCheckedConstraint("IsTomorrow", true, "fnTomorrow()"));
+				Constraint.CreateCheckedConstraint("IsTomorrow", true, false, "fnTomorrow()"));
 			t2.AddConstraint(
-				Constraint.CreateCheckedConstraint("IsTomorrow", false, "Tomorrow <> 1"));
+				Constraint.CreateCheckedConstraint("IsTomorrow", false, false, "Tomorrow <> 1"));
 
 			diff = t1.Compare(t2);
 			Assert.AreEqual(1, diff.ConstraintsChanged.Count);
