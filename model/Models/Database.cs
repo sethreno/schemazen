@@ -154,7 +154,7 @@ namespace SchemaZen.Library.Models {
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
 			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
-			"table_types", "schemas", "props", "permissions", "fulltext_catalogs", "fulltext_indexes"
+			"table_types", "schemas", "props", "permissions", "fulltext_catalogs", "fulltext_indexes", "check_constraints", "defaults"
 		};
 
 		public static string ValidTypes {
@@ -530,38 +530,49 @@ from #ScriptedRoles
 
 		private void LoadCheckConstraints(SqlCommand cm) {
 			cm.CommandText = @"
-
-				WITH SysObjectCheckConstraints AS
-				(
-					SELECT OBJECT_NAME(OBJECT_ID) AS ConstraintName
-						,SCHEMA_NAME(schema_id) AS SchemaName
-						,OBJECT_NAME(parent_object_id) AS TableName
-						,objectproperty(object_id, 'CnstIsNotRepl') AS NotForReplication
-					FROM sys.objects
-					WHERE type_desc = 'CHECK_CONSTRAINT'
-				)
-
-				SELECT CONSTRAINT_CATALOG AS TABLE_CATALOG, CONSTRAINT_SCHEMA AS TABLE_SCHEMA, 
-						NotForReplication,
-						TableName AS TABLE_NAME, CONSTRAINT_NAME, CHECK_CLAUSE 
-				FROM INFORMATION_SCHEMA.CHECK_CONSTRAINTS
-				INNER JOIN SysObjectCheckConstraints ON 
-				SysObjectCheckConstraints.SchemaName = CHECK_CONSTRAINTS.CONSTRAINT_SCHEMA AND
-				SysObjectCheckConstraints.ConstraintName = CHECK_CONSTRAINTS.CONSTRAINT_NAME 
-
- 
-			";
+				SELECT 
+					OBJECT_NAME(o.OBJECT_ID) AS CONSTRAINT_NAME,
+					SCHEMA_NAME(t.schema_id) AS TABLE_SCHEMA,
+					OBJECT_NAME(o.parent_object_id) AS TABLE_NAME,
+					CAST(0 AS bit) AS IS_TYPE,
+					objectproperty(o.object_id, 'CnstIsNotRepl') AS NotForReplication,
+					'CHECK' AS ConstraintType,
+					cc.definition as CHECK_CLAUSE,
+					cc.is_system_named
+				FROM sys.objects o
+					inner join sys.check_constraints cc on cc.object_id = o.object_id
+					inner join sys.tables t on t.object_id = o.parent_object_id
+					WHERE o.type_desc = 'CHECK_CONSTRAINT'
+				UNION ALL
+				SELECT 
+					OBJECT_NAME(o.OBJECT_ID) AS CONSTRAINT_NAME,
+					SCHEMA_NAME(tt.schema_id) AS TABLE_SCHEMA,
+					tt.name AS TABLE_NAME,
+					CAST(1 AS bit) AS IS_TYPE,
+					objectproperty(o.object_id, 'CnstIsNotRepl') AS NotForReplication,
+					'CHECK' AS ConstraintType,
+					cc.definition as CHECK_CLAUSE,
+					cc.is_system_named
+				FROM sys.objects o
+					inner join sys.check_constraints cc on cc.object_id = o.object_id
+					inner join sys.table_types tt on tt.type_table_object_id = o.parent_object_id
+					WHERE o.type_desc = 'CHECK_CONSTRAINT'
+				ORDER BY TABLE_SCHEMA, TABLE_NAME, CONSTRAINT_NAME
+				";
 
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var constraint = Constraint.CreateCheckedConstraint(
-						(string)dr["CONSTRAINT_NAME"],
-						Convert.ToBoolean(dr["NotForReplication"]),
-						(string)dr["CHECK_CLAUSE"]
-					);
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["IS_TYPE"]);
+					if (t != null) {
+						var constraint = Constraint.CreateCheckedConstraint(
+							(string)dr["CONSTRAINT_NAME"],
+							Convert.ToBoolean(dr["NotForReplication"]),
+							Convert.ToBoolean(dr["is_system_named"]),
+							(string)dr["CHECK_CLAUSE"]
+						);
 
-					t.AddConstraint(constraint);
+						t.AddConstraint(constraint);
+					}
 				}
 			}
 		}
@@ -727,19 +738,37 @@ order by fk.name, fkc.constraint_column_id
 			//get computed column definitions
 			cm.CommandText = @"
 					select
-						object_schema_name(object_id) as TABLE_SCHEMA,
-						object_name(object_id) as TABLE_NAME,
-						name as COLUMN_NAME,
-						definition as DEFINITION,
-						is_persisted as PERSISTED
+						object_schema_name(t.object_id) as TABLE_SCHEMA,
+						object_name(t.object_id) as TABLE_NAME,
+						cc.name as COLUMN_NAME,
+						cc.definition as DEFINITION,
+						cc.is_persisted as PERSISTED,
+						cc.is_nullable as NULLABLE,
+						cast(0 as bit) as IS_TYPE
 					from sys.computed_columns cc
+					inner join sys.tables t on cc.object_id = t.object_id
+					UNION ALL
+					select 
+						SCHEMA_NAME(tt.schema_id) as TABLE_SCHEMA,
+						tt.name as TABLE_NAME,
+						cc.name as COLUMN_NAME,
+						cc.definition as DEFINITION,
+						cc.is_persisted as PERSISTED,
+						cc.is_nullable as NULLABLE,
+						cast(1 as bit) AS IS_TYPE
+					from sys.computed_columns cc
+					inner join sys.table_types tt on cc.object_id = tt.type_table_object_id
 					";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					var column = t.Columns.Find((string)dr["COLUMN_NAME"]);
-					column.ComputedDefinition = (string)dr["DEFINITION"];
-					column.Persisted = (bool)dr["PERSISTED"];
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["IS_TYPE"]);
+					if (t != null) {
+						var column = t.Columns.Find((string)dr["COLUMN_NAME"]);
+						if (column != null) {
+							column.ComputedDefinition = (string)dr["DEFINITION"];
+							column.Persisted = (bool)dr["PERSISTED"];
+						}
+					}
 				}
 			}
 		}
@@ -753,18 +782,37 @@ order by fk.name, fkc.constraint_column_id
 						c.name as COLUMN_NAME, 
 						d.name as DEFAULT_NAME, 
 						d.definition as DEFAULT_VALUE,
-						d.is_system_named as IS_SYSTEM_NAMED
+						d.is_system_named as IS_SYSTEM_NAMED,
+						cast(0 AS bit) AS IS_TYPE
 					from sys.tables t 
 						inner join sys.columns c on c.object_id = t.object_id
 						inner join sys.default_constraints d on c.column_id = d.parent_column_id
 							and d.parent_object_id = c.object_id
-						inner join sys.schemas s on s.schema_id = t.schema_id";
+						inner join sys.schemas s on s.schema_id = t.schema_id
+					UNION ALL
+					select 
+						s.name as TABLE_SCHEMA,
+						tt.name as TABLE_NAME, 
+						c.name as COLUMN_NAME, 
+						d.name as DEFAULT_NAME, 
+						d.definition as DEFAULT_VALUE,
+						d.is_system_named as IS_SYSTEM_NAMED,
+						cast(1 AS bit) AS IS_TYPE
+					from sys.table_types tt 
+						inner join sys.columns c on c.object_id = tt.type_table_object_id
+						inner join sys.default_constraints d on c.column_id = d.parent_column_id
+							and d.parent_object_id = c.object_id
+						inner join sys.schemas s on s.schema_id = tt.schema_id
+";
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
-					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"]);
-					t.Columns.Find((string)dr["COLUMN_NAME"]).Default = new Default(
-						(string)dr["DEFAULT_NAME"],
-						(string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+					var t = FindTable((string)dr["TABLE_NAME"], (string)dr["TABLE_SCHEMA"], (bool)dr["IS_TYPE"]);
+					if (t != null) {
+						var c = t.Columns.Find((string)dr["COLUMN_NAME"]);
+						if (c != null) {
+							c.Default = new Default(t, c, (string)dr["DEFAULT_NAME"], (string)dr["DEFAULT_VALUE"], (bool)dr["IS_SYSTEM_NAMED"]);
+						}
+					}
 				}
 			}
 		}
@@ -1378,6 +1426,19 @@ ORDER BY
 
 			foreach (var t in Tables.Concat(TableTypes)) {
 				text.AppendLine(t.ScriptCreate());
+
+				foreach (var constraint in t.Constraints.Where(c => c.Type == "CHECK" && !c.ScriptInline)) {
+					text.AppendLine(constraint.ScriptCreate());
+				}
+
+				var defaults = (
+					from c in t.Columns.Items
+					where c.Default != null
+					select c.Default)
+				.ToArray();
+				foreach (var def in defaults) {
+					text.AppendLine(def.ScriptCreate());
+				}
 			}
 
 			text.AppendLine();
@@ -1444,6 +1505,17 @@ ORDER BY
 			WritePropsScript(log);
 			WriteSchemaScript(log);
 			WriteScriptDir("tables", Tables.ToArray(), log);
+			foreach (var table in Tables) {
+				WriteScriptDir("check_constraints", table.Constraints.Where(c => c.Type == "CHECK").ToArray(), log);
+
+				var defaults = (from c in table.Columns.Items
+								where c.Default != null
+								select c.Default).ToArray();
+
+				if (defaults.Any()) {
+					WriteScriptDir("defaults", defaults, log);
+				}
+			}
 			WriteScriptDir("table_types", TableTypes.ToArray(), log);
 			WriteScriptDir("user_defined_types", UserDefinedTypes.ToArray(), log);
 			WriteScriptDir("foreign_keys",
@@ -1508,6 +1580,16 @@ ORDER BY
 			// combine foreign keys into one script per table
 			var fk = o as ForeignKey;
 			if (fk != null) return MakeFileName(fk.Table);
+
+			// combine defaults into one script per table
+			if (o is Default) {
+				return MakeFileName((o as Default).Table);
+			}
+
+			// combine check constraints into one script per table
+			if (o is Constraint && (o as Constraint).Type == "CHECK") {
+				return MakeFileName((o as Constraint).Table);
+			}
 
 			var schema = o as IHasOwner == null ? "" : (o as IHasOwner).Owner;
 			var name = o as INameable == null ? "" : (o as INameable).Name;

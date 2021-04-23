@@ -13,7 +13,10 @@ namespace SchemaZen.Library.Models {
 		public string Filter { get; set; }
 		public bool Unique { get; set; }
 		private bool _isNotForReplication;
-		private string _checkConstraintExpression;
+		private bool _isSystemNamed;
+		public string CheckConstraintExpression { get; private set; }
+
+		public bool ScriptInline { get { return Table == null || (Table != null && Table.IsType); } }
 
 		public Constraint(string name, string type, string columns) {
 			Name = name;
@@ -24,11 +27,12 @@ namespace SchemaZen.Library.Models {
 			}
 		}
 
-		public static Constraint CreateCheckedConstraint(string name, bool isNotForReplication,
+		public static Constraint CreateCheckedConstraint(string name, bool isNotForReplication, bool isSystemNamed,
 			string checkConstraintExpression) {
 			var constraint = new Constraint(name, "CHECK", "") {
 				_isNotForReplication = isNotForReplication,
-				_checkConstraintExpression = checkConstraintExpression
+				_isSystemNamed = isSystemNamed,
+				CheckConstraintExpression = checkConstraintExpression
 			};
 			return constraint;
 		}
@@ -39,8 +43,11 @@ namespace SchemaZen.Library.Models {
 			switch (Type) {
 				case "CHECK":
 					var notForReplicationOption = _isNotForReplication ? "NOT FOR REPLICATION" : "";
-					return
-						$"CONSTRAINT [{Name}] CHECK {notForReplicationOption} {_checkConstraintExpression}";
+					if (ScriptInline) {
+						return $"CHECK {notForReplicationOption} {CheckConstraintExpression}";
+					} else {
+						return $"ALTER TABLE [{Table.Owner}].[{Table.Name}] WITH CHECK ADD {(_isSystemNamed ? string.Empty : $"CONSTRAINT [{Name}]")} CHECK {notForReplicationOption} {CheckConstraintExpression}";
+					}
 				case "INDEX":
 					var sql =
 						$"CREATE{UniqueText}{IndexType.Space()} INDEX [{Name}] ON [{Table.Owner}].[{Table.Name}] ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
@@ -55,7 +62,7 @@ namespace SchemaZen.Library.Models {
 					return sql;
 			}
 
-			return (Table.IsType ? string.Empty : $"CONSTRAINT [{Name}] ") +
+			return (Table.IsType || _isSystemNamed ? string.Empty : $"CONSTRAINT [{Name}] ") +
 				$"{Type}{IndexType.Space()} ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
 		}
 	}

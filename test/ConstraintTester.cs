@@ -70,9 +70,9 @@ namespace SchemaZen.Tests {
 
 			[Test]
 			public void check_constraint() {
-				var c = Constraint.CreateCheckedConstraint("test", true, "[a]>(1)");
+				var c = Constraint.CreateCheckedConstraint("test", true, false, "[a]>(1)");
 				Assert.AreEqual(
-					"CONSTRAINT [test] CHECK NOT FOR REPLICATION [a]>(1)",
+					"CHECK NOT FOR REPLICATION [a]>(1)",
 					c.ScriptCreate());
 			}
 		}
