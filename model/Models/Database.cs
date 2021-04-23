@@ -81,6 +81,8 @@ namespace SchemaZen.Library.Models {
 		public List<SqlUser> Users { get; set; } = new List<SqlUser>();
 		public List<Constraint> ViewIndexes { get; set; } = new List<Constraint>();
 		public List<Permission> Permissions { get; set; } = new List<Permission>();
+		public List<FulltextCatalog> FulltextCatalogs { get; set; } = new List<FulltextCatalog>();
+		public List<FulltextIndex> FulltextIndexes { get; set; } = new List<FulltextIndex>();
 
 		public DbProp FindProp(string name) {
 			return Props.FirstOrDefault(p =>
@@ -128,6 +130,14 @@ namespace SchemaZen.Library.Models {
 			return Permissions.FirstOrDefault(g => g.Name == name);
 		}
 
+		public FulltextCatalog FindFulltextCatalog(string name) {
+			return FulltextCatalogs.FirstOrDefault(f => f.Name == name);
+		}
+
+		public FulltextIndex FindFulltextIndex(string name) {
+			return FulltextIndexes.FirstOrDefault(f => f.Name == name);
+		}
+
 		public List<Table> FindTablesRegEx(string pattern, string excludePattern = null) {
 			return Tables.Where(t => FindTablesRegExPredicate(t, pattern, excludePattern)).ToList();
 		}
@@ -144,7 +154,7 @@ namespace SchemaZen.Library.Models {
 		public static HashSet<string> Dirs { get; } = new HashSet<string> {
 			"user_defined_types", "tables", "foreign_keys", "assemblies", "functions", "procedures",
 			"triggers", "views", "xmlschemacollections", "data", "roles", "users", "synonyms",
-			"table_types", "schemas", "props", "permissions", "check_constraints", "defaults"
+			"table_types", "schemas", "props", "permissions", "fulltext_catalogs", "fulltext_indexes", "check_constraints", "defaults"
 		};
 
 		public static string ValidTypes {
@@ -179,6 +189,7 @@ namespace SchemaZen.Library.Models {
 			Synonyms.Clear();
 			Roles.Clear();
 			Permissions.Clear();
+			FulltextCatalogs.Clear();
 
 			using (var cn = new SqlConnection(Connection)) {
 				cn.Open();
@@ -201,6 +212,8 @@ namespace SchemaZen.Library.Models {
 					LoadSynonyms(cm);
 					LoadRoles(cm);
 					LoadPermissions(cm);
+					LoadFulltextCatalogs(cm);
+					LoadFulltextCatalogIndexes(cm);
 				}
 			}
 		}
@@ -348,7 +361,7 @@ begin
 end
 
 select 
-    name
+	name
 ,   script
 from #ScriptedRoles
 ";
@@ -590,7 +603,7 @@ from #ScriptedRoles
 						UPDATE_RULE, 
 						DELETE_RULE,
 						fk.is_disabled,
-                        fk.is_system_named
+						fk.is_system_named
 					from INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
 						inner join sys.foreign_keys fk on rc.CONSTRAINT_NAME = fk.name and rc.CONSTRAINT_SCHEMA = OBJECT_SCHEMA_NAME(fk.parent_object_id)";
 			using (var dr = cm.ExecuteReader()) {
@@ -967,18 +980,18 @@ order by fk.name, fkc.constraint_column_id
 		private void LoadUserDefinedTypes(SqlCommand cm) {
 			//get types
 			cm.CommandText = @"
-            select
-                s.name as 'Type_Schema',
-                t.name as 'Type_Name',
-                tt.name as 'Base_Type_Name',
-                t.max_length as 'Max_Length',
-                t.is_nullable as 'Nullable'	
-            from sys.types t
-            inner join sys.schemas s on s.schema_id = t.schema_id
-            inner join sys.types tt on t.system_type_id = tt.user_type_id
-            where
-                t.is_user_defined = 1
-            and t.is_table_type = 0";
+			select
+				s.name as 'Type_Schema',
+				t.name as 'Type_Name',
+				tt.name as 'Base_Type_Name',
+				t.max_length as 'Max_Length',
+				t.is_nullable as 'Nullable'	
+			from sys.types t
+			inner join sys.schemas s on s.schema_id = t.schema_id
+			inner join sys.types tt on t.system_type_id = tt.user_type_id
+			where
+				t.is_user_defined = 1
+			and t.is_table_type = 0";
 
 			using (var dr = cm.ExecuteReader()) {
 				LoadUserDefinedTypesBase(dr, UserDefinedTypes);
@@ -1104,6 +1117,84 @@ where name = @dbname
 			}
 		}
 
+		private void LoadFulltextCatalogs(SqlCommand cm) {
+			//get fulltext catalogs
+			//https://www.sqlservercentral.com/scripts/script-to-generate-the-sql-to-create-a-fulltext-catalog-and-its-underlying-fulltext-index
+			cm.CommandText = @"
+select
+	name
+	, is_accent_sensitivity_on
+	, is_default
+from sys.fulltext_catalogs
+";
+			using (var dr = cm.ExecuteReader()) {
+				while (dr.Read()) {
+					FulltextCatalogs.Add(new FulltextCatalog((string)dr["name"]) {
+						IsAccentSensitivityOn = (bool)dr["is_accent_sensitivity_on"],
+						IsDefault = (bool)dr["is_default"]
+					});
+				}
+			}
+		}
+
+		private void LoadFulltextCatalogIndexes(SqlCommand cm) {
+			//get fulltext indexes
+			cm.CommandText = @"
+SELECT
+	catalog_name
+	, schema_name
+	, ix.name table_name
+	, c.name column_name
+	, fic.language_id
+	, fic.statistical_semantics
+	, i.name key_index
+FROM (
+		SELECT
+			MIN(fi.object_id) objectId
+			, u.name AS schema_name
+			, t.name
+			, unique_index_id
+			, c.name as catalog_name
+		FROM sys.tables AS t
+		INNER JOIN sys.schemas AS u ON u.schema_id = t.schema_id
+		INNER JOIN sys.fulltext_indexes fi ON t.object_id = fi.object_id
+		INNER JOIN sys.fulltext_catalogs c ON fi.fulltext_catalog_id = c.fulltext_catalog_id
+		GROUP BY
+			u.name
+			, t.Name
+			, unique_index_id
+			, c.name) ix
+	INNER JOIN sys.fulltext_index_columns AS fic ON ix.objectId = fic.object_id
+	INNER JOIN sys.columns c ON fic.column_id = c.column_id AND fic.object_id = c.object_id
+	INNER JOIN sys.indexes i ON ix.objectId = i.object_id AND ix.unique_index_id = i.index_id
+ORDER BY
+	catalog_name
+	, schema_name
+	, ix.name
+";
+			using (var dr = cm.ExecuteReader()) {
+				FulltextIndex index = null;
+				while (dr.Read()) {
+					if (index == null || index.SchemaName != (string)dr["schema_name"] || index.TableName != (string)dr["table_name"]) {
+						index = new FulltextIndex {
+							CatalogName = (string)dr["catalog_name"],
+							SchemaName = (string)dr["schema_name"],
+							TableName = (string)dr["table_name"],
+							KeyIndex = (string)dr["key_index"]
+						};
+
+						FulltextIndexes.Add(index);
+					}
+
+					index.Columns.Add(new FulltextIndexColumn {
+						ColumnName = (string)dr["column_name"],
+						LanguageId = (int)dr["language_id"],
+						StatisticalSemantics = (int)dr["statistical_semantics"] == 1
+					});
+				}
+			}
+		}
+
 		#endregion
 
 		#region Compare
@@ -1113,7 +1204,7 @@ where name = @dbname
 				Db = db
 			};
 
-			//compare database properties		   
+			//compare database properties
 			foreach (var p in from p in Props
 				let p2 = db.FindProp(p.Name)
 				where p.Script() != p2.Script()
@@ -1269,6 +1360,40 @@ where name = @dbname
 				diff.PermissionsDeleted.Add(p);
 			}
 
+			//get added and compare fulltext catalogs
+			foreach (var f in FulltextCatalogs) {
+				var f2 = db.FindFulltextCatalog(f.Name);
+				if (f2 == null) {
+					diff.FulltextCatalogsAdded.Add(f);
+				} else {
+					if (f.ScriptCreate() != f2.ScriptCreate()) {
+						diff.FulltextCatalogsDiff.Add(f);
+					}
+				}
+			}
+
+			//get deleted fulltext catalogs
+			foreach (var f in db.FulltextCatalogs.Where(f => FindFulltextCatalog(f.Name) == null)) {
+				diff.FulltextCatalogsDeleted.Add(f);
+			}
+
+			//get added and compare fulltext indexes
+			foreach (var f in FulltextIndexes) {
+				var f2 = db.FindFulltextIndex(f.Name);
+				if (f2 == null) {
+					diff.FulltextIndexesAdded.Add(f);
+				} else {
+					if (f.ScriptCreate() != f2.ScriptCreate() || diff.FulltextCatalogsDiff.Any(c => c.Name == f.CatalogName)) {
+						diff.FulltextIndexesDiff.Add(f);
+					}
+				}
+			}
+
+			//get deleted fulltext indexes
+			foreach (var f in db.FulltextIndexes.Where(f => FindFulltextIndex(f.Name) == null)) {
+				diff.FulltextIndexesDeleted.Add(f);
+			}
+
 			return diff;
 		}
 
@@ -1406,6 +1531,8 @@ where name = @dbname
 			WriteScriptDir("users", Users.ToArray(), log);
 			WriteScriptDir("synonyms", Synonyms.ToArray(), log);
 			WriteScriptDir("permissions", Permissions.ToArray(), log);
+			WriteScriptDir("fulltext_catalogs", FulltextCatalogs.ToArray(), log);
+			WriteScriptDir("fulltext_indexes", FulltextIndexes.ToArray(), log);
 
 			ExportData(tableHint, log);
 		}
@@ -1756,6 +1883,12 @@ where name = @dbname
 		public List<Permission> PermissionsAdded = new List<Permission>();
 		public List<Permission> PermissionsDeleted = new List<Permission>();
 		public List<Permission> PermissionsDiff = new List<Permission>();
+		public List<FulltextCatalog> FulltextCatalogsAdded = new List<FulltextCatalog>();
+		public List<FulltextCatalog> FulltextCatalogsDiff = new List<FulltextCatalog>();
+		public List<FulltextCatalog> FulltextCatalogsDeleted = new List<FulltextCatalog>();
+		public List<FulltextIndex> FulltextIndexesAdded = new List<FulltextIndex>();
+		public List<FulltextIndex> FulltextIndexesDiff = new List<FulltextIndex>();
+		public List<FulltextIndex> FulltextIndexesDeleted = new List<FulltextIndex>();
 
 		public bool IsDiff => PropsChanged.Count > 0
 			|| TablesAdded.Count > 0
@@ -1782,7 +1915,13 @@ where name = @dbname
 			|| SynonymsDeleted.Count > 0
 			|| PermissionsAdded.Count > 0
 			|| PermissionsDiff.Count > 0
-			|| PermissionsDeleted.Count > 0;
+			|| PermissionsDeleted.Count > 0
+			|| FulltextCatalogsAdded.Count > 0
+			|| FulltextCatalogsDiff.Count > 0
+			|| FulltextCatalogsDeleted.Count > 0
+			|| FulltextIndexesAdded.Count > 0
+			|| FulltextIndexesDiff.Count > 0
+			|| FulltextIndexesDeleted.Count > 0;
 
 		private static string Summarize(bool includeNames, List<string> changes, string caption) {
 			if (changes.Count == 0) return string.Empty;
@@ -1869,6 +2008,30 @@ where name = @dbname
 				PermissionsDiff.Select(o => $"{o.ObjectName}: {o.PermissionType} TO {o.UserName}")
 					.ToList(),
 				"permissions altered"));
+			sb.Append(Summarize(includeNames,
+				FulltextCatalogsAdded.Select(o => o.Name)
+					.ToList(),
+				"fulltext catalogs in source but not in target"));
+			sb.Append(Summarize(includeNames,
+				FulltextCatalogsDeleted
+					.Select(o => o.Name).ToList(),
+				"fulltext catalogs not in source but in target"));
+			sb.Append(Summarize(includeNames,
+				FulltextCatalogsDiff.Select(o => o.Name)
+					.ToList(),
+				"fulltext catalogs altered"));
+			sb.Append(Summarize(includeNames,
+				FulltextIndexesAdded.Select(o => o.Name)
+					.ToList(),
+				"fulltext indexes in source but not in target"));
+			sb.Append(Summarize(includeNames,
+				FulltextIndexesDeleted
+					.Select(o => o.Name).ToList(),
+				"fulltext indexes not in source but in target"));
+			sb.Append(Summarize(includeNames,
+				FulltextIndexesDiff.Select(o => o.Name)
+					.ToList(),
+				"fulltext indexes altered"));
 			return sb.ToString();
 		}
 
@@ -1995,6 +2158,44 @@ where name = @dbname
 			}
 
 			foreach (var p in PermissionsDeleted) {
+				text.AppendLine(p.ScriptDrop());
+				text.AppendLine("GO");
+			}
+
+			//add & delete fulltext catalogs and indexes
+			foreach (var p in FulltextCatalogsAdded) {
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextIndexesAdded) {
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextIndexesDiff) {
+				text.AppendLine(p.ScriptDrop());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextCatalogsDiff) {
+				text.AppendLine(p.ScriptDrop());
+				text.AppendLine("GO");
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextIndexesDiff) {
+				text.AppendLine(p.ScriptCreate());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextIndexesDeleted) {
+				text.AppendLine(p.ScriptDrop());
+				text.AppendLine("GO");
+			}
+
+			foreach (var p in FulltextCatalogsDeleted) {
 				text.AppendLine(p.ScriptDrop());
 				text.AppendLine("GO");
 			}

@@ -60,6 +60,7 @@
     <Compile Include="Logger.cs" />
     <Compile Include="Models\Assembly.cs" />
     <Compile Include="BatchSqlParser.cs" />
+    <Compile Include="Models\FulltextCatalog.cs" />
     <Compile Include="Models\Column.cs" />
     <Compile Include="Models\ColumnList.cs" />
     <Compile Include="ConfigHelper.cs" />
@@ -72,6 +73,8 @@
     <Compile Include="Models\Default.cs" />
     <Compile Include="Models\Exceptions.cs" />
     <Compile Include="Models\ForeignKey.cs" />
+    <Compile Include="Models\FulltextIndex.cs" />
+    <Compile Include="Models\FulltextIndexColumn.cs" />
     <Compile Include="Models\Permission.cs" />
     <Compile Include="Models\Identity.cs" />
     <Compile Include="Models\Interfaces.cs" />
