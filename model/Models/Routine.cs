@@ -24,17 +24,17 @@ namespace SchemaZen.Library.Models {
 		public string RelatedTableName { get; set; }
 		public Database Db { get; set; }
 
-		private const string _sqlCreateRegex =
-			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(CREATE)" +
-			Database.SqlWhitespaceOrCommentRegex;
-
-		private const string _sqlCreateWithNameRegex =
-			_sqlCreateRegex + @"+{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
+		private const string _sqlActionWithNameRegex =
+			_sqlActionRegex + @"{0}" + Database.SqlWhitespaceOrCommentRegex + @"+?(?:(?:(" +
 			Database.SqlEnclosedIdentifierRegex +
 			@"|" + Database.SqlRegularIdentifierRegex + @")\.)?(" +
 			Database.SqlEnclosedIdentifierRegex + @"|" +
 			Database.SqlRegularIdentifierRegex + @"))(?:\(|" +
 			Database.SqlWhitespaceOrCommentRegex + @")";
+
+		private const string _sqlActionRegex =
+			@"\A" + Database.SqlWhitespaceOrCommentRegex + @"*?(ALTER|CREATE)" +
+			Database.SqlWhitespaceOrCommentRegex;
 
 		public Routine(string owner, string name, Database db) {
 			Owner = owner;
@@ -67,9 +67,14 @@ namespace SchemaZen.Library.Models {
 			return script;
 		}
 
-		private string ScriptBase(Database db, string definition) {
+		private string ScriptBase(Database db, string definition, string action) {
+
+            if(RoutineType == RoutineKind.View)
+				definition = ModifyView(definition, action);
+
 			var before = ScriptQuotedIdAndAnsiNulls(db, false);
 			var after = ScriptQuotedIdAndAnsiNulls(db, true);
+
 			if (!string.IsNullOrEmpty(after))
 				after = Environment.NewLine + "GO" + Environment.NewLine + after;
 
@@ -78,12 +83,44 @@ namespace SchemaZen.Library.Models {
 					$"{Environment.NewLine}{(Disabled ? "DISABLE" : "ENABLE")} TRIGGER [{Owner}].[{Name}] ON [{RelatedTableSchema}].[{RelatedTableName}]{Environment.NewLine}GO{Environment.NewLine}";
 			}
 
-			if (string.IsNullOrEmpty(definition))
-				definition = $"/* missing definition for {RoutineType} [{Owner}].[{Name}] */";
-			else
-				definition = RemoveExtraNewLines(definition);
+			definition = RemoveExtraNewLines(definition);
 
 			return before + definition + after;
+		}
+
+		private string ModifyView(string definition, string action) {
+			var regex = new Regex(string.Format(_sqlActionWithNameRegex, GetSQLTypeForRegEx()), RegexOptions.IgnoreCase);
+			var match = regex.Match(definition);
+
+			if (!match.Success || string.IsNullOrEmpty(definition))
+				throw new Exception($"Unable to script routine {RoutineType} {Owner}.{Name} as " + action);
+
+			var actionGroup = match.Groups[1];
+			var ownerGroup = match.Groups[2];
+			var nameGroup = match.Groups[3];
+			var ownerGroupMatched = ownerGroup.Success;
+
+			if (match.Success && IsScriptMisMatched(action, actionGroup.Value, ownerGroupMatched ? ownerGroup.Value : string.Empty, nameGroup.Value)) {
+				var actionStart = actionGroup.Index;
+				var actionEnd = actionStart + actionGroup.Length;
+				var nameStart = ownerGroupMatched ? ownerGroup.Index - actionEnd :
+					nameGroup.Index - actionEnd;
+				var nameEnd = nameGroup.Index + nameGroup.Length;
+
+				var textBeforeAction = Text.Substring(0, actionStart);
+				var textBeforeOwner = Text.Substring(actionEnd, nameStart);
+				definition = textBeforeAction + action + textBeforeOwner + "[" + Owner + "].[" + Name +
+					"]" + Text.Substring(nameEnd);
+			}
+
+			return definition;
+		}
+
+		private bool IsScriptMisMatched( string action, string scriptAction, string scriptOwner, string scriptName) {
+			var matched = action.ToUpper() == scriptAction.ToUpper();
+			matched = matched && (Owner.ToUpper() == scriptOwner.Trim('[', ']').ToUpper() || (Owner.ToLower() == "dbo" && scriptOwner.Trim('[', ']').Trim() == String.Empty));
+			matched = matched && Name.ToUpper() == scriptName.Trim('[', ']').ToUpper();
+			return !matched;
 		}
 
 		private static string RemoveExtraNewLines(string definition) {
@@ -91,7 +128,7 @@ namespace SchemaZen.Library.Models {
 		}
 
 		public string ScriptCreate() {
-			return ScriptBase(Db, Text);
+			return ScriptBase(Db, Text, "CREATE");
 		}
 
 		public string GetSQLTypeForRegEx() {
@@ -115,14 +152,7 @@ namespace SchemaZen.Library.Models {
 
 		public string ScriptAlter(Database db) {
 			if (RoutineType != RoutineKind.XmlSchemaCollection) {
-				var regex = new Regex(_sqlCreateRegex, RegexOptions.IgnoreCase);
-				var match = regex.Match(Text);
-				var group = match.Groups[1];
-				if (group.Success) {
-					return ScriptBase(db,
-						Text.Substring(0, group.Index) + "ALTER" +
-						Text.Substring(group.Index + group.Length));
-				}
+				return ScriptBase(db, Text, "ALTER");
 			}
 
 			throw new Exception($"Unable to script routine {RoutineType} {Owner}.{Name} as ALTER");
@@ -133,7 +163,7 @@ namespace SchemaZen.Library.Models {
 				yield return "Script definition could not be retrieved.";
 			} else {
 				// check if the name is correct
-				var regex = new Regex(string.Format(_sqlCreateWithNameRegex, GetSQLTypeForRegEx()),
+				var regex = new Regex(string.Format(_sqlActionWithNameRegex, GetSQLTypeForRegEx()),
 					RegexOptions.IgnoreCase | RegexOptions.Singleline);
 				var match = regex.Match(Text);
 
