@@ -287,6 +287,38 @@ namespace SchemaZen.Tests {
 		}
 
 		[Test]
+		public void TestScriptNoDboPrefix() {
+			var setupSQL1 = @"
+CREATE TABLE t1 (
+	[ID] [nvarchar](250) NULL,
+	[Value] [numeric](5, 1) NULL,
+	[LongNVarchar] [nvarchar](max) NULL
+)";
+
+			var db = new Database("TestScriptNoDboPrefix", prefix_dbo: false);
+
+			db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
+
+			db.ExecCreate(true);
+
+			DBHelper.ExecSql(db.Connection, setupSQL1);
+
+			db.Dir = db.Name;
+			db.Load();
+
+			db.ScriptToDir();
+
+			Assert.AreEqual(1, db.Tables.Count());
+			Assert.AreEqual(250, db.Tables[0].Columns.Items[0].Length);
+			Assert.AreEqual(1, db.Tables[0].Columns.Items[1].Scale);
+			Assert.AreEqual(5, db.Tables[0].Columns.Items[1].Precision);
+			Assert.AreEqual(-1,
+				db.Tables[0].Columns.Items[2].Length); //nvarchar(max) is encoded as -1
+			Assert.AreEqual("t1", db.Tables[0].Name);
+			Assert.IsTrue(File.Exists(db.Name + "\\tables\\t1.sql"));
+		}
+
+		[Test]
 		public void TestScriptTableType() {
 			var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
