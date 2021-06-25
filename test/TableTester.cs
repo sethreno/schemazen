@@ -332,11 +332,13 @@ namespace SchemaZen.Tests {
 		}
 
 		[Test]
-		[ExpectedException(typeof(NotSupportedException))]
 		public void TestScriptNonSupportedColumn() {
-			var t = new Table("dbo", "bla");
-			t.Columns.Add(new Column("a", "madeuptype", true, null));
-			t.ScriptCreate();
+			Assert.Throws(typeof(NotSupportedException), () =>
+			{
+				var t = new Table("dbo", "bla");
+				t.Columns.Add(new Column("a", "madeuptype", true, null));
+				t.ScriptCreate();
+			});
 		}
 	}
 }

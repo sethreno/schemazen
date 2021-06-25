@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using ManyConsole;
-using NDesk.Options;
+using Mono.Options;
 using SchemaZen.Library.Command;
 
 namespace SchemaZen.console {

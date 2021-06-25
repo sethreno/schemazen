@@ -1,5 +1,5 @@
 ﻿using ManyConsole;
-using NDesk.Options;
+using Mono.Options;
 
 namespace SchemaZen.console {
 	public abstract class BaseCommand : ConsoleCommand {
