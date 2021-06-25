@@ -1,6 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Runtime;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.Library.Models {
 	public class SqlAssembly : INameable, IScriptable {
@@ -23,11 +24,11 @@ namespace SchemaZen.Library.Models {
 			var commands = Files.Select((kvp, index) => {
 				if (index == 0) {
 					return
-						$"CREATE ASSEMBLY [{Name}]\r\n{string.Empty}FROM {"0x" + new SoapHexBinary(kvp.Value)}\r\n{"WITH PERMISSION_SET = " + PermissionSet}";
+						$"CREATE ASSEMBLY [{Name}]\r\n{string.Empty}FROM {"0x" + Convert.ToHexString(kvp.Value)}\r\n{"WITH PERMISSION_SET = " + PermissionSet}";
 				}
 
 				return
-					$"ALTER ASSEMBLY [{Name}]\r\nADD FILE FROM {"0x" + new SoapHexBinary(kvp.Value)}\r\nAS N\'{kvp.Key}\'";
+					$"ALTER ASSEMBLY [{Name}]\r\nADD FILE FROM {"0x" + Convert.ToHexString(kvp.Value)}\r\nAS N\'{kvp.Key}\'";
 			});
 
 			var script = string.Join("\r\nGO\r\n", commands.ToArray());
@@ -39,3 +40,15 @@ namespace SchemaZen.Library.Models {
 		}
 	}
 }
+
+
+//class SoapHexBinary
+//{
+//	public SoapHexBinary(byte[] bytes)
+//	{
+//	}
+
+//	public byte Value { get; set; }
+
+//	public static SoapHexBinary Parse(string value) => new SoapHexBinary(new byte[] { });
+//}

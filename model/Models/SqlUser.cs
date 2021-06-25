@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 
 namespace SchemaZen.Library.Models {
 	public class SqlUser : INameable, IHasOwner, IScriptable {
@@ -21,7 +21,7 @@ namespace SchemaZen.Library.Models {
 
 		public string ScriptCreate() {
 			var login = PasswordHash == null ? string.Empty : $@"IF SUSER_ID('{Name}') IS NULL
-				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + new SoapHexBinary(PasswordHash)} HASHED END
+				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + Convert.ToHexString(PasswordHash)} HASHED END
 ";
 
 			return login +

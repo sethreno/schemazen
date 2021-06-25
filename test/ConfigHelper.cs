@@ -1,8 +1,13 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 
 namespace SchemaZen.Tests {
-	public class ConfigHelper {
+	public static class ConfigHelper {
+		private static readonly IDictionary<string, string> config;
+
 		public static string TestDB => GetSetting("testdb");
 
 		public static string TestSchemaDir => GetSetting("test_schema_dir");
@@ -11,7 +16,13 @@ namespace SchemaZen.Tests {
 
 		private static string GetSetting(string key) {
 			var val = Environment.GetEnvironmentVariable(key);
-			return val ?? ConfigurationManager.AppSettings[key];
+			return val ?? (config.TryGetValue(key, out val) ? val : null);
+		}
+
+		static ConfigHelper()
+		{
+			var settingsString = File.ReadAllText("appsettings.json");
+			config = JsonConvert.DeserializeObject<IDictionary<string, string>>(settingsString);
 		}
 	}
 }

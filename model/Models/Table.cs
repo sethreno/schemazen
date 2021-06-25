@@ -5,7 +5,6 @@ using System.Data.SqlClient;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Metadata.W3cXsd2001;
 using System.Text;
 
 namespace SchemaZen.Library.Models {
@@ -197,7 +196,7 @@ end
 								if (dr[c.Name] is DBNull)
 									data.Write(_nullValue);
 								else if (dr[c.Name] is byte[])
-									data.Write(new SoapHexBinary((byte[])dr[c.Name]).ToString());
+									data.Write(Convert.ToHexString((byte[])dr[c.Name]));
 								else if (dr[c.Name] is DateTime) {
 									data.Write(
 										((DateTime)dr[c.Name])
@@ -335,7 +334,7 @@ end
 				case "binary":
 				case "varbinary":
 				case "image":
-					return SoapHexBinary.Parse(val).Value;
+					return Convert.FromHexString(val);
 				default:
 					return val;
 			}
