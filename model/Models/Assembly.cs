@@ -40,15 +40,3 @@ namespace SchemaZen.Library.Models {
 		}
 	}
 }
-
-
-//class SoapHexBinary
-//{
-//	public SoapHexBinary(byte[] bytes)
-//	{
-//	}
-
-//	public byte Value { get; set; }
-
-//	public static SoapHexBinary Parse(string value) => new SoapHexBinary(new byte[] { });
-//}
