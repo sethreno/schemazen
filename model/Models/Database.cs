@@ -223,7 +223,7 @@ namespace SchemaZen.Library.Models {
 
 		private void LoadSynonyms(SqlCommand cm) {
 			try {
-				Console.WriteLine("-- Loading synonyms");
+				WriteDebug("-- Loading synonyms");
 				cm.CommandText = $@"
 						select object_schema_name(object_id) as schema_name, name as synonym_name, base_object_name
 						where object_schema_name(object_id) in {schemaIn}
@@ -243,7 +243,7 @@ namespace SchemaZen.Library.Models {
 
 		private void LoadPermissions(SqlCommand cm) {
 			try {
-				Console.WriteLine("-- Loading Permissions");
+				// get permissions
 				// based on http://sql-articles.com/scripts/script-to-retrieve-security-information-sql-server-2005-and-above/
 				cm.CommandText = $@"
 						select 
@@ -266,110 +266,110 @@ namespace SchemaZen.Library.Models {
 		}
 
 		private void LoadRoles(SqlCommand cm) {
-			Console.WriteLine("-- Loading Roles");
+			WriteDebug("-- Loading Roles");
 			//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
 			cm.CommandText = @"
-create table #ScriptedRoles (
-	name nvarchar(255) not null
-,	script nvarchar(max)
-)
+				create table #ScriptedRoles (
+					name nvarchar(255) not null
+				,	script nvarchar(max)
+				)
 
-insert into #ScriptedRoles
-select 
-	name
-,	null as script 
-from sys.database_principals
-where type = 'R'
-	and name not in (
-	-- Ignore default roles, just look for custom ones
-		'db_accessadmin'
-	,	'db_backupoperator'
-	,	'db_datareader'
-	,	'db_datawriter'
-	,	'db_ddladmin'
-	,	'db_denydatareader'
-	,	'db_denydatawriter'
-	,	'db_owner'
-	,	'db_securityadmin'
-	,	'public'
-	)
+				insert into #ScriptedRoles
+				select 
+					name
+				,	null as script 
+				from sys.database_principals
+				where type = 'R'
+					and name not in (
+					-- Ignore default roles, just look for custom ones
+						'db_accessadmin'
+					,	'db_backupoperator'
+					,	'db_datareader'
+					,	'db_datawriter'
+					,	'db_ddladmin'
+					,	'db_denydatareader'
+					,	'db_denydatawriter'
+					,	'db_owner'
+					,	'db_securityadmin'
+					,	'public'
+					)
 
-while(exists(select 1 from #ScriptedRoles where script is null))
-begin
+				while(exists(select 1 from #ScriptedRoles where script is null))
+				begin
 
-	DECLARE @RoleName VARCHAR(255)
-	SET @RoleName = (select top 1 name from #ScriptedRoles where script is null)
+					DECLARE @RoleName VARCHAR(255)
+					SET @RoleName = (select top 1 name from #ScriptedRoles where script is null)
 
-	-- Script out the Role
-	DECLARE @roleDesc VARCHAR(MAX), @crlf VARCHAR(2)
-	SET @crlf = CHAR(13) + CHAR(10)
-	SET @roleDesc = 'CREATE ROLE [' + @roleName + ']' + @crlf + 'GO' + @crlf + @crlf
+					-- Script out the Role
+					DECLARE @roleDesc VARCHAR(MAX), @crlf VARCHAR(2)
+					SET @crlf = CHAR(13) + CHAR(10)
+					SET @roleDesc = 'CREATE ROLE [' + @roleName + ']' + @crlf + 'GO' + @crlf + @crlf
 
-	SELECT    @roleDesc = @roleDesc +
-			CASE dp.state
-				WHEN 'D' THEN 'DENY '
-				WHEN 'G' THEN 'GRANT '
-				WHEN 'R' THEN 'REVOKE '
-				WHEN 'W' THEN 'GRANT '
-			END + 
-			dp.permission_name + ' ' +
-			CASE dp.class
-				WHEN 0 THEN ''
-				WHEN 1 THEN --table or column subset on the table
-					CASE WHEN dp.major_id < 0 THEN
-						+ 'ON [sys].[' + OBJECT_NAME(dp.major_id) + '] '
-					ELSE
-						+ 'ON [' +
-						(SELECT SCHEMA_NAME(schema_id) + '].[' + name FROM sys.objects WHERE object_id = dp.major_id)
-							+ -- optionally concatenate column names
-						CASE WHEN MAX(dp.minor_id) > 0 
-							 THEN '] ([' + REPLACE(
-											(SELECT name + '], [' 
-											 FROM sys.columns 
-											 WHERE object_id = dp.major_id 
-												AND column_id IN (SELECT minor_id 
-																  FROM sys.database_permissions 
-																  WHERE major_id = dp.major_id
-																	AND USER_NAME(grantee_principal_id) IN (@roleName)
-																 )
-											 FOR XML PATH('')
-											) --replace final square bracket pair
-										+ '])', ', []', '')
-							 ELSE ']'
-						END + ' '
-					END
-				WHEN 3 THEN 'ON SCHEMA::[' + SCHEMA_NAME(dp.major_id) + '] '
-				WHEN 4 THEN 'ON ' + (SELECT RIGHT(type_desc, 4) + '::[' + name FROM sys.database_principals WHERE principal_id = dp.major_id) + '] '
-				WHEN 5 THEN 'ON ASSEMBLY::[' + (SELECT name FROM sys.assemblies WHERE assembly_id = dp.major_id) + '] '
-				WHEN 6 THEN 'ON TYPE::[' + (SELECT name FROM sys.types WHERE user_type_id = dp.major_id) + '] '
-				WHEN 10 THEN 'ON XML SCHEMA COLLECTION::[' + (SELECT SCHEMA_NAME(schema_id) + '.' + name FROM sys.xml_schema_collections WHERE xml_collection_id = dp.major_id) + '] '
-				WHEN 15 THEN 'ON MESSAGE TYPE::[' + (SELECT name FROM sys.service_message_types WHERE message_type_id = dp.major_id) + '] '
-				WHEN 16 THEN 'ON CONTRACT::[' + (SELECT name FROM sys.service_contracts WHERE service_contract_id = dp.major_id) + '] '
-				WHEN 17 THEN 'ON SERVICE::[' + (SELECT name FROM sys.services WHERE service_id = dp.major_id) + '] '
-				WHEN 18 THEN 'ON REMOTE SERVICE BINDING::[' + (SELECT name FROM sys.remote_service_bindings WHERE remote_service_binding_id = dp.major_id) + '] '
-				WHEN 19 THEN 'ON ROUTE::[' + (SELECT name FROM sys.routes WHERE route_id = dp.major_id) + '] '
-				WHEN 23 THEN 'ON FULLTEXT CATALOG::[' + (SELECT name FROM sys.fulltext_catalogs WHERE fulltext_catalog_id = dp.major_id) + '] '
-				WHEN 24 THEN 'ON SYMMETRIC KEY::[' + (SELECT name FROM sys.symmetric_keys WHERE symmetric_key_id = dp.major_id) + '] '
-				WHEN 25 THEN 'ON CERTIFICATE::[' + (SELECT name FROM sys.certificates WHERE certificate_id = dp.major_id) + '] '
-				WHEN 26 THEN 'ON ASYMMETRIC KEY::[' + (SELECT name FROM sys.asymmetric_keys WHERE asymmetric_key_id = dp.major_id) + '] '
-			 END COLLATE SQL_Latin1_General_CP1_CI_AS
-			 + 'TO [' + @roleName + ']' + 
-			 CASE dp.state WHEN 'W' THEN ' WITH GRANT OPTION' ELSE '' END + @crlf
-	FROM    sys.database_permissions dp
-	WHERE    USER_NAME(dp.grantee_principal_id) IN (@roleName)
-	GROUP BY dp.state, dp.major_id, dp.permission_name, dp.class
+					SELECT    @roleDesc = @roleDesc +
+							CASE dp.state
+								WHEN 'D' THEN 'DENY '
+								WHEN 'G' THEN 'GRANT '
+								WHEN 'R' THEN 'REVOKE '
+								WHEN 'W' THEN 'GRANT '
+							END + 
+							dp.permission_name + ' ' +
+							CASE dp.class
+								WHEN 0 THEN ''
+								WHEN 1 THEN --table or column subset on the table
+									CASE WHEN dp.major_id < 0 THEN
+										+ 'ON [sys].[' + OBJECT_NAME(dp.major_id) + '] '
+									ELSE
+										+ 'ON [' +
+										(SELECT SCHEMA_NAME(schema_id) + '].[' + name FROM sys.objects WHERE object_id = dp.major_id)
+											+ -- optionally concatenate column names
+										CASE WHEN MAX(dp.minor_id) > 0 
+											 THEN '] ([' + REPLACE(
+															(SELECT name + '], [' 
+															 FROM sys.columns 
+															 WHERE object_id = dp.major_id 
+																AND column_id IN (SELECT minor_id 
+																				  FROM sys.database_permissions 
+																				  WHERE major_id = dp.major_id
+																					AND USER_NAME(grantee_principal_id) IN (@roleName)
+																				 )
+															 FOR XML PATH('')
+															) --replace final square bracket pair
+														+ '])', ', []', '')
+											 ELSE ']'
+										END + ' '
+									END
+								WHEN 3 THEN 'ON SCHEMA::[' + SCHEMA_NAME(dp.major_id) + '] '
+								WHEN 4 THEN 'ON ' + (SELECT RIGHT(type_desc, 4) + '::[' + name FROM sys.database_principals WHERE principal_id = dp.major_id) + '] '
+								WHEN 5 THEN 'ON ASSEMBLY::[' + (SELECT name FROM sys.assemblies WHERE assembly_id = dp.major_id) + '] '
+								WHEN 6 THEN 'ON TYPE::[' + (SELECT name FROM sys.types WHERE user_type_id = dp.major_id) + '] '
+								WHEN 10 THEN 'ON XML SCHEMA COLLECTION::[' + (SELECT SCHEMA_NAME(schema_id) + '.' + name FROM sys.xml_schema_collections WHERE xml_collection_id = dp.major_id) + '] '
+								WHEN 15 THEN 'ON MESSAGE TYPE::[' + (SELECT name FROM sys.service_message_types WHERE message_type_id = dp.major_id) + '] '
+								WHEN 16 THEN 'ON CONTRACT::[' + (SELECT name FROM sys.service_contracts WHERE service_contract_id = dp.major_id) + '] '
+								WHEN 17 THEN 'ON SERVICE::[' + (SELECT name FROM sys.services WHERE service_id = dp.major_id) + '] '
+								WHEN 18 THEN 'ON REMOTE SERVICE BINDING::[' + (SELECT name FROM sys.remote_service_bindings WHERE remote_service_binding_id = dp.major_id) + '] '
+								WHEN 19 THEN 'ON ROUTE::[' + (SELECT name FROM sys.routes WHERE route_id = dp.major_id) + '] '
+								WHEN 23 THEN 'ON FULLTEXT CATALOG::[' + (SELECT name FROM sys.fulltext_catalogs WHERE fulltext_catalog_id = dp.major_id) + '] '
+								WHEN 24 THEN 'ON SYMMETRIC KEY::[' + (SELECT name FROM sys.symmetric_keys WHERE symmetric_key_id = dp.major_id) + '] '
+								WHEN 25 THEN 'ON CERTIFICATE::[' + (SELECT name FROM sys.certificates WHERE certificate_id = dp.major_id) + '] '
+								WHEN 26 THEN 'ON ASYMMETRIC KEY::[' + (SELECT name FROM sys.asymmetric_keys WHERE asymmetric_key_id = dp.major_id) + '] '
+							 END COLLATE SQL_Latin1_General_CP1_CI_AS
+							 + 'TO [' + @roleName + ']' + 
+							 CASE dp.state WHEN 'W' THEN ' WITH GRANT OPTION' ELSE '' END + @crlf
+					FROM    sys.database_permissions dp
+					WHERE    USER_NAME(dp.grantee_principal_id) IN (@roleName)
+					GROUP BY dp.state, dp.major_id, dp.permission_name, dp.class
 
-	update #ScriptedRoles 
-	set script = @roleDesc
-	where name = @RoleName
+					update #ScriptedRoles 
+					set script = @roleDesc
+					where name = @RoleName
 
-end
+				end
 
-select 
-    name
-,   script
-from #ScriptedRoles
-";
+				select 
+					name
+				,   script
+				from #ScriptedRoles
+				";
 			Role r = null;
 			using (var dr = cm.ExecuteReader()) {
 				while (dr.Read()) {
@@ -383,7 +383,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadUsersAndLogins(SqlCommand cm) {
-			Console.WriteLine("-- Loading Users");
+			WriteDebug("-- Loading Users");
 			cm.CommandText = @"
 				select dp.name as UserName, USER_NAME(drm.role_principal_id) as AssociatedDBRole, default_schema_name
 				from sys.database_principals dp
@@ -427,7 +427,7 @@ from #ScriptedRoles
 
 		private void LoadCLRAssemblies(SqlCommand cm) {
 			try {
-				Console.WriteLine("-- Loading CLR Assemblies");
+				WriteDebug("-- Loading CLR Assemblies");
 				cm.CommandText =
 					@"select a.name as AssemblyName, a.permission_set_desc, af.name as FileName, af.content
 						from sys.assemblies a
@@ -455,7 +455,7 @@ from #ScriptedRoles
 
 		private void LoadXmlSchemas(SqlCommand cm) {
 			try {
-				Console.WriteLine("-- Loading Xml Schemas");
+				WriteDebug("-- Loading Xml Schemas");
 				cm.CommandText = $@"
 						select s.name as DBSchemaName, x.name as XMLSchemaCollectionName, xml_schema_namespace(s.name, x.name) as definition
 						from sys.xml_schema_collections x
@@ -480,7 +480,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadRoutines(SqlCommand cm) {
-			Console.WriteLine("-- Loading Routines");
+			WriteDebug("-- Loading Routines");
 			cm.CommandText = $@"
 					select
 						s.name as schemaName,
@@ -534,7 +534,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadCheckConstraints(SqlCommand cm) {
-			Console.WriteLine("-- Loading Check Constraints");
+			WriteDebug("-- Loading Check Constraints");
 			cm.CommandText = $@"
 				SELECT 
 					OBJECT_NAME(o.OBJECT_ID) AS CONSTRAINT_NAME,
@@ -584,7 +584,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadForeignKeys(SqlCommand cm) {
-			Console.WriteLine("-- Loading Foreign Keys");
+			WriteDebug("-- Loading Foreign Keys");
 			cm.CommandText = $@"
 					select 
 						TABLE_SCHEMA,
@@ -664,7 +664,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadConstraintsAndIndexes(SqlCommand cm) {
-			Console.WriteLine("-- Loading Constraints/Indexes");
+			WriteDebug("-- Loading Constraints/Indexes");
 			cm.CommandText = $@"
 					select 
 						s.name as schemaName,
@@ -743,7 +743,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadColumnComputes(SqlCommand cm) {
-			Console.WriteLine("-- Loading Computed Columns");
+			WriteDebug("-- Loading Computed Columns");
 			cm.CommandText = $@"
 					select
 						object_schema_name(t.object_id) as TABLE_SCHEMA,
@@ -782,7 +782,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadColumnDefaults(SqlCommand cm) {
-			Console.WriteLine("-- Loading Column Defaults");
+			WriteDebug("-- Loading Column Defaults");
 			cm.CommandText = $@"
 					select 
 						s.name as TABLE_SCHEMA,
@@ -826,7 +826,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadColumnIdentities(SqlCommand cm) {
-			Console.WriteLine("-- Loading Column Identities");
+			WriteDebug("-- Loading Column Identities");
 			cm.CommandText = $@"
 					select 
 						s.name as TABLE_SCHEMA,
@@ -856,7 +856,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadColumns(SqlCommand cm) {
-			Console.WriteLine("-- Loading Columns");
+			WriteDebug("-- Loading Columns");
 			cm.CommandText = $@"
 				select 
 					t.TABLE_SCHEMA,
@@ -957,7 +957,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadTables(SqlCommand cm) {
-			Console.WriteLine("-- Loading Tables");
+			WriteDebug("-- Loading Tables");
 			cm.CommandText = $@"
 				select 
 					TABLE_SCHEMA, 
@@ -987,7 +987,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadUserDefinedTypes(SqlCommand cm) {
-			Console.WriteLine("-- Loading UDTs");
+			WriteDebug("-- Loading UDTs");
 			cm.CommandText = $@"
             select
                 s.name as 'Type_Schema',
@@ -1027,7 +1027,7 @@ from #ScriptedRoles
 		}
 
 		private void LoadSchemas(SqlCommand cm) {
-			Console.WriteLine("-- Loading Schemas");
+			WriteDebug("-- Loading Schemas");
 			var schemaRestrict = "";
 			if (schemas != null && schemas.Count > 0) {
 				schemaRestrict = "and s.name in (" + string.Join(",", schemas.Select(s => $"'{s}'").ToArray()) + ")";
@@ -1755,6 +1755,12 @@ from #ScriptedRoles
 		}
 
 		#endregion
+
+		private static void WriteDebug(string format, params object[] args) {
+#if DEBUG
+			Console.WriteLine(format, args);
+#endif
+		}
 	}
 
 	public class DatabaseDiff {
