@@ -13,9 +13,12 @@ namespace SchemaZen.Library.Command {
 		public string ScriptDir { get; set; }
 		public ILogger Logger { get; set; }
 		public bool Overwrite { get; set; }
+		public int Timeout { get; set; }
+		public bool PrefixDbo { get; set; }
 
-		public Database CreateDatabase(IList<string> filteredTypes = null) {
+		public Database CreateDatabase(IList<string> filteredTypes = null, IList<string> schemas = null) {
 			filteredTypes = filteredTypes ?? new List<string>();
+			schemas = schemas ?? new List<string>();
 
 			if (!string.IsNullOrEmpty(ConnectionString)) {
 				if (!string.IsNullOrEmpty(Server) ||
@@ -26,7 +29,7 @@ namespace SchemaZen.Library.Command {
 						"You must not provide both a connection string and a server/db/user/password");
 				}
 
-				return new Database(filteredTypes) {
+				return new Database(filteredTypes, schemas, PrefixDbo) {
 					Connection = ConnectionString,
 					Dir = ScriptDir
 				};
@@ -50,7 +53,7 @@ namespace SchemaZen.Library.Command {
 				builder.Password = Pass;
 			}
 
-			return new Database(filteredTypes) {
+			return new Database(filteredTypes, schemas, PrefixDbo) {
 				Connection = builder.ToString(),
 				Dir = ScriptDir
 			};

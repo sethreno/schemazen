@@ -39,6 +39,10 @@ namespace SchemaZen.console {
 				"A comma separated list of the types that will only be scripted. Valid types: " +
 				Database.ValidTypes,
 				o => OnlyTypes = o);
+			HasOption(
+				"schemas=",
+				"A comma separated list of schemas that only the objects within these will be scripted. ",
+				o => Schemas = o);
 		}
 
 		private Logger _logger;
@@ -48,6 +52,7 @@ namespace SchemaZen.console {
 		protected string DataTablesPattern { get; set; }
 		protected string DataTablesExcludePattern { get; set; }
 		protected string TableHint { get; set; }
+		protected string Schemas { get; set; }
 
 		public override int Run(string[] args) {
 			_logger = new Logger(Verbose);
@@ -59,6 +64,10 @@ namespace SchemaZen.console {
 				Overwrite = true;
 			}
 
+			int commandTimeout;
+			if (!int.TryParse(Timeout, out commandTimeout))
+				commandTimeout = 30; // Default for SQLCommand
+
 			var scriptCommand = new ScriptCommand {
 				ConnectionString = ConnectionString,
 				DbName = DbName,
@@ -67,16 +76,20 @@ namespace SchemaZen.console {
 				Server = Server,
 				User = User,
 				Logger = _logger,
-				Overwrite = Overwrite
+				Overwrite = Overwrite,
+				Timeout = commandTimeout,
+				PrefixDbo = !NoPrefixDbo
 			};
 
 			var filteredTypes = HandleFilteredTypes();
-			var namesAndSchemas = HandleDataTables(DataTables);
+			var dataTableNames = HandleDataTables(DataTables);
+			var schemas = HandleSchemas(Schemas);
 
 			try {
-				scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern,
-					TableHint, filteredTypes);
-			} catch (Exception ex) {
+				scriptCommand.Execute(dataTableNames, DataTablesPattern, DataTablesExcludePattern,
+					TableHint, filteredTypes, schemas);
+			}
+			catch (Exception ex) {
 				throw new ConsoleHelpAsException(ex.Message);
 			}
 
@@ -96,6 +109,10 @@ namespace SchemaZen.console {
 			}
 
 			return Database.Dirs.Except(keepTypes.Except(removeTypes)).ToList();
+		}
+
+		private List<string> HandleSchemas(string schemasString) {
+			return schemasString?.Split(',').ToList() ?? new List<string>();
 		}
 
 		private Dictionary<string, string> HandleDataTables(string tableNames) {
