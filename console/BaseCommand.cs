@@ -29,6 +29,14 @@ namespace SchemaZen.console {
 				"f|databaseFilesPath=",
 				"Path to database data and log files.",
 				o => DatabaseFilesPath = o);
+			HasOption(
+			   "timeout=",
+			   "Number of seconds for sql command timeout.",
+			   o => Timeout = o);
+			HasOption(
+			   "noprefixdbo",
+			   "Do not prefix objects in the dbo schema with dbo in their filename (for backwards compatibility).",
+			   o => NoPrefixDbo = o != null);
 		}
 
 		protected string Server { get; set; }
@@ -40,5 +48,7 @@ namespace SchemaZen.console {
 		protected bool Overwrite { get; set; }
 		protected bool Verbose { get; set; }
 		protected string DatabaseFilesPath { get; set; }
+		protected string Timeout { get; set; }
+		protected bool NoPrefixDbo { get; set; }
 	}
 }

@@ -6,21 +6,21 @@ using System.Linq;
 
 namespace SchemaZen.Library.Command {
 	public class ScriptCommand : BaseCommand {
-		public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern,
+		public void Execute(Dictionary<string, string> dataTableNames, string dataTablesPattern,
 			string dataTablesExcludePattern,
-			string tableHint, List<string> filteredTypes) {
+			string tableHint, List<string> filteredTypes, List<string> schemas) {
 			if (!Overwrite && Directory.Exists(ScriptDir)) {
 				var message = $"{ScriptDir} already exists - you must set overwrite to true";
 				throw new InvalidOperationException(message);
 			}
 
-			var db = CreateDatabase(filteredTypes);
+			var db = CreateDatabase(filteredTypes, schemas);
 
 			Logger.Log(TraceLevel.Verbose, "Loading database schema...");
-			db.Load();
+			db.Load(Timeout);
 			Logger.Log(TraceLevel.Verbose, "Database schema loaded.");
 
-			foreach (var nameAndSchema in namesAndSchemas) {
+			foreach (var nameAndSchema in dataTableNames) {
 				AddDataTable(db, nameAndSchema.Key, nameAndSchema.Value);
 			}
 
