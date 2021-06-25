@@ -8,7 +8,7 @@ namespace SchemaZen.Tests {
 	public class TestHelper {
 		public static bool EchoSql => true;
 
-		[SetUp]
+		[OneTimeSetUp]
 		public void SetUp() {
 			var conn = GetConnString("TESTDB");
 			DBHelper.DropDb(conn);

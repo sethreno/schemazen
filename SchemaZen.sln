@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "console\Console.csproj", "{95219FB8-6E54-4672-943B-3D2ECAED51A2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "console\Console.csproj", "{95219FB8-6E54-4672-943B-3D2ECAED51A2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "test\Tests.csproj", "{73E24852-B1C6-476B-B5D9-ADB06D5870D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "test\Tests.csproj", "{73E24852-B1C6-476B-B5D9-ADB06D5870D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Library", "model\Library.csproj", "{1283684F-CC5F-4647-BD97-9D833D20110E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Library", "model\Library.csproj", "{1283684F-CC5F-4647-BD97-9D833D20110E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{45A1FC03-225C-4D1C-877B-5ECF25E392C5}"
 	ProjectSection(SolutionItems) = preProject
