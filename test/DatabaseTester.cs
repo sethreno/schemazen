@@ -78,7 +78,7 @@ namespace SchemaZen.Tests {
 			db.Load();
 			var result = db.ScriptCreate();
 			Assert.That(result,
-				Is.StringContaining(
+				Does.Contain(
 					"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)"));
 
 			TestHelper.DropDb("test");
@@ -128,7 +128,7 @@ namespace SchemaZen.Tests {
 			TestHelper.DropDb("TEST");
 
 			Assert.That(result,
-				Is.StringContaining(
+				Does.Contain(
 					"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)"));
 		}
 
@@ -153,7 +153,7 @@ namespace SchemaZen.Tests {
 			TestHelper.DropDb("TEST");
 
 			Assert.That(result,
-				Is.StringContaining(
+				Does.Contain(
 					"CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])"));
 		}
 
