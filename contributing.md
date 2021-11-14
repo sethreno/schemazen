@@ -17,10 +17,8 @@ fine for small changes, but bigger changes should look like this:
 ## Coding conventions
 
 The coding conventions are all defined in [.editorconfig](.editorconfig)
-and [Rebracer.xml](Rebracer.xml) so installing the
-[EditorConfig](http://editorconfig.org/) and
-[Rebracer](https://github.com/SLaks/Rebracer) plugins for visual studio
-will magically keep your changes consistent with the rest of the code.
+so installing [EditorConfig](http://editorconfig.org/) plugins for your
+editor will help keep your changes consistent with the rest of the code.
 
 The existing code should provide all the guidance needed, but here's a
 brief summary:
@@ -28,4 +26,3 @@ brief summary:
 * use tabs for indentation, not spaces
 * don't use newlines before braces
 * use line continuation for lines over 80 chars
-
