@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
 	<PublishTrimmed>true</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\model\Library.csproj" />
+    <ProjectReference Include="..\Library\Library.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="ILMerge" Version="3.0.41" />

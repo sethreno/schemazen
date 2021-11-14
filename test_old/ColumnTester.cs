@@ -3,6 +3,7 @@ using NUnit.Framework;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
+
 	[TestFixture]
 	public class ColumnTester {
 		[TestFixture]

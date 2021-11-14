@@ -1,0 +1,4 @@
+ALTER TABLE [dbo].[Daily_Discount_Dept_Summary] WITH CHECK ADD CONSTRAINT [FK_DAILY_DISCOUNT_DEPT_SUMMARY_Master_Locations]
+   FOREIGN KEY([Location_ID]) REFERENCES [dbo].[MASTER_LOCATIONS] ([Location_ID])
+
+GO
