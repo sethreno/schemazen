@@ -48,14 +48,14 @@ namespace SchemaZen.Library.Models {
 		public string DefaultText {
 			get {
 				if (Default == null || !string.IsNullOrEmpty(ComputedDefinition)) return "";
-				return "\r\n      " + Default.ScriptCreate();
+				return Environment.NewLine + "      " + Default.ScriptCreate();
 			}
 		}
 
 		public string IdentityText {
 			get {
 				if (Identity == null) return "";
-				return "\r\n      " + Identity.Script();
+				return Environment.NewLine + "      " + Identity.Script();
 			}
 		}
 
