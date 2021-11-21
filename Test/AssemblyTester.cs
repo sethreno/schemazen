@@ -4,7 +4,6 @@ using Xunit;
 namespace SchemaZen.Tests;
 
 public class AssemblyTester {
-
 	[Theory]
 	[InlineData("SAFE_ACCESS", "SAFE")]
 	[InlineData("UNSAFE_ACCESS", "UNSAFE")]
