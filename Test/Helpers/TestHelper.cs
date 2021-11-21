@@ -1,14 +1,11 @@
-﻿using System;
-using System.Data.SqlClient;
-using NUnit.Framework;
+﻿using System.Data.SqlClient;
 using SchemaZen.Library;
 
 namespace SchemaZen.Tests {
-	[SetUpFixture]
+
 	public class TestHelper {
 		public static bool EchoSql => true;
 
-		[OneTimeSetUp]
 		public void SetUp() {
 			var conn = GetConnString("TESTDB");
 			DBHelper.DropDb(conn);
