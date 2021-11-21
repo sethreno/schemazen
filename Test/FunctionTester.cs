@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Linq;
-using NUnit.Framework;
+using Xunit;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
-	[TestFixture]
+
+	[Collection("TestDb")]
 	public class FunctionTester {
 		private const string _exampleFunc = @"
 CREATE FUNCTION [dbo].udf_GetDate()
@@ -14,7 +15,7 @@ BEGIN
 END
 ";
 
-		[Test]
+		[Fact]
 		public void TestScript() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
 				RoutineType = Routine.RoutineKind.Function,
@@ -25,22 +26,22 @@ END
 			TestHelper.ExecSql("drop function [dbo].[udf_GetDate]", "");
 		}
 
-		[Test]
+		[Fact]
 		public void TestScriptNoWarnings() {
 			var f = new Routine("dbo", "udf_GetDate", null) {
 				Text = _exampleFunc,
 				RoutineType = Routine.RoutineKind.Function
 			};
-			Assert.IsFalse(f.Warnings().Any());
+			Assert.False(f.Warnings().Any());
 		}
 
-		[Test]
+		[Fact]
 		public void TestScriptWarnings() {
 			var f = new Routine("dbo", "udf_GetDate2", null) {
 				Text = _exampleFunc,
 				RoutineType = Routine.RoutineKind.Function
 			};
-			Assert.IsTrue(f.Warnings().Any());
+			Assert.True(f.Warnings().Any());
 		}
 	}
 }

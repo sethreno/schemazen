@@ -3,31 +3,25 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using System.IO;
 using System.Text;
-using NUnit.Framework;
+using Xunit;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
+using Test.Helpers;
+using System.Reflection;
 
 namespace SchemaZen.Tests {
-	[TestFixture]
-	public class TableTester {
-		private List<List<string>> TabDataToList(string data) {
-			var lines = new List<List<string>>();
-			foreach (var line in data.Split('\t')) {
-				lines.Add(new List<string>());
-				foreach (var field in line.Split('\t')) {
-					lines[lines.Count - 1].Add(field);
-				}
-			}
 
-			////remove the \r from the end of the last field of each line
-			//foreach (List<string> line in lines) {
-			//    if (line.Count == 0) continue;
-			//    line[line.Count - 1] = line.Last.Remove(line.Last.Length - 1, 1);
-			//}
-			return lines;
+	[Collection("TestDb")]
+	public class TableTester {
+
+		private TestDbFixture _testDb;
+
+		public TableTester(TestDbFixture testDb)
+		{
+			_testDb = testDb;
 		}
 
-		[Test]
+		[Fact]
 		public void CompareConstraints() {
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
@@ -42,12 +36,12 @@ namespace SchemaZen.Tests {
 				Constraint.CreateCheckedConstraint("IsTomorrow", false, false, "Tomorrow <> 1"));
 
 			diff = t1.Compare(t2);
-			Assert.AreEqual(1, diff.ConstraintsChanged.Count);
-			Assert.IsNotNull(diff);
-			Assert.IsTrue(diff.IsDiff);
+			Assert.Equal(1, diff.ConstraintsChanged.Count);
+			Assert.NotNull(diff);
+			Assert.True(diff.IsDiff);
 		}
 
-		[Test]
+		[Fact]
 		public void TestCompare() {
 			var t1 = new Table("dbo", "Test");
 			var t2 = new Table("dbo", "Test");
@@ -60,25 +54,25 @@ namespace SchemaZen.Tests {
 			t2.AddConstraint(new Constraint("PK_Test", "PRIMARY KEY", "first"));
 
 			diff = t1.Compare(t2);
-			Assert.IsNotNull(diff);
-			Assert.IsFalse(diff.IsDiff);
+			Assert.NotNull(diff);
+			Assert.False(diff.IsDiff);
 
 			//test add
 			t1.Columns.Add(new Column("second", "varchar", 30, false, null));
 			diff = t1.Compare(t2);
-			Assert.IsTrue(diff.IsDiff);
-			Assert.AreEqual(1, diff.ColumnsAdded.Count);
+			Assert.True(diff.IsDiff);
+			Assert.Equal(1, diff.ColumnsAdded.Count);
 
 			//test delete
 			diff = t2.Compare(t1);
-			Assert.IsTrue(diff.IsDiff);
-			Assert.AreEqual(1, diff.ColumnsDropped.Count);
+			Assert.True(diff.IsDiff);
+			Assert.Equal(1, diff.ColumnsDropped.Count);
 
 			//test diff
 			t1.Columns.Items[0].Length = 20;
 			diff = t1.Compare(t2);
-			Assert.IsTrue(diff.IsDiff);
-			Assert.AreEqual(1, diff.ColumnsDiff.Count);
+			Assert.True(diff.IsDiff);
+			Assert.Equal(1, diff.ColumnsDiff.Count);
 
 			Console.WriteLine("--- create ----");
 			Console.Write(t1.ScriptCreate());
@@ -90,7 +84,18 @@ namespace SchemaZen.Tests {
 			Console.Write(t2.Compare(t1).Script());
 		}
 
-		[Test]
+		private string CreateTestExportDb(string methodName) {
+			if (string.IsNullOrEmpty(methodName))
+				throw new ArgumentException("unable to determine method name");
+
+			var conn = TestHelper.GetConnString(methodName);
+			DBHelper.DropDb(conn);
+			DBHelper.CreateDb(conn);
+			SqlConnection.ClearAllPools();
+			return conn;
+		}
+
+		[Fact]
 		public void TestExportData() {
 			var t = new Table("dbo", "Status");
 			t.Columns.Add(new Column("id", "int", false, null));
@@ -99,10 +104,7 @@ namespace SchemaZen.Tests {
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-			var conn = TestHelper.GetConnString("TESTDB");
-			DBHelper.DropDb(conn);
-			DBHelper.CreateDb(conn);
-			SqlConnection.ClearAllPools();
+			var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
 			var dataIn =
@@ -120,12 +122,12 @@ namespace SchemaZen.Tests {
 			t.ImportData(conn, filename);
 			var sw = new StringWriter();
 			t.ExportData(conn, sw);
-			Assert.AreEqual(dataIn, sw.ToString());
+			Assert.Equal(dataIn, sw.ToString());
 
 			File.Delete(filename);
 		}
 
-		[Test]
+		[Fact]
 		public void TestImportAndExportIgnoringComputedData() {
 			var t = new Table("dbo", "Status");
 			t.Columns.Add(new Column("id", "int", false, null));
@@ -138,10 +140,7 @@ namespace SchemaZen.Tests {
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-			var conn = TestHelper.GetConnString("TESTDB");
-			DBHelper.DropDb(conn);
-			DBHelper.CreateDb(conn);
-			SqlConnection.ClearAllPools();
+			var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
 			var dataIn =
@@ -160,13 +159,13 @@ namespace SchemaZen.Tests {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
-				Assert.AreEqual(dataIn, sw.ToString());
+				Assert.Equal(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
 			}
 		}
 
-		[Test]
+		[Fact]
 		public void TestImportAndExportDateTimeWithoutLosePrecision() {
 			var t = new Table("dbo", "Dummy");
 			t.Columns.Add(new Column("id", "int", false, null));
@@ -174,10 +173,7 @@ namespace SchemaZen.Tests {
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-			var conn = TestHelper.GetConnString("TESTDB");
-			DBHelper.DropDb(conn);
-			DBHelper.CreateDb(conn);
-			SqlConnection.ClearAllPools();
+			var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
 			var dataIn =
@@ -196,13 +192,13 @@ namespace SchemaZen.Tests {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
-				Assert.AreEqual(dataIn, sw.ToString());
+				Assert.Equal(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
 			}
 		}
 
-		[Test]
+		[Fact]
 		public void TestImportAndExportNonDefaultSchema() {
 			var s = new Schema("example", "dbo");
 			var t = new Table(s.Name, "Example");
@@ -212,10 +208,7 @@ namespace SchemaZen.Tests {
 			t.Columns.Find("id").Identity = new Identity(1, 1);
 			t.AddConstraint(new Constraint("PK_Example", "PRIMARY KEY", "id"));
 
-			var conn = TestHelper.GetConnString("TESTDB");
-			DBHelper.DropDb(conn);
-			DBHelper.CreateDb(conn);
-			SqlConnection.ClearAllPools();
+			var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
 			DBHelper.ExecBatchSql(conn, s.ScriptCreate());
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
@@ -235,13 +228,13 @@ namespace SchemaZen.Tests {
 				t.ImportData(conn, filename);
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
-				Assert.AreEqual(dataIn, sw.ToString());
+				Assert.Equal(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
 			}
 		}
 
-		[Test]
+		[Fact]
 		public void TestLargeAmountOfRowsImportAndExport() {
 			var t = new Table("dbo", "TestData");
 			t.Columns.Add(new Column("test_field", "int", false, null));
@@ -255,10 +248,7 @@ namespace SchemaZen.Tests {
 				Unique = true
 			});
 
-			var conn = TestHelper.GetConnString("TESTDB");
-			DBHelper.DropDb(conn);
-			DBHelper.CreateDb(conn);
-			SqlConnection.ClearAllPools();
+			var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
 			DBHelper.ExecBatchSql(conn, t.ScriptCreate());
 
 			var filename = Path.GetTempFileName();
@@ -275,7 +265,7 @@ namespace SchemaZen.Tests {
 			writer.Close();
 
 			var dataIn = sb.ToString();
-			Assert.AreEqual(dataIn,
+			Assert.Equal(dataIn,
 				File.ReadAllText(
 					filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
@@ -284,13 +274,13 @@ namespace SchemaZen.Tests {
 				var sw = new StringWriter();
 				t.ExportData(conn, sw);
 
-				Assert.AreEqual(dataIn, sw.ToString());
+				Assert.Equal(dataIn, sw.ToString());
 			} finally {
 				File.Delete(filename);
 			}
 		}
 
-		[Test]
+		[Fact]
 		public void TestScript() {
 			//create a table with all known types, script it, and execute the script
 			var t = new Table("dbo", "AllTypesTest");
@@ -331,7 +321,7 @@ namespace SchemaZen.Tests {
 			TestHelper.ExecSql("drop table [dbo].[AllTypesTest]", "");
 		}
 
-		[Test]
+		[Fact]
 		public void TestScriptNonSupportedColumn() {
 			Assert.Throws(typeof(NotSupportedException), () =>
 			{

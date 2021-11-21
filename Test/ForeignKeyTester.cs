@@ -1,10 +1,11 @@
-﻿using System.Linq;
-using NUnit.Framework;
+﻿using Xunit;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
-	[TestFixture]
+
+	[Collection("TestDb")]
 	public class ForeignKeyTester {
+
 		public void TestMultiColumnKey() {
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
@@ -26,15 +27,15 @@ namespace SchemaZen.Tests {
 			db.ExecCreate(true);
 			db.Load();
 
-			Assert.AreEqual("c3", db.FindForeignKey("fk_test", "dbo").Columns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test", "dbo").Columns[1]);
-			Assert.AreEqual("c1", db.FindForeignKey("fk_test", "dbo").RefColumns[0]);
-			Assert.AreEqual("c2", db.FindForeignKey("fk_test", "dbo").RefColumns[1]);
+			Assert.Equal("c3", db.FindForeignKey("fk_test", "dbo").Columns[0]);
+			Assert.Equal("c2", db.FindForeignKey("fk_test", "dbo").Columns[1]);
+			Assert.Equal("c1", db.FindForeignKey("fk_test", "dbo").RefColumns[0]);
+			Assert.Equal("c2", db.FindForeignKey("fk_test", "dbo").RefColumns[1]);
 
 			db.ExecCreate(true);
 		}
 
-		[Test]
+		[Fact]
 		public void TestScript() {
 			var person = new Table("dbo", "Person");
 			person.Columns.Add(new Column("id", "int", false, null));
@@ -62,7 +63,7 @@ namespace SchemaZen.Tests {
 			TestHelper.ExecSql("drop table Person", "");
 		}
 
-		[Test]
+		[Fact]
 		public void TestScriptForeignKeyWithNoName() {
 			var t1 = new Table("dbo", "t1");
 			t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
@@ -85,14 +86,14 @@ namespace SchemaZen.Tests {
 			db.ExecCreate(true);
 			db.Load();
 
-			Assert.AreEqual(1, db.ForeignKeys.Count);
+			Assert.Equal(1, db.ForeignKeys.Count);
 
 			var fkCopy = db.ForeignKeys.Single();
-			Assert.AreEqual("c3", fkCopy.Columns[0]);
-			Assert.AreEqual("c2", fkCopy.Columns[1]);
-			Assert.AreEqual("c1", fkCopy.RefColumns[0]);
-			Assert.AreEqual("c2", fkCopy.RefColumns[1]);
-			Assert.IsTrue(fkCopy.IsSystemNamed);
+			Assert.Equal("c3", fkCopy.Columns[0]);
+			Assert.Equal("c2", fkCopy.Columns[1]);
+			Assert.Equal("c1", fkCopy.RefColumns[0]);
+			Assert.Equal("c2", fkCopy.RefColumns[1]);
+			Assert.True(fkCopy.IsSystemNamed);
 
 			db.ExecCreate(true);
 		}

@@ -1,6 +1,7 @@
 using System.Data.SqlClient;
 using SchemaZen.Library;
 using SchemaZen.Tests;
+using Xunit;
 
 namespace Test.Helpers;
 
@@ -13,4 +14,11 @@ public class TestDbFixture : IDisposable {
 	}
 
 	public void Dispose() { }
+}
+
+[CollectionDefinition("TestDb")]
+public class TestDbCollection : ICollectionFixture<TestDbFixture> {
+	// This class has no code, and is never created. Its purpose is simply
+	// to be the place to apply [CollectionDefinition] and all the
+	// ICollectionFixture<> interfaces.
 }

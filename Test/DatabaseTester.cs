@@ -6,7 +6,8 @@ using Test.Helpers;
 
 namespace SchemaZen.Tests;
 
-public class DatabaseTester : IClassFixture<TestDbFixture> {
+[Collection("TestDb")]
+public class DatabaseTester {
 
 	private TestDbFixture _testDb;
 

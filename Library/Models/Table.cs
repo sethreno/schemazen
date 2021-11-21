@@ -28,7 +28,8 @@ end
 	}
 
 	public class Table : INameable, IHasOwner, IScriptable {
-		private const string _rowSeparator = "\r\n";
+		// TODO allow users to configure these
+		private static readonly string _rowSeparator = Environment.NewLine;
 		private const string _tab = "\t";
 		private const string _escapeTab = "--SchemaZenTAB--";
 		private const string _carriageReturn = "\r";

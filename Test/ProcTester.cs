@@ -1,11 +1,13 @@
 ﻿using System.Linq;
-using NUnit.Framework;
+using Xunit;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests {
-	[TestFixture]
+
+	[Collection("TestDb")]
 	public class ProcTester {
-		[Test]
+
+		[Fact]
 		public void TestScript() {
 			var t = new Table("dbo", "Address");
 			t.Columns.Add(new Column("id", "int", false, null));
@@ -30,7 +32,7 @@ AS
 			TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
 		}
 
-		[Test]
+		[Fact]
 		public void TestScriptWarnings() {
 			const string baseText = @"--example of routine that has been renamed since creation
 CREATE PROCEDURE {0}
@@ -42,18 +44,18 @@ AS
 			getAddress.RoutineType = Routine.RoutineKind.Procedure;
 
 			getAddress.Text = string.Format(baseText, "[dbo].[NamedDifferently]");
-			Assert.IsTrue(getAddress.Warnings().Any());
+			Assert.True(getAddress.Warnings().Any());
 			getAddress.Text = string.Format(baseText, "dbo.NamedDifferently");
-			Assert.IsTrue(getAddress.Warnings().Any());
+			Assert.True(getAddress.Warnings().Any());
 
 			getAddress.Text = string.Format(baseText, "dbo.[GetAddress]");
-			Assert.IsFalse(getAddress.Warnings().Any());
+			Assert.False(getAddress.Warnings().Any());
 
 			getAddress.Text = string.Format(baseText, "dbo.GetAddress");
-			Assert.IsFalse(getAddress.Warnings().Any());
+			Assert.False(getAddress.Warnings().Any());
 
 			getAddress.Text = string.Format(baseText, "GetAddress");
-			Assert.IsFalse(getAddress.Warnings().Any());
+			Assert.False(getAddress.Warnings().Any());
 		}
 	}
 }
