@@ -6,14 +6,6 @@ namespace SchemaZen.Tests;
 public class TestHelper {
 	public static bool EchoSql => true;
 
-	public void SetUp() {
-		var conn = GetConnString("TESTDB");
-		DBHelper.DropDb(conn);
-		DBHelper.CreateDb(conn);
-		SqlConnection.ClearAllPools();
-		// TODO: verify that database called "model" is empty, otherwise tests will fail because new databases are created with this as a template
-	}
-
 	public static void ExecSql(string sql, string dbName) {
 		if (EchoSql) Console.WriteLine(sql);
 		using (var cn = new SqlConnection(ConfigHelper.TestDB)) {
