@@ -14,10 +14,13 @@ public static class ConfigHelper {
 
 	public static string TestSchemaDir => GetSetting("test_schema_dir");
 
-	public static string SqlDbDiffPath => GetSetting("SqlDbDiffPath");
-
 	private static string GetSetting(string key) {
 		var val = Environment.GetEnvironmentVariable(key);
-		return val ?? (config.TryGetValue(key, out val) ? val : null);
+		if (val != null) return val;
+
+		if (config.TryGetValue(key, out val)) return val;
+
+		throw new Exception(
+			$"Setting: {key} not found in appsettings or environment variable");
 	}
 }
