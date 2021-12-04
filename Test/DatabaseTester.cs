@@ -25,7 +25,7 @@ public class DatabaseTester {
 		}
 	}
 
-	public static void TestCopySchema(string pathToSchemaScript) {
+	private static void TestCopySchema(string pathToSchemaScript) {
 		TestHelper.DropDb("TEST_SOURCE");
 		TestHelper.DropDb("TEST_COPY");
 
