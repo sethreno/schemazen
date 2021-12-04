@@ -5,6 +5,8 @@ namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class ForeignKeyTester {
+
+	[Fact]
 	public void TestMultiColumnKey() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
