@@ -1,13 +1,13 @@
-﻿namespace SchemaZen.Library.Models {
-	public interface INameable {
-		string Name { get; set; }
-	}
+﻿namespace SchemaZen.Library.Models; 
 
-	public interface IHasOwner {
-		string Owner { get; set; }
-	}
+public interface INameable {
+	string Name { get; set; }
+}
 
-	public interface IScriptable {
-		string ScriptCreate();
-	}
+public interface IHasOwner {
+	string Owner { get; set; }
+}
+
+public interface IScriptable {
+	string ScriptCreate();
 }

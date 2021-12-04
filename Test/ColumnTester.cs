@@ -4,7 +4,6 @@ using Xunit;
 namespace SchemaZen.Tests;
 
 public class ColumnTester {
-
 	public class ScriptCreate {
 		[Fact]
 		public void int_no_trailing_space() {

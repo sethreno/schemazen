@@ -5,8 +5,7 @@ using System.Linq;
 namespace SchemaZen.Library.Models;
 
 public class SqlAssembly : INameable, IScriptable {
-	public List<KeyValuePair<string, byte[]>> Files = new List<KeyValuePair<string, byte[]>>();
-	public string Name { get; set; }
+	public List<KeyValuePair<string, byte[]>> Files = new();
 	public string PermissionSet;
 
 	public SqlAssembly(string permissionSet, string name) {
@@ -20,13 +19,14 @@ public class SqlAssembly : INameable, IScriptable {
 			PermissionSet = "UNSAFE";
 	}
 
+	public string Name { get; set; }
+
 	public string ScriptCreate() {
 		var commands = Files.Select((kvp, index) => {
-			if (index == 0) {
+			if (index == 0)
 				return $@"CREATE ASSEMBLY [{Name}]
 {string.Empty}FROM {"0x" + Convert.ToHexString(kvp.Value)}
 {"WITH PERMISSION_SET = " + PermissionSet}";
-			}
 
 			return
 				$@"ALTER ASSEMBLY [{Name}]

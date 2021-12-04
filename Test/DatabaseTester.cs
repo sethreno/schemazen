@@ -1,18 +1,16 @@
 ﻿using System.Data.SqlClient;
-using Xunit;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
 using Test.Helpers;
+using Xunit;
 
 namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class DatabaseTester {
-
 	private TestDbFixture _testDb;
 
-	public DatabaseTester(TestDbFixture testDb)
-	{
+	public DatabaseTester(TestDbFixture testDb) {
 		_testDb = testDb;
 	}
 
@@ -60,7 +58,6 @@ public class DatabaseTester {
 
 	[Fact]
 	public void TestDescIndex() {
-
 		TestHelper.DropDb("test");
 		TestHelper.ExecSql("create database test", "");
 
@@ -199,7 +196,8 @@ public class DatabaseTester {
 		t2.AddConstraint(new Constraint("pk_t2", "PRIMARY KEY", "col1") {
 			IndexType = "CLUSTERED"
 		});
-		t2.AddConstraint(Constraint.CreateCheckedConstraint("ck_col2", true, false, "([col2]>(0))"));
+		t2.AddConstraint(
+			Constraint.CreateCheckedConstraint("ck_col2", true, false, "([col2]>(0))"));
 		t2.AddConstraint(new Constraint("IX_col3", "UNIQUE", "col3") {
 			IndexType = "NONCLUSTERED"
 		});
@@ -696,13 +694,11 @@ select * from Table1
 		Assert.True(Directory.Exists(db.Name + "/tables"));
 		Assert.True(Directory.Exists(db.Name + "/foreign_keys"));
 
-		foreach (var t in db.DataTables) {
-			if (t.Name == "EmptyTable") {
+		foreach (var t in db.DataTables)
+			if (t.Name == "EmptyTable")
 				Assert.False(File.Exists(db.Name + "/data/" + t.Name + ".tsv"));
-			} else {
+			else
 				Assert.True(File.Exists(db.Name + "/data/" + t.Name + ".tsv"));
-			}
-		}
 
 		foreach (var t in db.Tables) {
 			var tblFile = db.Name + "/tables/" + t.Name + ".sql";
@@ -712,7 +708,8 @@ select * from Table1
 			var script = File.ReadAllText(tblFile);
 			var cindex = -1;
 
-			foreach (var ckobject in t.Constraints.Where(c=>c.Type != "CHECK").OrderBy(x => x.Name)) {
+			foreach (var ckobject in t.Constraints.Where(c => c.Type != "CHECK")
+				         .OrderBy(x => x.Name)) {
 				var thisindex = script.IndexOf(ckobject.ScriptCreate());
 				Assert.True(thisindex > cindex, "Constraints are not ordered.");
 
@@ -720,14 +717,12 @@ select * from Table1
 			}
 		}
 
-		foreach (var t in db.TableTypes) {
+		foreach (var t in db.TableTypes)
 			Assert.True(File.Exists(db.Name + "/table_types/TYPE_" + t.Name + ".sql"));
-		}
 
 		foreach (var expected in db.ForeignKeys.Select(fk =>
-			db.Name + "/foreign_keys/" + fk.Table.Name + ".sql")) {
+			         db.Name + "/foreign_keys/" + fk.Table.Name + ".sql"))
 			Assert.True(File.Exists(expected), "File does not exist" + expected);
-		}
 
 		// Test that the foreign keys are ordered in the file
 		foreach (var t in db.Tables) {
@@ -738,7 +733,7 @@ select * from Table1
 				var fkindex = -1;
 
 				foreach (var fkobject in db.ForeignKeys.Where(x => x.Table == t)
-					.OrderBy(x => x.Name)) {
+					         .OrderBy(x => x.Name)) {
 					var thisindex = script.IndexOf(fkobject.ScriptCreate());
 					Assert.True(thisindex > fkindex, "Foreign keys are not ordered.");
 
@@ -768,10 +763,8 @@ select * from Table1
 		db.Load();
 
 		if (Directory.Exists(db.Dir)
-		) // if the directory exists, delete it to make it a fair test
-		{
+		   ) // if the directory exists, delete it to make it a fair test
 			Directory.Delete(db.Dir, true);
-		}
 
 		db.ScriptToDir();
 

@@ -1,20 +1,20 @@
-﻿namespace SchemaZen.Library.Models {
-	public class Synonym : INameable, IHasOwner, IScriptable {
-		public string Name { get; set; }
-		public string Owner { get; set; }
-		public string BaseObjectName { get; set; }
+﻿namespace SchemaZen.Library.Models; 
 
-		public Synonym(string name, string owner) {
-			Name = name;
-			Owner = owner;
-		}
+public class Synonym : INameable, IHasOwner, IScriptable {
+	public Synonym(string name, string owner) {
+		Name = name;
+		Owner = owner;
+	}
 
-		public string ScriptCreate() {
-			return $"CREATE SYNONYM [{Owner}].[{Name}] FOR {BaseObjectName}";
-		}
+	public string BaseObjectName { get; set; }
+	public string Owner { get; set; }
+	public string Name { get; set; }
 
-		public string ScriptDrop() {
-			return $"DROP SYNONYM [{Owner}].[{Name}]";
-		}
+	public string ScriptCreate() {
+		return $"CREATE SYNONYM [{Owner}].[{Name}] FOR {BaseObjectName}";
+	}
+
+	public string ScriptDrop() {
+		return $"DROP SYNONYM [{Owner}].[{Name}]";
 	}
 }

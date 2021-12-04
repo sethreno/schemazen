@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace SchemaZen.Library {
+﻿namespace SchemaZen.Library {
 	public class StringUtil {
 		/// <summary>
 		///     Adds a space to the beginning of a string.
@@ -17,7 +15,7 @@ namespace SchemaZen.Library {
 		///     Extension methods to make sql script generators more readable.
 		/// </summary>
 		public static class Strings {
-			public static string Space(this String val) {
+			public static string Space(this string val) {
 				return StringUtil.AddSpaceIfNotEmpty(val);
 			}
 		}

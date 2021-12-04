@@ -4,7 +4,6 @@ using Xunit;
 namespace SchemaZen.Tests;
 
 public class ConstraintTester {
-
 	public class ScriptCreate {
 		private static Constraint SetUp() {
 			return new Constraint("test", "INDEX", "a,b") {

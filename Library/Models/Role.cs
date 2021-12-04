@@ -1,10 +1,10 @@
-﻿namespace SchemaZen.Library.Models {
-	public class Role : IScriptable, INameable {
-		public string Name { get; set; }
-		public string Script { get; set; }
+﻿namespace SchemaZen.Library.Models; 
 
-		public string ScriptCreate() {
-			return Script;
-		}
+public class Role : IScriptable, INameable {
+	public string Script { get; set; }
+	public string Name { get; set; }
+
+	public string ScriptCreate() {
+		return Script;
 	}
 }
