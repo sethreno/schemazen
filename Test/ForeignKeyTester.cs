@@ -1,11 +1,10 @@
 ﻿using SchemaZen.Library.Models;
 using Xunit;
 
-namespace SchemaZen.Tests; 
+namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class ForeignKeyTester {
-
 	[Fact]
 	public void TestMultiColumnKey() {
 		var t1 = new Table("dbo", "t1");

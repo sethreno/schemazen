@@ -6,7 +6,7 @@ using SchemaZen.Library.Models;
 using Test.Helpers;
 using Xunit;
 
-namespace SchemaZen.Tests; 
+namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class TableTester {
