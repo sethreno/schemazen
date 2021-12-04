@@ -15,6 +15,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestCopyTestSchemas() {
 		// Regression tests databases scripted by other tools.
 		// To add a new test script the entire database to a single file and
@@ -57,6 +58,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestDescIndex() {
 		TestHelper.DropDb("test");
 		TestHelper.ExecSql("create database test", "");
@@ -76,6 +78,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestCollate() {
 		var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
 		TestHelper.DropDb("TEST_SOURCE");
@@ -94,6 +97,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestTableIndexesWithFilter() {
 		TestHelper.DropDb("TEST");
 		TestHelper.ExecSql("CREATE DATABASE TEST", "");
@@ -116,6 +120,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestViewIndexes() {
 		TestHelper.DropDb("TEST");
 		TestHelper.ExecSql("CREATE DATABASE TEST", "");
@@ -176,6 +181,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScript() {
 		var db = new Database("TEST_TEMP");
 		var t1 = new Table("dbo", "t1");
@@ -225,6 +231,7 @@ public class DatabaseTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTableType() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -259,6 +266,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTableTypePrimaryKey() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -298,6 +306,7 @@ PRIMARY KEY CLUSTERED
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTableTypeComputedColumn() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -328,6 +337,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTableTypeColumnCheckConstraint() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -358,6 +368,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTableTypeColumnDefaultConstraint() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -388,6 +399,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptFKSameName() {
 		var setupSQL = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
@@ -444,6 +456,7 @@ CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASC
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptViewInsteadOfTrigger() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
@@ -492,6 +505,7 @@ DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptTriggerWithNoSets() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
@@ -563,6 +577,7 @@ select * from Table1
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptToDir() {
 		var policy = new Table("dbo", "Policy");
 		policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
@@ -759,6 +774,7 @@ select * from Table1
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptToDirOnlyCreatesNecessaryFolders() {
 		var db = new Database("TestEmptyDB");
 

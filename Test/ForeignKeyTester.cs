@@ -6,6 +6,7 @@ namespace SchemaZen.Tests;
 [Collection("TestDb")]
 public class ForeignKeyTester {
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestMultiColumnKey() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
@@ -36,6 +37,7 @@ public class ForeignKeyTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScript() {
 		var person = new Table("dbo", "Person");
 		person.Columns.Add(new Column("id", "int", false, null));
@@ -64,6 +66,7 @@ public class ForeignKeyTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScriptForeignKeyWithNoName() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));

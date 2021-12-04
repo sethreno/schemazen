@@ -14,6 +14,7 @@ END
 ";
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScript() {
 		var f = new Routine("dbo", "udf_GetDate", null) {
 			RoutineType = Routine.RoutineKind.Function,

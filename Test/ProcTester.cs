@@ -6,6 +6,7 @@ namespace SchemaZen.Tests;
 [Collection("TestDb")]
 public class ProcTester {
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScript() {
 		var t = new Table("dbo", "Address");
 		t.Columns.Add(new Column("id", "int", false, null));

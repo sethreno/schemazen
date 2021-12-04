@@ -91,6 +91,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestExportData() {
 		var t = new Table("dbo", "Status");
 		t.Columns.Add(new Column("id", "int", false, null));
@@ -123,6 +124,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestImportAndExportIgnoringComputedData() {
 		var t = new Table("dbo", "Status");
 		t.Columns.Add(new Column("id", "int", false, null));
@@ -161,6 +163,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestImportAndExportDateTimeWithoutLosePrecision() {
 		var t = new Table("dbo", "Dummy");
 		t.Columns.Add(new Column("id", "int", false, null));
@@ -194,6 +197,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestImportAndExportNonDefaultSchema() {
 		var s = new Schema("example", "dbo");
 		var t = new Table(s.Name, "Example");
@@ -230,6 +234,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestLargeAmountOfRowsImportAndExport() {
 		var t = new Table("dbo", "TestData");
 		t.Columns.Add(new Column("test_field", "int", false, null));
@@ -276,6 +281,7 @@ public class TableTester {
 	}
 
 	[Fact]
+	[Trait("Category", "Integration")]
 	public void TestScript() {
 		//create a table with all known types, script it, and execute the script
 		var t = new Table("dbo", "AllTypesTest");
