@@ -31,7 +31,7 @@ public class TableTester {
 			Constraint.CreateCheckedConstraint("IsTomorrow", false, false, "Tomorrow <> 1"));
 
 		diff = t1.Compare(t2);
-		Assert.Equal(1, diff.ConstraintsChanged.Count);
+		Assert.Single(diff.ConstraintsChanged);
 		Assert.NotNull(diff);
 		Assert.True(diff.IsDiff);
 	}
@@ -56,18 +56,18 @@ public class TableTester {
 		t1.Columns.Add(new Column("second", "varchar", 30, false, null));
 		diff = t1.Compare(t2);
 		Assert.True(diff.IsDiff);
-		Assert.Equal(1, diff.ColumnsAdded.Count);
+		Assert.Single(diff.ColumnsAdded);
 
 		//test delete
 		diff = t2.Compare(t1);
 		Assert.True(diff.IsDiff);
-		Assert.Equal(1, diff.ColumnsDropped.Count);
+		Assert.Single(diff.ColumnsDropped);
 
 		//test diff
 		t1.Columns.Items[0].Length = 20;
 		diff = t1.Compare(t2);
 		Assert.True(diff.IsDiff);
-		Assert.Equal(1, diff.ColumnsDiff.Count);
+		Assert.Single(diff.ColumnsDiff);
 
 		Console.WriteLine("--- create ----");
 		Console.Write(t1.ScriptCreate());

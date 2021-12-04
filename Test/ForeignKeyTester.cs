@@ -87,7 +87,7 @@ public class ForeignKeyTester {
 		db.ExecCreate(true);
 		db.Load();
 
-		Assert.Equal(1, db.ForeignKeys.Count);
+		Assert.Single(db.ForeignKeys);
 
 		var fkCopy = db.ForeignKeys.Single();
 		Assert.Equal("c3", fkCopy.Columns[0]);

@@ -145,7 +145,7 @@ public class DatabaseTester {
 		var db = CreateSampleDataForRegExTests();
 
 		Assert.Equal(3, db.FindTablesRegEx("^cmic").Count);
-		Assert.Equal(1, db.FindTablesRegEx("Location").Count);
+		Assert.Single(db.FindTablesRegEx("Location"));
 	}
 
 	[Fact]
@@ -248,12 +248,12 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 		db.ScriptToDir();
 
-		Assert.Equal(1, db.TableTypes.Count());
+		Assert.Single(db.TableTypes);
 		Assert.Equal(250, db.TableTypes[0].Columns.Items[0].Length);
 		Assert.Equal(1, db.TableTypes[0].Columns.Items[1].Scale);
 		Assert.Equal(5, db.TableTypes[0].Columns.Items[1].Precision);
-		Assert.Equal(-1,
-			db.TableTypes[0].Columns.Items[2].Length); //nvarchar(max) is encoded as -1
+		//nvarchar(max) is encoded as -1
+		Assert.Equal(-1, db.TableTypes[0].Columns.Items[2].Length);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
 		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 	}
@@ -285,8 +285,8 @@ PRIMARY KEY CLUSTERED
 
 		db.ScriptToDir();
 
-		Assert.Equal(1, db.TableTypes.Count());
-		Assert.Equal(1, db.TableTypes[0].PrimaryKey.Columns.Count);
+		Assert.Single(db.TableTypes);
+		Assert.Single(db.TableTypes[0].PrimaryKey.Columns);
 		Assert.Equal("ID", db.TableTypes[0].PrimaryKey.Columns[0].ColumnName);
 		Assert.Equal(50, db.TableTypes[0].Columns.Items[1].Length);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
@@ -318,7 +318,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 		db.ScriptToDir();
 
-		Assert.Equal(1, db.TableTypes.Count());
+		Assert.Single(db.TableTypes);
 		Assert.Equal(3, db.TableTypes[0].Columns.Items.Count());
 		Assert.Equal("ComputedValue", db.TableTypes[0].Columns.Items[2].Name);
 		Assert.Equal("([VALUE1]+[VALUE2])", db.TableTypes[0].Columns.Items[2].ComputedDefinition);
@@ -348,8 +348,8 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 		db.ScriptToDir();
 
-		Assert.Equal(1, db.TableTypes.Count());
-		Assert.Equal(1, db.TableTypes[0].Constraints.Count());
+		Assert.Single(db.TableTypes);
+		Assert.Single(db.TableTypes[0].Constraints);
 		var constraint = db.TableTypes[0].Constraints.First();
 		Assert.Equal("([Value]>(0))", constraint.CheckConstraintExpression);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
@@ -378,7 +378,7 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 		db.ScriptToDir();
 
-		Assert.Equal(1, db.TableTypes.Count());
+		Assert.Single(db.TableTypes);
 		Assert.NotNull(db.TableTypes[0].Columns.Items[1].Default);
 		Assert.Equal(" DEFAULT ((0))", db.TableTypes[0].Columns.Items[1].Default.ScriptCreate());
 
@@ -485,7 +485,7 @@ DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[
 		var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger)
 			.ToList();
 
-		Assert.Equal(1, triggers.Count());
+		Assert.Single(triggers);
 		Assert.Equal("TR_v1", triggers[0].Name);
 		Assert.True(File.Exists(db.Name + "/triggers/TR_v1.sql"));
 	}

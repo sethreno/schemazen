@@ -63,7 +63,7 @@ go
 delete from users
 -- */";
 		var scripts = BatchSqlParser.SplitBatch(script);
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -79,7 +79,7 @@ delete from users
 	public void CanParseSimpleScript() {
 		var script = "Test" + Environment.NewLine + "go";
 		var scripts = BatchSqlParser.SplitBatch(script);
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 		Assert.Equal("Test" + Environment.NewLine, scripts[0]);
 	}
 
@@ -87,7 +87,7 @@ delete from users
 	public void CanParseSimpleScriptEndingInNewLine() {
 		var script = "Test" + Environment.NewLine + "GO" + Environment.NewLine;
 		var scripts = BatchSqlParser.SplitBatch(script);
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 		Assert.Equal("Test" + Environment.NewLine, scripts[0]);
 	}
 
@@ -110,7 +110,7 @@ GO";
 		var scripts = BatchSqlParser.SplitBatch(script);
 
 		Assert.Equal(script, scripts[0]);
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -124,7 +124,7 @@ GO";
 
 		var scripts = BatchSqlParser.SplitBatch(script);
 
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 		Assert.Equal(script, scripts[0]);
 	}
 
@@ -165,7 +165,7 @@ gO
 	public void SemiColonDoesNotSplitScript() {
 		const string script = "CREATE PROC Blah AS SELECT FOO; SELECT Bar;";
 		var scripts = BatchSqlParser.SplitBatch(script);
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -243,7 +243,7 @@ NOGO <-- also not a GO <-- still no
 1:2
 ");
 		//shoud be 1 script
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -255,7 +255,7 @@ GO
 ' 1:2
 ");
 		//should be 1 script
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -266,7 +266,7 @@ GO
 1:2
 GO");
 		//should be 1 script with no 'GO'
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 		Assert.False(scripts[0].Contains("GO"));
 	}
 
@@ -305,7 +305,7 @@ select 1 as [GO]
 SET ANSI_NULLS OFF
 GO
 ");
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 
 	[Fact]
@@ -316,6 +316,6 @@ select 1 as ""GO""
 SET ANSI_NULLS OFF
 GO
 ");
-		Assert.Equal(1, scripts.Length);
+		Assert.Single(scripts);
 	}
 }
