@@ -318,7 +318,7 @@ public class TableTester {
 
 	[Fact]
 	public void TestScriptNonSupportedColumn() {
-		Assert.Throws(typeof(NotSupportedException), () => {
+		Assert.Throws<NotSupportedException>(() => {
 			var t = new Table("dbo", "bla");
 			t.Columns.Add(new Column("a", "madeuptype", true, null));
 			t.ScriptCreate();

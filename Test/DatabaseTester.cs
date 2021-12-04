@@ -161,7 +161,7 @@ public class DatabaseTester {
 		var db = CreateSampleDataForRegExTests();
 
 		Assert.Equal(2, db.FindTablesRegEx("^cmic", "Code$").Count);
-		Assert.Equal(0, db.FindTablesRegEx("Location", "Location").Count);
+		Assert.Empty(db.FindTablesRegEx("Location", "Location"));
 	}
 
 	private static Database CreateSampleDataForRegExTests() {
@@ -292,8 +292,9 @@ PRIMARY KEY CLUSTERED
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
 		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 
-		Assert.True(File.ReadAllText(db.Name + "/table_types/TYPE_MyTableType.sql")
-			.Contains("PRIMARY KEY"));
+		Assert.Contains(
+			"PRIMARY KEY",
+			File.ReadAllText(db.Name + "/table_types/TYPE_MyTableType.sql"));
 	}
 
 	[Fact]
@@ -551,8 +552,14 @@ select * from Table1
 		var target = new Database();
 		var scriptUp = target.Compare(source).Script();
 		var scriptDown = source.Compare(target).Script();
-		Assert.True(scriptUp.ToLower().Contains("drop procedure [dbo].[test]"));
-		Assert.True(scriptDown.ToLower().Contains("create procedure [dbo].[test]"));
+
+		Assert.Contains(
+			"drop procedure [dbo].[test]",
+			scriptUp.ToLower());
+
+		Assert.Contains(
+			"create procedure [dbo].[test]",
+			scriptDown.ToLower());
 	}
 
 	[Fact]
@@ -768,16 +775,16 @@ select * from Table1
 
 		db.ScriptToDir();
 
-		Assert.Equal(0, db.Assemblies.Count);
-		Assert.Equal(0, db.DataTables.Count);
-		Assert.Equal(0, db.ForeignKeys.Count);
-		Assert.Equal(0, db.Routines.Count);
-		Assert.Equal(0, db.Schemas.Count);
-		Assert.Equal(0, db.Synonyms.Count);
-		Assert.Equal(0, db.Tables.Count);
-		Assert.Equal(0, db.TableTypes.Count);
-		Assert.Equal(0, db.Users.Count);
-		Assert.Equal(0, db.ViewIndexes.Count);
+		Assert.Empty(db.Assemblies);
+		Assert.Empty(db.DataTables);
+		Assert.Empty(db.ForeignKeys);
+		Assert.Empty(db.Routines);
+		Assert.Empty(db.Schemas);
+		Assert.Empty(db.Synonyms);
+		Assert.Empty(db.Tables);
+		Assert.Empty(db.TableTypes);
+		Assert.Empty(db.Users);
+		Assert.Empty(db.ViewIndexes);
 
 		Assert.True(Directory.Exists(db.Name));
 		Assert.True(File.Exists(db.Name + "/props.sql"));

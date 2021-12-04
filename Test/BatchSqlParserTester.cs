@@ -96,7 +96,7 @@ delete from users
 		const string script = @"GO
 GO";
 		var scripts = BatchSqlParser.SplitBatch(script);
-		Assert.Equal(0, scripts.Length);
+		Assert.Empty(scripts);
 	}
 
 	[Fact]
@@ -267,7 +267,7 @@ GO
 GO");
 		//should be 1 script with no 'GO'
 		Assert.Single(scripts);
-		Assert.False(scripts[0].Contains("GO"));
+		Assert.DoesNotContain("GO", scripts[0]);
 	}
 
 	[Fact]
