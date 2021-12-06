@@ -35,12 +35,12 @@ public class TestHelper {
 		return connString;
 	}
 
-	public static void DropDb(string dbName) {
+	public static void DropDb(string dbName, string connectionDbName) {
 		if (DbExists(dbName)) {
-			ExecSql("ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
-				"");
-			ExecSql("drop database " + dbName, "");
-			ClearPool(dbName);
+			ExecSql(
+				$"ALTER DATABASE {dbName} SET SINGLE_USER WITH ROLLBACK IMMEDIATE",
+				connectionDbName);
+			ExecSql($"drop database {dbName}", connectionDbName);
 		}
 	}
 

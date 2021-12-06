@@ -1,66 +1,15 @@
-﻿using System.Data.SqlClient;
-using SchemaZen.Library;
+﻿using SchemaZen.Library;
 using SchemaZen.Library.Models;
-using Test.Helpers;
 using Xunit;
 
 namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class DatabaseTester {
-	private TestDbFixture _testDb;
-
-	public DatabaseTester(TestDbFixture testDb) {
-		_testDb = testDb;
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	public void TestCopyTestSchemas() {
-		// Regression tests databases scripted by other tools.
-		// To add a new test script the entire database to a single file and
-		// put it in the test_schemas directory.
-		foreach (var script in Directory.GetFiles(ConfigHelper.TestSchemaDir)) {
-			Console.WriteLine("Testing {0}", script);
-			TestCopySchema(script);
-		}
-	}
-
-	private static void TestCopySchema(string pathToSchemaScript) {
-		TestHelper.DropDb("TEST_SOURCE");
-		TestHelper.DropDb("TEST_COPY");
-
-		//create the db from sql script
-		TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
-		TestHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), "TEST_SOURCE");
-		SqlConnection.ClearAllPools();
-
-		//load the model from newly created db and create a copy
-		var copy = new Database("TEST_COPY");
-		copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
-		copy.Load();
-		SqlConnection.ClearAllPools();
-		var scripted = copy.ScriptCreate();
-		TestHelper.ExecBatchSql(scripted, "master");
-
-		//compare the dbs to make sure they are the same
-		var source = new Database("TEST_SOURCE") {
-			Connection = TestHelper.GetConnString("TEST_SOURCE")
-		};
-		source.Load();
-		copy.Load();
-		TestCompare(source, copy);
-	}
-
-	private static void TestCompare(Database source, Database copy) {
-		//compare the dbs to make sure they are the same                        
-		Assert.False(source.Compare(copy).IsDiff);
-	}
-
 	[Fact]
 	[Trait("Category", "Integration")]
 	public void TestDescIndex() {
-		TestHelper.DropDb("test");
+		TestHelper.DropDb("test", "master");
 		TestHelper.ExecSql("create database test", "");
 
 		TestHelper.ExecSql(@"create table MyTable (Id int)", "test");
@@ -74,19 +23,18 @@ public class DatabaseTester {
 			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)",
 			result);
 
-		TestHelper.DropDb("test");
+		TestHelper.DropDb("test", "master");
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
 	public void TestCollate() {
 		var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
-		TestHelper.DropDb("TEST_SOURCE");
+		TestHelper.DropDb("TEST_SOURCE", "master");
 
 		//create the db from sql script
 		TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
 		TestHelper.ExecBatchSql(File.ReadAllText(pathToSchema), "TEST_SOURCE");
-		SqlConnection.ClearAllPools();
 
 		//load the model from newly created db and check collation
 		var copy = new Database("TEST_COPY");
@@ -99,7 +47,7 @@ public class DatabaseTester {
 	[Fact]
 	[Trait("Category", "Integration")]
 	public void TestTableIndexesWithFilter() {
-		TestHelper.DropDb("TEST");
+		TestHelper.DropDb("TEST", "master");
 		TestHelper.ExecSql("CREATE DATABASE TEST", "");
 
 		TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, EndDate datetime)", "TEST");
@@ -112,7 +60,7 @@ public class DatabaseTester {
 		};
 		db.Load();
 		var result = db.ScriptCreate();
-		TestHelper.DropDb("TEST");
+		TestHelper.DropDb("TEST", "master");
 
 		Assert.Contains(
 			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)",
@@ -122,7 +70,7 @@ public class DatabaseTester {
 	[Fact]
 	[Trait("Category", "Integration")]
 	public void TestViewIndexes() {
-		TestHelper.DropDb("TEST");
+		TestHelper.DropDb("TEST", "master");
 		TestHelper.ExecSql("CREATE DATABASE TEST", "");
 
 		TestHelper.ExecSql(
@@ -138,7 +86,7 @@ public class DatabaseTester {
 		};
 		db.Load();
 		var result = db.ScriptCreate();
-		TestHelper.DropDb("TEST");
+		TestHelper.DropDb("TEST", "master");
 
 		Assert.Contains(
 			"CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])",
@@ -213,15 +161,14 @@ public class DatabaseTester {
 		db.Tables.Add(t1);
 		db.Tables.Add(t2);
 
-		TestHelper.DropDb("TEST_TEMP");
-		SqlConnection.ClearAllPools();
+		TestHelper.DropDb("TEST_TEMP", "master");
 		TestHelper.ExecBatchSql(db.ScriptCreate(), "master");
 
 		var db2 = new Database();
 		db2.Connection = TestHelper.GetConnString("TEST_TEMP");
 		db2.Load();
 
-		TestHelper.DropDb("TEST_TEMP");
+		TestHelper.DropDb("TEST_TEMP", "master");
 
 		foreach (var t in db.Tables) {
 			var copy = db2.FindTable(t.Name, t.Owner);
@@ -770,7 +717,8 @@ select * from Table1
 			ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
 		copy.CreateFromDir(true);
 		copy.Load();
-		TestCompare(db, copy);
+
+		Assert.False(db.Compare(copy).IsDiff);
 	}
 
 	[Fact]

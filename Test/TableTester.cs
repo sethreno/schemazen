@@ -1,21 +1,13 @@
-﻿using System.Data.SqlClient;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Text;
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
-using Test.Helpers;
 using Xunit;
 
 namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class TableTester {
-	private TestDbFixture _testDb;
-
-	public TableTester(TestDbFixture testDb) {
-		_testDb = testDb;
-	}
-
 	[Fact]
 	public void CompareConstraints() {
 		var t1 = new Table("dbo", "Test");
@@ -86,7 +78,6 @@ public class TableTester {
 		var conn = TestHelper.GetConnString(methodName);
 		DBHelper.DropDb(conn);
 		DBHelper.CreateDb(conn);
-		SqlConnection.ClearAllPools();
 		return conn;
 	}
 
