@@ -56,10 +56,4 @@ public class TestHelper {
 
 		return exists;
 	}
-
-	public static void ClearPool(string dbName) {
-		using (var cn = new SqlConnection(GetConnString(dbName))) {
-			SqlConnection.ClearPool(cn);
-		}
-	}
 }

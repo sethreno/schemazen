@@ -1,47 +1,81 @@
-﻿using SchemaZen.Library.Models;
+﻿using Microsoft.Extensions.Logging;
+using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SchemaZen.Tests;
 
-[Collection("CheckTestSchemas")]
+[Trait("Category", "Integration")]
 public class CheckTestSchemas {
-	[Fact]
-	[Trait("Category", "Integration")]
-	public void TestCopyTestSchemas() {
-		// Regression tests databases scripted by other tools.
-		// To add a new test script the entire database to a single file and
-		// put it in the test_schemas directory.
-		var files = Directory.GetFiles(ConfigHelper.TestSchemaDir).ToList();
-		for (var i = 0; i < files.Count; i++) {
-			var script = files[i];
-			Console.WriteLine("Testing {0}", script);
-			TestCopySchema(script, $"{i}");
-		}
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public CheckTestSchemas(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
 	}
 
-	private static void TestCopySchema(
+	[Fact]
+	public async Task test_bop_quote() {
+		var script = Path.Combine("test_schemas", "BOP_QUOTE.sql");
+		await TestCopySchema(script, "bop");
+	}
+
+	[Fact]
+	public async Task test_bop_quote_2() {
+		var script = Path.Combine("test_schemas", "BOP_QUOTE_2.sql");
+		await TestCopySchema(script, "bop2");
+	}
+
+	[Fact]
+	public async Task test_dfs_quote() {
+		var script = Path.Combine("test_schemas", "DFS_QUOTE.sql");
+		await TestCopySchema(script, "dfs");
+	}
+
+	[Fact]
+	public async Task test_fk_refs_non_pk_col() {
+		var script = Path.Combine("test_schemas", "FK_REFS_NON_PK_COL.sql");
+		await TestCopySchema(script, "fk_refs_non_pk_col");
+	}
+
+	[Fact]
+	public async Task test_ims_quote() {
+		var script = Path.Combine("test_schemas", "IMS_QUOTE.sql");
+		await TestCopySchema(script, "ims_quote");
+	}
+
+	[Fact]
+	public async Task test_sandbox3() {
+		var script = Path.Combine("test_schemas", "SANDBOX3_GBL.SQL");
+		await TestCopySchema(script, "sandbox3");
+	}
+
+	private async Task TestCopySchema(
 		string pathToSchemaScript,
 		string dbSuffix) {
 		var sourceDbName = $"CopySchemaSource_{dbSuffix}";
 		var destDbName = $"CopySchemaDest_{dbSuffix}";
 
-		TestHelper.DropDb(sourceDbName, "master");
-		TestHelper.DropDb(destDbName, "master");
+		await _dbHelper.DropDbAsync(sourceDbName);
+		await _dbHelper.DropDbAsync(destDbName);
 
 		//create the db from sql script
-		TestHelper.ExecSql($"CREATE DATABASE {sourceDbName}", "master");
-		TestHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), sourceDbName);
+		_logger.LogInformation($"creating db {sourceDbName}");
+		await _dbHelper.ExecSqlAsync($"CREATE DATABASE {sourceDbName}");
+		_dbHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), sourceDbName);
 
 		//load the model from newly created db and create a copy
 		var copy = new Database(destDbName);
-		copy.Connection = TestHelper.GetConnString(sourceDbName);
+		copy.Connection = _dbHelper.GetConnString(sourceDbName);
 		copy.Load();
 		var scripted = copy.ScriptCreate();
-		TestHelper.ExecBatchSql(scripted, "master");
+		_dbHelper.ExecBatchSql(scripted);
 
 		//compare the dbs to make sure they are the same
 		var source = new Database(sourceDbName) {
-			Connection = TestHelper.GetConnString(sourceDbName)
+			Connection = _dbHelper.GetConnString(sourceDbName)
 		};
 		source.Load();
 		copy.Load();
