@@ -6,7 +6,6 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace SchemaZen.Tests;
 
-[Collection("TestDb")]
 public class DatabaseTester {
 	private readonly TestDbHelper _dbHelper;
 
@@ -171,7 +170,6 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 ";
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 		await testDb.ExecSqlAsync(setupSQL1);
-
 		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 
@@ -190,8 +188,8 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTableTypePrimaryKey() {
-		var setupSQL1 = @"
+	public async Task TestScriptTableTypePrimaryKey() {
+		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 [ID] [int] NOT NULL,
 [Value] [varchar](50) NOT NULL,
@@ -203,128 +201,90 @@ PRIMARY KEY CLUSTERED
 
 ";
 
-		var db = new Database("TestScriptTableTypePrimaryKey");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(sql);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-
-		db.ScriptToDir();
 
 		Assert.Single(db.TableTypes);
 		Assert.Single(db.TableTypes[0].PrimaryKey.Columns);
 		Assert.Equal("ID", db.TableTypes[0].PrimaryKey.Columns[0].ColumnName);
 		Assert.Equal(50, db.TableTypes[0].Columns.Items[1].Length);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
-		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 
-		Assert.Contains(
-			"PRIMARY KEY",
-			File.ReadAllText(db.Name + "/table_types/TYPE_MyTableType.sql"));
+		var result = db.ScriptCreate();
+		Assert.Contains("PRIMARY KEY", result);
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTableTypeComputedColumn() {
-		var setupSQL1 = @"
+	public async Task TestScriptTableTypeComputedColumn() {
+		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 [Value1] [int] NOT NULL,
 [Value2] [int] NOT NULL,
 [ComputedValue] AS ([VALUE1]+[VALUE2])
 )
 ";
-		var db = new Database("TestScriptTableTypeComputedColumn");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(sql);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-
-		db.ScriptToDir();
 
 		Assert.Single(db.TableTypes);
 		Assert.Equal(3, db.TableTypes[0].Columns.Items.Count());
 		Assert.Equal("ComputedValue", db.TableTypes[0].Columns.Items[2].Name);
 		Assert.Equal("([VALUE1]+[VALUE2])", db.TableTypes[0].Columns.Items[2].ComputedDefinition);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
-		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTableTypeColumnCheckConstraint() {
-		var setupSQL1 = @"
+	public async Task TestScriptTableTypeColumnCheckConstraint() {
+		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 [ID] [nvarchar](250) NULL,
 [Value] [numeric](5, 1) NULL CHECK([Value]>(0)),
 [LongNVarchar] [nvarchar](max) NULL
 )
 ";
-		var db = new Database("TestScriptTableTypeColumnCheckConstraint");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(sql);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-
-		db.ScriptToDir();
 
 		Assert.Single(db.TableTypes);
 		Assert.Single(db.TableTypes[0].Constraints);
 		var constraint = db.TableTypes[0].Constraints.First();
 		Assert.Equal("([Value]>(0))", constraint.CheckConstraintExpression);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
-		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTableTypeColumnDefaultConstraint() {
-		var setupSQL1 = @"
+	public async Task TestScriptTableTypeColumnDefaultConstraint() {
+		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 [ID] [nvarchar](250) NULL,
 [Value] [numeric](5, 1) NULL DEFAULT 0,
 [LongNVarchar] [nvarchar](max) NULL
 )
 ";
-		var db = new Database("TestScriptTableTypeColumnDefaultConstraint");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(sql);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-
-		db.ScriptToDir();
 
 		Assert.Single(db.TableTypes);
 		Assert.NotNull(db.TableTypes[0].Columns.Items[1].Default);
 		Assert.Equal(" DEFAULT ((0))", db.TableTypes[0].Columns.Items[1].Default.ScriptCreate());
-
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
-		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptFKSameName() {
-		var setupSQL = @"
+	public async Task TestScriptFKSameName() {
+		var sql = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
 
 CREATE TABLE [dbo].[t1a]
@@ -353,19 +313,13 @@ CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASC
 
 ";
 
-		var db = new Database("TestScriptFKSameName");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(sql);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 
 		// Required in order to expose the exception
-		db.ScriptToDir();
+		db.ScriptCreate();
 
 		Assert.Equal(2, db.ForeignKeys.Count());
 		Assert.Equal(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
@@ -380,7 +334,7 @@ CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASC
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptViewInsteadOfTrigger() {
+	public async Task TestScriptViewInsteadOfTrigger() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
 (
@@ -403,33 +357,26 @@ DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[
 
 ";
 
-		var db = new Database("TestScriptViewInsteadOfTrigger");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-		DBHelper.ExecSql(db.Connection, setupSQL2);
-		DBHelper.ExecSql(db.Connection, setupSQL3);
-
-		db.Dir = db.Name;
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(setupSQL1);
+		await testDb.ExecSqlAsync(setupSQL2);
+		await testDb.ExecSqlAsync(setupSQL3);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 
 		// Required in order to expose the exception
-		db.ScriptToDir();
+		db.ScriptCreate();
 
 		var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger)
 			.ToList();
 
 		Assert.Single(triggers);
 		Assert.Equal("TR_v1", triggers[0].Name);
-		Assert.True(File.Exists(db.Name + "/triggers/TR_v1.sql"));
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTriggerWithNoSets() {
+	public async Task TestScriptTriggerWithNoSets() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
 (
@@ -450,26 +397,18 @@ a INT NOT NULL
 CREATE TRIGGER [dbo].[TR_1] ON [dbo].[t1]  FOR UPDATE,INSERT
 AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 
-		var db = new Database("TestScriptTrigger");
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(setupSQL1);
+		await testDb.ExecSqlAsync(setupSQL2);
+		await testDb.ExecSqlAsync(setupSQL3);
+		var db = new Database("test") { Connection = testDb.GetConnString() };
+		db.Load();
 
 		// Set these properties to the defaults so they are not scripted
 		db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
 		db.FindProp("ANSI_NULLS").Value = "ON";
 
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-		DBHelper.ExecSql(db.Connection, setupSQL2);
-		DBHelper.ExecSql(db.Connection, setupSQL3);
-
-		db.Dir = db.Name;
-		db.Load();
-
-		db.ScriptToDir();
-
-		var script = File.ReadAllText(db.Name + "/triggers/TR_1.sql");
+		var script = db.ScriptCreate();
 
 		Assert.DoesNotContain(
 			"INSERTEDENABLE", script);
@@ -501,7 +440,7 @@ select * from Table1
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptToDir() {
+	public async Task TestScriptToDir() {
 		var policy = new Table("dbo", "Policy");
 		policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
 		policy.Columns.Add(new Column("form", "tinyint", false, null) { Position = 2 });
@@ -618,8 +557,9 @@ select * from Table1
 		db.FindProp("PARAMETERIZATION").Value = "FORCED";
 		db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
 
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-		db.ExecCreate(true);
+		await _dbHelper.DropDbAsync(db.Name);
+		await using var testDb = _dbHelper.CreateTestDb(db);
+		db.Connection = testDb.GetConnString();
 
 		DBHelper.ExecSql(db.Connection,
 			"  insert into formType ([code], [desc]) values (1, 'DP-1')\n"
@@ -688,9 +628,10 @@ select * from Table1
 		}
 
 		var copy = new Database("ScriptToDirTestCopy");
+		await _dbHelper.DropDbAsync("ScriptToDirTestCopy");
+		await using var testDb2 = _dbHelper.CreateTestDb(copy);
 		copy.Dir = db.Dir;
-		copy.Connection =
-			ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + copy.Name);
+		copy.Connection = testDb2.GetConnString();
 		copy.CreateFromDir(true);
 		copy.Load();
 
@@ -699,18 +640,16 @@ select * from Table1
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptToDirOnlyCreatesNecessaryFolders() {
+	public async Task TestScriptToDirOnlyCreatesNecessaryFolders() {
 		var db = new Database("TestEmptyDB");
+		await _dbHelper.DropDbAsync(db.Name);
+		await using var testDb = _dbHelper.CreateTestDb(db);
 
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
+		db.Connection = testDb.GetConnString();
 		db.Dir = db.Name;
 		db.Load();
 
-		if (Directory.Exists(db.Dir)
-		   ) // if the directory exists, delete it to make it a fair test
+		if (Directory.Exists(db.Dir))
 			Directory.Delete(db.Dir, true);
 
 		db.ScriptToDir();
