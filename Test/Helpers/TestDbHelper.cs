@@ -1,5 +1,6 @@
 ﻿using System.Data.SqlClient;
 using SchemaZen.Library;
+using SchemaZen.Library.Models;
 
 namespace SchemaZen.Tests;
 
@@ -10,6 +11,21 @@ public class TestDbHelper {
 	public TestDbHelper(string masterDbConnString) {
 		_masterDbConnString = masterDbConnString;
 		_masterDbName = new SqlConnectionStringBuilder(_masterDbConnString).InitialCatalog;
+	}
+
+	public string MakeTestDbName() {
+		return $"testDb{Guid.NewGuid()}".Replace("-", "");
+	}
+
+	public async Task<TestDb> CreateTestDbAsync(string? dbName = null) {
+		if (dbName == null) dbName = MakeTestDbName();
+		await CreateDbAsync(dbName);
+		return new TestDb(dbName, this);
+	}
+
+	public TestDb CreateTestDb(Database db) {
+		ExecBatchSql(db.ScriptCreate());
+		return new TestDb(db.Name, this);
 	}
 
 	public string GetConnString(string dbName) {
@@ -39,6 +55,13 @@ public class TestDbHelper {
 		DBHelper.ExecBatchSql(GetConnString(dbName), sql);
 	}
 
+	public async Task CreateDbAsync(string dbName) {
+		if (await DbExistsAsync(dbName))
+			await DropDbAsync(dbName);
+
+		await ExecSqlAsync($"create database {dbName}", _masterDbName);
+	}
+
 	public async Task DropDbAsync(string dbName) {
 		if (!await DbExistsAsync(dbName)) return;
 
@@ -54,5 +77,32 @@ public class TestDbHelper {
 		using var cm = cn.CreateCommand();
 		cm.CommandText = "select db_id('" + dbName + "')";
 		return !ReferenceEquals(cm.ExecuteScalar(), DBNull.Value);
+	}
+}
+
+public sealed class TestDb : IAsyncDisposable {
+	private readonly TestDbHelper _helper;
+
+	public TestDb(string name, TestDbHelper helper) {
+		DbName = name;
+		_helper = helper;
+	}
+
+	public string DbName { get; }
+
+	public async ValueTask DisposeAsync() {
+		await _helper.DropDbAsync(DbName);
+	}
+
+	public async Task ExecSqlAsync(string sql) {
+		await _helper.ExecSqlAsync(sql, DbName);
+	}
+
+	public void ExecBatchSql(string sql) {
+		_helper.ExecBatchSql(sql, DbName);
+	}
+
+	public string GetConnString() {
+		return _helper.GetConnString(DbName);
 	}
 }

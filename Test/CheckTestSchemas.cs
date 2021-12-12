@@ -49,10 +49,14 @@ public class CheckTestSchemas {
 	[Fact]
 	public async Task test_sandbox3() {
 		var script = Path.Combine("test_schemas", "SANDBOX3_GBL.SQL");
-		await TestCopySchema(script, "sandbox3");
+		var copy = await TestCopySchema(script, "sandbox3");
+
+		Assert.Equal(
+			"SQL_Latin1_General_CP1_CI_AS",
+			copy.FindProp("COLLATE").Value);
 	}
 
-	private async Task TestCopySchema(
+	private async Task<Database> TestCopySchema(
 		string pathToSchemaScript,
 		string dbSuffix) {
 		var sourceDbName = $"CopySchemaSource_{dbSuffix}";
@@ -80,5 +84,7 @@ public class CheckTestSchemas {
 		source.Load();
 		copy.Load();
 		Assert.False(source.Compare(copy).IsDiff);
+
+		return copy;
 	}
 }

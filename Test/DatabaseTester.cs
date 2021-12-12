@@ -1,66 +1,52 @@
 ﻿using SchemaZen.Library;
 using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace SchemaZen.Tests;
 
 [Collection("TestDb")]
 public class DatabaseTester {
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public DatabaseTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
+	}
+
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestDescIndex() {
-		TestHelper.DropDb("test", "master");
-		TestHelper.ExecSql("create database test", "");
+	public async Task TestDescIndex() {
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
-		TestHelper.ExecSql(@"create table MyTable (Id int)", "test");
-		TestHelper.ExecSql(@"create nonclustered index MyIndex on MyTable (Id desc)", "test");
-		var db = new Database("test") {
-			Connection = TestHelper.GetConnString("test")
-		};
+		await testDb.ExecSqlAsync(@"create table MyTable (Id int)");
+		await testDb.ExecSqlAsync(@"create nonclustered index MyIndex on MyTable (Id desc)");
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 		var result = db.ScriptCreate();
+
 		Assert.Contains(
 			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)",
 			result);
-
-		TestHelper.DropDb("test", "master");
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestCollate() {
-		var pathToSchema = ConfigHelper.TestSchemaDir + "/SANDBOX3_GBL.SQL";
-		TestHelper.DropDb("TEST_SOURCE", "master");
+	public async Task TestTableIndexesWithFilter() {
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
-		//create the db from sql script
-		TestHelper.ExecSql("CREATE DATABASE TEST_SOURCE", "");
-		TestHelper.ExecBatchSql(File.ReadAllText(pathToSchema), "TEST_SOURCE");
+		await testDb.ExecSqlAsync(
+			@"CREATE TABLE MyTable (Id int, EndDate datetime)");
 
-		//load the model from newly created db and check collation
-		var copy = new Database("TEST_COPY");
-		copy.Connection = TestHelper.GetConnString("TEST_SOURCE");
-		copy.Load();
+		await testDb.ExecSqlAsync(
+			@"CREATE NONCLUSTERED INDEX MyIndex ON MyTable (Id) WHERE (EndDate) IS NULL");
 
-		Assert.Equal("SQL_Latin1_General_CP1_CI_AS", copy.FindProp("COLLATE").Value);
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	public void TestTableIndexesWithFilter() {
-		TestHelper.DropDb("TEST", "master");
-		TestHelper.ExecSql("CREATE DATABASE TEST", "");
-
-		TestHelper.ExecSql(@"CREATE TABLE MyTable (Id int, EndDate datetime)", "TEST");
-		TestHelper.ExecSql(
-			@"CREATE NONCLUSTERED INDEX MyIndex ON MyTable (Id) WHERE (EndDate) IS NULL",
-			"TEST");
-
-		var db = new Database("TEST") {
-			Connection = TestHelper.GetConnString("TEST")
-		};
+		var db = new Database("TEST") { Connection = testDb.GetConnString() };
 		db.Load();
 		var result = db.ScriptCreate();
-		TestHelper.DropDb("TEST", "master");
 
 		Assert.Contains(
 			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)",
@@ -69,24 +55,22 @@ public class DatabaseTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestViewIndexes() {
-		TestHelper.DropDb("TEST", "master");
-		TestHelper.ExecSql("CREATE DATABASE TEST", "");
+	public async Task TestViewIndexes() {
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
-		TestHelper.ExecSql(
-			@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)", "TEST");
-		TestHelper.ExecSql(
-			@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t",
-			"TEST");
-		TestHelper.ExecSql(@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)",
-			"TEST");
+		await testDb.ExecSqlAsync(
+			@"CREATE TABLE MyTable (Id int, Name nvarchar(250), EndDate datetime)");
 
-		var db = new Database("TEST") {
-			Connection = TestHelper.GetConnString("TEST")
-		};
+		await testDb.ExecSqlAsync(
+			@"CREATE VIEW dbo.MyView WITH SCHEMABINDING as SELECT t.Id, t.Name, t.EndDate from dbo.MyTable t");
+
+		await testDb.ExecSqlAsync(
+			@"CREATE UNIQUE CLUSTERED INDEX MyIndex ON MyView (Id, Name)");
+
+
+		var db = new Database("TEST") { Connection = testDb.GetConnString() };
 		db.Load();
 		var result = db.ScriptCreate();
-		TestHelper.DropDb("TEST", "master");
 
 		Assert.Contains(
 			"CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])",
@@ -130,8 +114,8 @@ public class DatabaseTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScript() {
-		var db = new Database("TEST_TEMP");
+	public async Task TestScript() {
+		var db = new Database(_dbHelper.MakeTestDbName());
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
 		t1.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
@@ -161,14 +145,11 @@ public class DatabaseTester {
 		db.Tables.Add(t1);
 		db.Tables.Add(t2);
 
-		TestHelper.DropDb("TEST_TEMP", "master");
-		TestHelper.ExecBatchSql(db.ScriptCreate(), "master");
+		await using var testDb = _dbHelper.CreateTestDb(db);
 
 		var db2 = new Database();
-		db2.Connection = TestHelper.GetConnString("TEST_TEMP");
+		db2.Connection = testDb.GetConnString();
 		db2.Load();
-
-		TestHelper.DropDb("TEST_TEMP", "master");
 
 		foreach (var t in db.Tables) {
 			var copy = db2.FindTable(t.Name, t.Owner);
@@ -179,7 +160,7 @@ public class DatabaseTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptTableType() {
+	public async Task TestScriptTableType() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
 [ID] [nvarchar](250) NULL,
@@ -188,28 +169,23 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 )
 
 ";
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(setupSQL1);
 
-		var db = new Database("TestScriptTableType");
-
-		db.Connection = ConfigHelper.TestDB.Replace("database=TESTDB", "database=" + db.Name);
-
-		db.ExecCreate(true);
-
-		DBHelper.ExecSql(db.Connection, setupSQL1);
-
-		db.Dir = db.Name;
+		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-
-		db.ScriptToDir();
 
 		Assert.Single(db.TableTypes);
 		Assert.Equal(250, db.TableTypes[0].Columns.Items[0].Length);
 		Assert.Equal(1, db.TableTypes[0].Columns.Items[1].Scale);
 		Assert.Equal(5, db.TableTypes[0].Columns.Items[1].Precision);
-		//nvarchar(max) is encoded as -1
 		Assert.Equal(-1, db.TableTypes[0].Columns.Items[2].Length);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
-		Assert.True(File.Exists(db.Name + "/table_types/TYPE_MyTableType.sql"));
+
+		var result = db.ScriptCreate();
+		Assert.Contains(
+			"CREATE TYPE [dbo].[MyTableType] AS TABLE",
+			result);
 	}
 
 	[Fact]
