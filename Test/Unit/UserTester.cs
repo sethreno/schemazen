@@ -1,9 +1,9 @@
 ﻿using SchemaZen.Library.Models;
 using Xunit;
 
-namespace SchemaZen.Tests; 
+namespace Test.Unit;
 
-public class UserTester {
+public class UserTest {
 	[Fact]
 	public void TestUserNameShouldBeEscaped() {
 		var user = new SqlUser("foo.bar", "dbo");

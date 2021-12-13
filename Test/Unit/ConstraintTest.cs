@@ -1,9 +1,9 @@
 ﻿using SchemaZen.Library.Models;
 using Xunit;
 
-namespace SchemaZen.Tests;
+namespace Test.Unit;
 
-public class ConstraintTester {
+public class ConstraintTest {
 	public class ScriptCreate {
 		private static Constraint SetUp() {
 			return new Constraint("test", "INDEX", "a,b") {

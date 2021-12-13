@@ -1,9 +1,9 @@
 ﻿using SchemaZen.Library;
 using Xunit;
 
-namespace SchemaZen.Tests;
+namespace Test.Unit;
 
-public class BatchSqlParserTester {
+public class BatchSqlParserTest {
 	[Fact]
 	public void CanParseCommentBeforeGoStatement() {
 		const string script = @"SELECT FOO

@@ -1,9 +1,10 @@
 ﻿using Microsoft.Extensions.Logging;
 using SchemaZen.Library.Models;
+using Test.Integration.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SchemaZen.Tests;
+namespace Test.Integration;
 
 [Trait("Category", "Integration")]
 public class CheckTestSchemas {
@@ -18,37 +19,37 @@ public class CheckTestSchemas {
 
 	[Fact]
 	public async Task test_bop_quote() {
-		var script = Path.Combine("test_schemas", "BOP_QUOTE.sql");
+		var script = Path.Combine("Integration/Schemas", "BOP_QUOTE.sql");
 		await TestCopySchema(script, "bop");
 	}
 
 	[Fact]
 	public async Task test_bop_quote_2() {
-		var script = Path.Combine("test_schemas", "BOP_QUOTE_2.sql");
+		var script = Path.Combine("Integration/Schemas", "BOP_QUOTE_2.sql");
 		await TestCopySchema(script, "bop2");
 	}
 
 	[Fact]
 	public async Task test_dfs_quote() {
-		var script = Path.Combine("test_schemas", "DFS_QUOTE.sql");
+		var script = Path.Combine("Integration/Schemas", "DFS_QUOTE.sql");
 		await TestCopySchema(script, "dfs");
 	}
 
 	[Fact]
 	public async Task test_fk_refs_non_pk_col() {
-		var script = Path.Combine("test_schemas", "FK_REFS_NON_PK_COL.sql");
+		var script = Path.Combine("Integration/Schemas", "FK_REFS_NON_PK_COL.sql");
 		await TestCopySchema(script, "fk_refs_non_pk_col");
 	}
 
 	[Fact]
 	public async Task test_ims_quote() {
-		var script = Path.Combine("test_schemas", "IMS_QUOTE.sql");
+		var script = Path.Combine("Integration/Schemas", "IMS_QUOTE.sql");
 		await TestCopySchema(script, "ims_quote");
 	}
 
 	[Fact]
 	public async Task test_sandbox3() {
-		var script = Path.Combine("test_schemas", "SANDBOX3_GBL.SQL");
+		var script = Path.Combine("Integration/Schemas", "SANDBOX3_GBL.SQL");
 		var copy = await TestCopySchema(script, "sandbox3");
 
 		Assert.Equal(

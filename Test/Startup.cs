@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
-using SchemaZen.Tests;
+using Test.Integration.Helpers;
 
-namespace Test; 
+namespace Test;
 
 public class Startup {
 	public void ConfigureServices(IServiceCollection services) {

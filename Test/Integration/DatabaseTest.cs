@@ -1,11 +1,13 @@
-﻿using SchemaZen.Library;
+using SchemaZen.Library;
 using SchemaZen.Library.Models;
+using Test.Integration.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace SchemaZen.Tests;
+namespace Test.Integration;
 
+[Trait("Category", "Integration")]
 public class DatabaseTester {
 	private readonly TestDbHelper _dbHelper;
 
@@ -17,7 +19,6 @@ public class DatabaseTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestDescIndex() {
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
@@ -33,7 +34,6 @@ public class DatabaseTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestTableIndexesWithFilter() {
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
@@ -53,7 +53,6 @@ public class DatabaseTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestViewIndexes() {
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
@@ -77,42 +76,6 @@ public class DatabaseTester {
 	}
 
 	[Fact]
-	public void TestFindTableRegEx() {
-		var db = CreateSampleDataForRegExTests();
-
-		Assert.Equal(3, db.FindTablesRegEx("^cmic").Count);
-		Assert.Single(db.FindTablesRegEx("Location"));
-	}
-
-	[Fact]
-	public void TestFindTableRegEx_ExcludeOnly() {
-		var db = CreateSampleDataForRegExTests();
-
-		Assert.Equal(3, db.FindTablesRegEx(null, "^cmic").Count);
-		Assert.Equal(5, db.FindTablesRegEx(null, "Location").Count);
-	}
-
-	[Fact]
-	public void TestFindTableRegEx_BothIncludeExclude() {
-		var db = CreateSampleDataForRegExTests();
-
-		Assert.Equal(2, db.FindTablesRegEx("^cmic", "Code$").Count);
-		Assert.Empty(db.FindTablesRegEx("Location", "Location"));
-	}
-
-	private static Database CreateSampleDataForRegExTests() {
-		var db = new Database();
-		db.Tables.Add(new Table("dbo", "cmicDeductible"));
-		db.Tables.Add(new Table("dbo", "cmicZipCode"));
-		db.Tables.Add(new Table("dbo", "cmicState"));
-		db.Tables.Add(new Table("dbo", "Policy"));
-		db.Tables.Add(new Table("dbo", "Location"));
-		db.Tables.Add(new Table("dbo", "Rate"));
-		return db;
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScript() {
 		var db = new Database(_dbHelper.MakeTestDbName());
 		var t1 = new Table("dbo", "t1");
@@ -158,7 +121,6 @@ public class DatabaseTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTableType() {
 		var setupSQL1 = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -187,7 +149,6 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTableTypePrimaryKey() {
 		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -217,7 +178,6 @@ PRIMARY KEY CLUSTERED
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTableTypeComputedColumn() {
 		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -239,7 +199,6 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTableTypeColumnCheckConstraint() {
 		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -261,7 +220,6 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTableTypeColumnDefaultConstraint() {
 		var sql = @"
 CREATE TYPE [dbo].[MyTableType] AS TABLE(
@@ -282,7 +240,6 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptFKSameName() {
 		var sql = @"
 CREATE SCHEMA [s2] AUTHORIZATION [dbo]
@@ -333,7 +290,6 @@ CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASC
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptViewInsteadOfTrigger() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
@@ -375,7 +331,6 @@ DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptTriggerWithNoSets() {
 		var setupSQL1 = @"
 CREATE TABLE [dbo].[t1]
@@ -415,31 +370,6 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 	}
 
 	[Fact]
-	public void TestScriptDeletedProc() {
-		var source = new Database();
-		source.Routines.Add(new Routine("dbo", "test", null));
-		source.FindRoutine("test", "dbo").RoutineType = Routine.RoutineKind.Procedure;
-		source.FindRoutine("test", "dbo").Text = @"
-create procedure [dbo].[test]
-as 
-select * from Table1
-";
-
-		var target = new Database();
-		var scriptUp = target.Compare(source).Script();
-		var scriptDown = source.Compare(target).Script();
-
-		Assert.Contains(
-			"drop procedure [dbo].[test]",
-			scriptUp.ToLower());
-
-		Assert.Contains(
-			"create procedure [dbo].[test]",
-			scriptDown.ToLower());
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptToDir() {
 		var policy = new Table("dbo", "Policy");
 		policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
@@ -639,7 +569,6 @@ select * from Table1
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptToDirOnlyCreatesNecessaryFolders() {
 		var db = new Database("TestEmptyDB");
 		await _dbHelper.DropDbAsync(db.Name);

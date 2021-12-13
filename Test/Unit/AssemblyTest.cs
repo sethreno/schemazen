@@ -1,9 +1,9 @@
 ﻿using SchemaZen.Library.Models;
 using Xunit;
 
-namespace SchemaZen.Tests;
+namespace Test.Unit;
 
-public class AssemblyTester {
+public class AssemblyTest {
 	[Theory]
 	[InlineData("SAFE_ACCESS", "SAFE")]
 	[InlineData("UNSAFE_ACCESS", "UNSAFE")]

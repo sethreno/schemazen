@@ -1,22 +1,23 @@
 ﻿using Microsoft.Extensions.Logging;
 using SchemaZen.Library.Models;
+using Test.Integration.Helpers;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SchemaZen.Tests;
+namespace Test.Integration;
 
-public class ForeignKeyTester {
+[Trait("Category", "Integration")]
+public class ForeignKeyTest {
 	private readonly TestDbHelper _dbHelper;
 
 	private readonly ILogger _logger;
 
-	public ForeignKeyTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+	public ForeignKeyTest(ITestOutputHelper output, TestDbHelper dbHelper) {
 		_logger = output.BuildLogger();
 		_dbHelper = dbHelper;
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestMultiColumnKey() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
@@ -46,7 +47,6 @@ public class ForeignKeyTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScript() {
 		var person = new Table("dbo", "Person");
 		person.Columns.Add(new Column("id", "int", false, null));
@@ -82,7 +82,6 @@ public class ForeignKeyTester {
 	}
 
 	[Fact]
-	[Trait("Category", "Integration")]
 	public async Task TestScriptForeignKeyWithNoName() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));

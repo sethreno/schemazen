@@ -3,9 +3,9 @@ using SchemaZen.Library.Models;
 using Xunit;
 using Xunit.Abstractions;
 
-namespace SchemaZen.Tests;
+namespace Test.Unit;
 
-public class FunctionTester {
+public class FunctionTest {
 	private const string _exampleFunc = @"
 CREATE FUNCTION [dbo].udf_GetDate()
 RETURNS DATETIME AS
@@ -14,27 +14,10 @@ BEGIN
 END
 ";
 
-	private readonly TestDbHelper _dbHelper;
-
 	private readonly ILogger _logger;
 
-	public FunctionTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+	public FunctionTest(ITestOutputHelper output) {
 		_logger = output.BuildLogger();
-		_dbHelper = dbHelper;
-	}
-
-	[Fact]
-	[Trait("Category", "Integration")]
-	public async Task TestScript() {
-		var f = new Routine("dbo", "udf_GetDate", null) {
-			RoutineType = Routine.RoutineKind.Function,
-			Text = _exampleFunc
-		};
-
-		await using var testDb = await _dbHelper.CreateTestDbAsync();
-
-		// script includes GO so use ExecBatch
-		testDb.ExecBatchSql(f.ScriptCreate());
 	}
 
 	[Fact]

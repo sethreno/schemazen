@@ -1,9 +1,9 @@
 ﻿using SchemaZen.Library.Models;
 using Xunit;
 
-namespace SchemaZen.Tests;
+namespace Test.Unit;
 
-public class ColumnTester {
+public class ColumnTest {
 	public class ScriptCreate {
 		[Fact]
 		public void int_no_trailing_space() {

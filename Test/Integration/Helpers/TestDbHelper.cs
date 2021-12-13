@@ -2,7 +2,7 @@
 using SchemaZen.Library;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.Tests;
+namespace Test.Integration.Helpers;
 
 public class TestDbHelper {
 	private readonly string _masterDbConnString;
