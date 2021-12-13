@@ -1,13 +1,23 @@
-﻿using SchemaZen.Library.Models;
+﻿using Microsoft.Extensions.Logging;
+using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
 
-namespace SchemaZen.Tests; 
+namespace SchemaZen.Tests;
 
-[Collection("TestDb")]
 public class ProcTester {
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public ProcTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
+	}
+
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScript() {
+	public async Task TestScript() {
 		var t = new Table("dbo", "Address");
 		t.Columns.Add(new Column("id", "int", false, null));
 		t.Columns.Add(new Column("street", "varchar", 50, false, null));
@@ -24,11 +34,9 @@ AS
 	select * from Address where id = @id
 ";
 
-		TestHelper.ExecSql(t.ScriptCreate(), "");
-		TestHelper.ExecBatchSql(getAddress.ScriptCreate() + "\nGO", "");
-
-		TestHelper.ExecSql("drop table [dbo].[Address]", "");
-		TestHelper.ExecSql("drop procedure [dbo].[GetAddress]", "");
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
+		testDb.ExecBatchSql(getAddress.ScriptCreate());
 	}
 
 	[Fact]
