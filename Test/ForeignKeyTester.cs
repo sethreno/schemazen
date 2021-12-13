@@ -1,13 +1,23 @@
-﻿using SchemaZen.Library.Models;
+﻿using Microsoft.Extensions.Logging;
+using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SchemaZen.Tests;
 
-[Collection("TestDb")]
 public class ForeignKeyTester {
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public ForeignKeyTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
+	}
+
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestMultiColumnKey() {
+	public async Task TestMultiColumnKey() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
 		t1.Columns.Add(new Column("c1", "int", false, null));
@@ -20,25 +30,24 @@ public class ForeignKeyTester {
 
 		var fk = new ForeignKey(t2, "fk_test", "c3,c2", t1, "c1,c2");
 
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t1.ScriptCreate());
+		await testDb.ExecSqlAsync(t2.ScriptCreate());
+		await testDb.ExecSqlAsync(fk.ScriptCreate());
+
 		var db = new Database("TESTDB");
-		db.Tables.Add(t1);
-		db.Tables.Add(t2);
-		db.ForeignKeys.Add(fk);
-		db.Connection = TestHelper.GetConnString("TESTDB");
-		db.ExecCreate(true);
+		db.Connection = testDb.GetConnString();
 		db.Load();
 
 		Assert.Equal("c3", db.FindForeignKey("fk_test", "dbo").Columns[0]);
 		Assert.Equal("c2", db.FindForeignKey("fk_test", "dbo").Columns[1]);
 		Assert.Equal("c1", db.FindForeignKey("fk_test", "dbo").RefColumns[0]);
 		Assert.Equal("c2", db.FindForeignKey("fk_test", "dbo").RefColumns[1]);
-
-		db.ExecCreate(true);
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScript() {
+	public async Task TestScript() {
 		var person = new Table("dbo", "Person");
 		person.Columns.Add(new Column("id", "int", false, null));
 		person.Columns.Add(new Column("name", "varchar", 50, false, null));
@@ -55,19 +64,26 @@ public class ForeignKeyTester {
 		address.Columns.Find("id").Identity = new Identity(1, 1);
 		address.AddConstraint(new Constraint("PK_Address", "PRIMARY KEY", "id"));
 
-		var fk = new ForeignKey(address, "FK_Address_Person", "personId", person, "id", "",
-			"CASCADE");
+		var fk = new ForeignKey(
+			address, "FK_Address_Person", "personId", person, "id", "", "CASCADE");
 
-		TestHelper.ExecSql(person.ScriptCreate(), "");
-		TestHelper.ExecSql(address.ScriptCreate(), "");
-		TestHelper.ExecSql(fk.ScriptCreate(), "");
-		TestHelper.ExecSql("drop table Address", "");
-		TestHelper.ExecSql("drop table Person", "");
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(person.ScriptCreate());
+		await testDb.ExecSqlAsync(address.ScriptCreate());
+		await testDb.ExecSqlAsync(fk.ScriptCreate());
+
+		var db = new Database("TESTDB");
+		db.Connection = testDb.GetConnString();
+		db.Load();
+
+		Assert.NotNull(db.FindTable("Person", "dbo"));
+		Assert.NotNull(db.FindTable("Address", "dbo"));
+		Assert.NotNull(db.FindForeignKey("FK_Address_Person", "dbo"));
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScriptForeignKeyWithNoName() {
+	public async Task TestScriptForeignKeyWithNoName() {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("c2", "varchar", 10, false, null));
 		t1.Columns.Add(new Column("c1", "int", false, null));
@@ -81,12 +97,13 @@ public class ForeignKeyTester {
 		var fk = new ForeignKey(t2, "fk_ABCDEF", "c3,c2", t1, "c1,c2");
 		fk.IsSystemNamed = true;
 
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t1.ScriptCreate());
+		await testDb.ExecSqlAsync(t2.ScriptCreate());
+		await testDb.ExecSqlAsync(fk.ScriptCreate());
+
 		var db = new Database("TESTDB");
-		db.Tables.Add(t1);
-		db.Tables.Add(t2);
-		db.ForeignKeys.Add(fk);
-		db.Connection = TestHelper.GetConnString("TESTDB");
-		db.ExecCreate(true);
+		db.Connection = testDb.GetConnString();
 		db.Load();
 
 		Assert.Single(db.ForeignKeys);
@@ -97,7 +114,5 @@ public class ForeignKeyTester {
 		Assert.Equal("c1", fkCopy.RefColumns[0]);
 		Assert.Equal("c2", fkCopy.RefColumns[1]);
 		Assert.True(fkCopy.IsSystemNamed);
-
-		db.ExecCreate(true);
 	}
 }

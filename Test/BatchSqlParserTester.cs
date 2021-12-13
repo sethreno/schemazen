@@ -175,7 +175,6 @@ GO /* blah */";
 
 		Assert.Equal(2, BatchSqlParser.SplitBatch(script).Length);
 		//why should this throw an exception?
-		//UnitTestHelper.AssertThrows<SqlParseException>(() => BatchSqlParser.SplitBatch(script));
 	}
 
 	[Fact]
