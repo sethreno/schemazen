@@ -1,9 +1,10 @@
-﻿using SchemaZen.Library.Models;
+﻿using Microsoft.Extensions.Logging;
+using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
 
-namespace SchemaZen.Tests; 
+namespace SchemaZen.Tests;
 
-[Collection("TestDb")]
 public class FunctionTester {
 	private const string _exampleFunc = @"
 CREATE FUNCTION [dbo].udf_GetDate()
@@ -13,16 +14,27 @@ BEGIN
 END
 ";
 
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public FunctionTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
+	}
+
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScript() {
+	public async Task TestScript() {
 		var f = new Routine("dbo", "udf_GetDate", null) {
 			RoutineType = Routine.RoutineKind.Function,
 			Text = _exampleFunc
 		};
-		Console.WriteLine(f.ScriptCreate());
-		TestHelper.ExecBatchSql(f.ScriptCreate() + "\nGO", "");
-		TestHelper.ExecSql("drop function [dbo].[udf_GetDate]", "");
+
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+
+		// script includes GO so use ExecBatch
+		testDb.ExecBatchSql(f.ScriptCreate());
 	}
 
 	[Fact]
