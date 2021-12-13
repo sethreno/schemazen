@@ -239,7 +239,7 @@ NOGO <-- also not a GO <-- still no
 		scripts = BatchSqlParser.SplitBatch(
 			@"
 1:1
--- GO eff yourself
+-- GO ride a bike
 1:2
 ");
 		//shoud be 1 script
