@@ -1,13 +1,21 @@
-﻿using System.Reflection;
-using System.Text;
-using SchemaZen.Library;
+﻿using System.Text;
+using Microsoft.Extensions.Logging;
 using SchemaZen.Library.Models;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace SchemaZen.Tests;
 
-[Collection("TestDb")]
 public class TableTester {
+	private readonly TestDbHelper _dbHelper;
+
+	private readonly ILogger _logger;
+
+	public TableTester(ITestOutputHelper output, TestDbHelper dbHelper) {
+		_logger = output.BuildLogger();
+		_dbHelper = dbHelper;
+	}
+
 	[Fact]
 	public void CompareConstraints() {
 		var t1 = new Table("dbo", "Test");
@@ -61,29 +69,19 @@ public class TableTester {
 		Assert.True(diff.IsDiff);
 		Assert.Single(diff.ColumnsDiff);
 
-		Console.WriteLine("--- create ----");
-		Console.Write(t1.ScriptCreate());
+		_logger.LogTrace("--- create ----");
+		_logger.LogTrace(t1.ScriptCreate());
 
-		Console.WriteLine("--- migrate up ---");
-		Console.Write(t1.Compare(t2).Script());
+		_logger.LogTrace("--- migrate up ---");
+		_logger.LogTrace(t1.Compare(t2).Script());
 
-		Console.WriteLine("--- migrate down ---");
-		Console.Write(t2.Compare(t1).Script());
-	}
-
-	private string CreateTestExportDb(string methodName) {
-		if (string.IsNullOrEmpty(methodName))
-			throw new ArgumentException("unable to determine method name");
-
-		var conn = TestHelper.GetConnString(methodName);
-		DBHelper.DropDb(conn);
-		DBHelper.CreateDb(conn);
-		return conn;
+		_logger.LogTrace("--- migrate down ---");
+		_logger.LogTrace(t2.Compare(t1).Script());
 	}
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestExportData() {
+	public async Task TestExportData() {
 		var t = new Table("dbo", "Status");
 		t.Columns.Add(new Column("id", "int", false, null));
 		t.Columns.Add(new Column("code", "char", 1, false, null));
@@ -91,8 +89,8 @@ public class TableTester {
 		t.Columns.Find("id").Identity = new Identity(1, 1);
 		t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-		var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
-		DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
 			@"1	R	Ready
@@ -106,9 +104,9 @@ public class TableTester {
 		writer.Flush();
 		writer.Close();
 
-		t.ImportData(conn, filename);
+		t.ImportData(testDb.GetConnString(), filename);
 		var sw = new StringWriter();
-		t.ExportData(conn, sw);
+		t.ExportData(testDb.GetConnString(), sw);
 		Assert.Equal(dataIn, sw.ToString());
 
 		File.Delete(filename);
@@ -116,7 +114,7 @@ public class TableTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestImportAndExportIgnoringComputedData() {
+	public async Task TestImportAndExportIgnoringComputedData() {
 		var t = new Table("dbo", "Status");
 		t.Columns.Add(new Column("id", "int", false, null));
 		t.Columns.Add(new Column("code", "char", 1, false, null));
@@ -128,8 +126,8 @@ public class TableTester {
 		t.Columns.Find("id").Identity = new Identity(1, 1);
 		t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-		var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
-		DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
 			@"1	R	Ready
@@ -144,9 +142,9 @@ public class TableTester {
 		writer.Close();
 
 		try {
-			t.ImportData(conn, filename);
+			t.ImportData(testDb.GetConnString(), filename);
 			var sw = new StringWriter();
-			t.ExportData(conn, sw);
+			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
 		} finally {
 			File.Delete(filename);
@@ -155,15 +153,15 @@ public class TableTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestImportAndExportDateTimeWithoutLosePrecision() {
+	public async Task TestImportAndExportDateTimeWithoutLosePrecision() {
 		var t = new Table("dbo", "Dummy");
 		t.Columns.Add(new Column("id", "int", false, null));
 		t.Columns.Add(new Column("createdTime", "datetime", false, null));
 		t.Columns.Find("id").Identity = new Identity(1, 1);
 		t.AddConstraint(new Constraint("PK_Status", "PRIMARY KEY", "id"));
 
-		var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
-		DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
 			@"1	2017-02-21 11:20:30.1
@@ -178,9 +176,9 @@ public class TableTester {
 		writer.Close();
 
 		try {
-			t.ImportData(conn, filename);
+			t.ImportData(testDb.GetConnString(), filename);
 			var sw = new StringWriter();
-			t.ExportData(conn, sw);
+			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
 		} finally {
 			File.Delete(filename);
@@ -189,7 +187,7 @@ public class TableTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestImportAndExportNonDefaultSchema() {
+	public async Task TestImportAndExportNonDefaultSchema() {
 		var s = new Schema("example", "dbo");
 		var t = new Table(s.Name, "Example");
 		t.Columns.Add(new Column("id", "int", false, null));
@@ -198,9 +196,9 @@ public class TableTester {
 		t.Columns.Find("id").Identity = new Identity(1, 1);
 		t.AddConstraint(new Constraint("PK_Example", "PRIMARY KEY", "id"));
 
-		var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
-		DBHelper.ExecBatchSql(conn, s.ScriptCreate());
-		DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(s.ScriptCreate());
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
 			@"1	R	Ready
@@ -215,9 +213,9 @@ public class TableTester {
 		writer.Close();
 
 		try {
-			t.ImportData(conn, filename);
+			t.ImportData(testDb.GetConnString(), filename);
 			var sw = new StringWriter();
-			t.ExportData(conn, sw);
+			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
 		} finally {
 			File.Delete(filename);
@@ -226,7 +224,7 @@ public class TableTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestLargeAmountOfRowsImportAndExport() {
+	public async Task TestLargeAmountOfRowsImportAndExport() {
 		var t = new Table("dbo", "TestData");
 		t.Columns.Add(new Column("test_field", "int", false, null));
 		t.AddConstraint(new Constraint("PK_TestData", "PRIMARY KEY", "test_field") {
@@ -239,8 +237,8 @@ public class TableTester {
 			Unique = true
 		});
 
-		var conn = CreateTestExportDb(MethodBase.GetCurrentMethod()?.Name ?? "");
-		DBHelper.ExecBatchSql(conn, t.ScriptCreate());
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var filename = Path.GetTempFileName();
 
@@ -261,9 +259,9 @@ public class TableTester {
 				filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
 		try {
-			t.ImportData(conn, filename);
+			t.ImportData(testDb.GetConnString(), filename);
 			var sw = new StringWriter();
-			t.ExportData(conn, sw);
+			t.ExportData(testDb.GetConnString(), sw);
 
 			Assert.Equal(dataIn, sw.ToString());
 		} finally {
@@ -273,7 +271,7 @@ public class TableTester {
 
 	[Fact]
 	[Trait("Category", "Integration")]
-	public void TestScript() {
+	public async Task TestScript() {
 		//create a table with all known types, script it, and execute the script
 		var t = new Table("dbo", "AllTypesTest");
 		t.Columns.Add(new Column("a", "bigint", false, null));
@@ -308,9 +306,8 @@ public class TableTester {
 		t.Columns.Add(new Column("cc", "xml", true, null));
 		t.Columns.Add(new Column("dd", "hierarchyid", false, null));
 
-		Console.WriteLine(t.ScriptCreate());
-		TestHelper.ExecSql(t.ScriptCreate(), "");
-		TestHelper.ExecSql("drop table [dbo].[AllTypesTest]", "");
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
 	}
 
 	[Fact]

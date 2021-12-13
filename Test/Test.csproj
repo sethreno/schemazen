@@ -28,9 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Content Include="test_schemas/*.*">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

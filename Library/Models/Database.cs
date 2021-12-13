@@ -9,7 +9,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using SchemaZen.Library.Models.Comparers;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class Database {
 	#region Compare
@@ -1591,7 +1591,6 @@ where name = @dbname
 					scripts.Remove(f);
 				} catch (SqlBatchException ex) {
 					errors.Add(new SqlFileException(f, ex));
-					//Console.WriteLine("Error occurred in {0}: {1}", f, ex);
 				}
 			}
 		}
