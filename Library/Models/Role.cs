@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public class Role : IScriptable, INameable {
 	public string Script { get; set; }

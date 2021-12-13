@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class SqlUser : INameable, IHasOwner, IScriptable {
 	public List<string> DatabaseRoles = new();
@@ -26,7 +26,8 @@ public class SqlUser : INameable, IHasOwner, IScriptable {
 		return login +
 			$"CREATE USER [{Name}] {(PasswordHash == null ? "WITHOUT LOGIN" : "FOR LOGIN " + $"[{Name}]")} {(string.IsNullOrEmpty(Owner) ? string.Empty : "WITH DEFAULT_SCHEMA = ")}[{Owner}]"
 			+ "\r\n" +
-			string.Join("\r\n",
+			string.Join(
+				"\r\n",
 				DatabaseRoles.Select(
 						r =>
 							$"/*ALTER ROLE {r} ADD MEMBER {Name}*/ exec sp_addrolemember '{r}', '{Name}'")

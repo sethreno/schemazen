@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public interface INameable {
 	string Name { get; set; }

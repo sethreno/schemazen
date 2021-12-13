@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public class Permission : IScriptable, INameable {
 	public Permission(string userName, string objectName, string permissionType) {

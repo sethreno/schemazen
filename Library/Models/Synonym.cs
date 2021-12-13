@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public class Synonym : INameable, IHasOwner, IScriptable {
 	public Synonym(string name, string owner) {

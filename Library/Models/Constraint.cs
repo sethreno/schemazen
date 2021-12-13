@@ -2,7 +2,7 @@
 using System.Linq;
 using SchemaZen.Library.Extensions;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class Constraint : INameable, IScriptable {
 	private bool _isNotForReplication;
@@ -12,8 +12,9 @@ public class Constraint : INameable, IScriptable {
 		Name = name;
 		Type = type;
 		if (!string.IsNullOrEmpty(columns))
-			Columns = new List<ConstraintColumn>(columns.Split(',')
-				.Select(x => new ConstraintColumn(x, false)));
+			Columns = new List<ConstraintColumn>(
+				columns.Split(',')
+					.Select(x => new ConstraintColumn(x, false)));
 	}
 
 	public string IndexType { get; set; }
@@ -54,7 +55,9 @@ public class Constraint : INameable, IScriptable {
 			$"{Type}{IndexType.Space()} ({string.Join(", ", Columns.Select(c => c.Script()).ToArray())})";
 	}
 
-	public static Constraint CreateCheckedConstraint(string name, bool isNotForReplication,
+	public static Constraint CreateCheckedConstraint(
+		string name,
+		bool isNotForReplication,
 		bool isSystemNamed,
 		string checkConstraintExpression) {
 		var constraint = new Constraint(name, "CHECK", "") {

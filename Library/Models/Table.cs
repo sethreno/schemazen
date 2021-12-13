@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class Schema : INameable, IHasOwner, IScriptable {
 	public Schema(string name, string owner) {
@@ -191,13 +191,17 @@ public class Table : INameable, IHasOwner, IScriptable {
 									.ToString(_dateTimeFormat, CultureInfo.InvariantCulture));
 							else if (dr[c.Name] is float || dr[c.Name] is double ||
 							         dr[c.Name] is decimal)
-								data.Write(Convert.ToString(dr[c.Name],
-									CultureInfo.InvariantCulture));
+								data.Write(
+									Convert.ToString(
+										dr[c.Name],
+										CultureInfo.InvariantCulture));
 							else
-								data.Write(dr[c.Name].ToString()
-									.Replace(_tab, _escapeTab)
-									.Replace(_lineFeed, _escapeLineFeed)
-									.Replace(_carriageReturn, _escapeCarriageReturn));
+								data.Write(
+									dr[c.Name]
+										.ToString()
+										.Replace(_tab, _escapeTab)
+										.Replace(_lineFeed, _escapeLineFeed)
+										.Replace(_carriageReturn, _escapeCarriageReturn));
 
 							if (c != cols.Last())
 								data.Write(_tab);
@@ -221,7 +225,8 @@ public class Table : INameable, IHasOwner, IScriptable {
 
 		var linenumber = 0;
 		var batch_rows = 0;
-		using (var bulk = new SqlBulkCopy(conn,
+		using (var bulk = new SqlBulkCopy(
+			       conn,
 			       SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.KeepNulls |
 			       SqlBulkCopyOptions.TableLock)) {
 			foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
@@ -245,7 +250,8 @@ public class Table : INameable, IHasOwner, IScriptable {
 
 						if (rowsep_cnt == _rowSeparator.Length) {
 							// Remove rowseparator from line
-							line.RemoveRange(line.Count - _rowSeparator.Length,
+							line.RemoveRange(
+								line.Count - _rowSeparator.Length,
 								_rowSeparator.Length);
 							break;
 						}
@@ -261,21 +267,28 @@ public class Table : INameable, IHasOwner, IScriptable {
 
 					var row = dt.NewRow();
 					var fields =
-						new string(line.ToArray()).Split(new[] { _tab },
+						new string(line.ToArray()).Split(
+							new[] { _tab },
 							StringSplitOptions.None);
 					if (fields.Length != dt.Columns.Count)
-						throw new DataFileException("Incorrect number of columns", filename,
+						throw new DataFileException(
+							"Incorrect number of columns",
+							filename,
 							linenumber);
 
 					for (var j = 0; j < fields.Length; j++)
 						try {
-							row[j] = ConvertType(cols[j].Type,
-								fields[j].Replace(_escapeLineFeed, _lineFeed)
+							row[j] = ConvertType(
+								cols[j].Type,
+								fields[j]
+									.Replace(_escapeLineFeed, _lineFeed)
 									.Replace(_escapeCarriageReturn, _carriageReturn)
 									.Replace(_escapeTab, _tab));
 						} catch (FormatException ex) {
-							throw new DataFileException($"{ex.Message} at column {j + 1}",
-								filename, linenumber);
+							throw new DataFileException(
+								$"{ex.Message} at column {j + 1}",
+								filename,
+								linenumber);
 						}
 
 					dt.Rows.Add(row);
@@ -332,8 +345,10 @@ public class Table : INameable, IHasOwner, IScriptable {
 			return;
 		}
 
-		var uk = Constraints.Where(c => c.Unique).OrderBy(c => c.Columns.Count)
-			.ThenBy(c => c.Name).FirstOrDefault();
+		var uk = Constraints.Where(c => c.Unique)
+			.OrderBy(c => c.Columns.Count)
+			.ThenBy(c => c.Name)
+			.FirstOrDefault();
 
 		if (uk != null) {
 			var ukColumns = uk.Columns.Select(c => $"[{c.ColumnName}]");
@@ -425,9 +440,10 @@ public class TableDiff {
 			}
 
 		foreach (var c in ConstraintsDeleted)
-			text.Append(c.Type != "INDEX"
-				? $"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n"
-				: $"DROP INDEX {c.Name} ON [{Owner}].[{Name}]\r\n");
+			text.Append(
+				c.Type != "INDEX"
+					? $"ALTER TABLE [{Owner}].[{Name}] DROP CONSTRAINT {c.Name}\r\n"
+					: $"DROP INDEX {c.Name} ON [{Owner}].[{Name}]\r\n");
 
 		return text.ToString();
 	}

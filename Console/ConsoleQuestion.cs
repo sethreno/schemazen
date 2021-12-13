@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace SchemaZen.console; 
+namespace SchemaZen.console;
 
 public static class ConsoleQuestion {
 	// ReSharper disable once InconsistentNaming

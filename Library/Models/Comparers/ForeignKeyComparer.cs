@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SchemaZen.Library.Models.Comparers; 
+namespace SchemaZen.Library.Models.Comparers;
 
 public class ForeignKeyComparer : IComparer<ForeignKey> {
 	public static ForeignKeyComparer Instance { get; } = new();

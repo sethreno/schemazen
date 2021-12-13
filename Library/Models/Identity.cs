@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public class Identity {
 	public Identity(string seed, string increment) {

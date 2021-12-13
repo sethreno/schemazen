@@ -22,17 +22,18 @@ public class SqlAssembly : INameable, IScriptable {
 	public string Name { get; set; }
 
 	public string ScriptCreate() {
-		var commands = Files.Select((kvp, index) => {
-			if (index == 0)
-				return $@"CREATE ASSEMBLY [{Name}]
+		var commands = Files.Select(
+			(kvp, index) => {
+				if (index == 0)
+					return $@"CREATE ASSEMBLY [{Name}]
 {string.Empty}FROM {"0x" + Convert.ToHexString(kvp.Value)}
 {"WITH PERMISSION_SET = " + PermissionSet}";
 
-			return
-				$@"ALTER ASSEMBLY [{Name}]
+				return
+					$@"ALTER ASSEMBLY [{Name}]
 ADD FILE FROM {"0x" + Convert.ToHexString(kvp.Value)}
 AS N\'{kvp.Key}\'";
-		});
+			});
 
 		var go = Environment.NewLine + "GO" + Environment.NewLine;
 

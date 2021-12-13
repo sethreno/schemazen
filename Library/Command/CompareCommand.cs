@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.Library.Command; 
+namespace SchemaZen.Library.Command;
 
 public class CompareCommand : BaseCommand {
 	public string Source { get; set; }

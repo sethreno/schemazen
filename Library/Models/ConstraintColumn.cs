@@ -1,4 +1,4 @@
-﻿namespace SchemaZen.Library.Models; 
+﻿namespace SchemaZen.Library.Models;
 
 public class ConstraintColumn {
 	public ConstraintColumn(string columnName, bool desc) {

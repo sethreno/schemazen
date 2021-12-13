@@ -8,14 +8,15 @@ using SchemaZen.Library;
 using SchemaZen.Library.Command;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.console; 
+namespace SchemaZen.console;
 
 public class Script : BaseCommand {
 	private Logger _logger;
 
 	public Script()
 		: base(
-			"Script", "Generate scripts for the specified database.") {
+			"Script",
+			"Generate scripts for the specified database.") {
 		HasOption(
 			"dataTables=",
 			"A comma separated list of tables to export data from.",
@@ -76,8 +77,12 @@ public class Script : BaseCommand {
 		var namesAndSchemas = HandleDataTables(DataTables);
 
 		try {
-			scriptCommand.Execute(namesAndSchemas, DataTablesPattern, DataTablesExcludePattern,
-				TableHint, filteredTypes);
+			scriptCommand.Execute(
+				namesAndSchemas,
+				DataTablesPattern,
+				DataTablesExcludePattern,
+				TableHint,
+				filteredTypes);
 		} catch (Exception ex) {
 			throw new ConsoleHelpAsException(ex.Message);
 		}

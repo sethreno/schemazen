@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 
-namespace SchemaZen.Library.Command; 
+namespace SchemaZen.Library.Command;
 
 public class CreateCommand : BaseCommand {
 	public void Execute(string databaseFilesPath) {

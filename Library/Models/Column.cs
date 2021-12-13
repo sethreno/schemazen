@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class Column {
 	public Column() { }
@@ -18,7 +18,12 @@ public class Column {
 		Length = length;
 	}
 
-	public Column(string name, string type, byte precision, int scale, bool nullable,
+	public Column(
+		string name,
+		string type,
+		byte precision,
+		int scale,
+		bool nullable,
 		Default defaultValue)
 		: this(name, type, nullable, defaultValue) {
 		Precision = precision;
@@ -128,7 +133,8 @@ public class Column {
 				return val.ToString();
 
 			default:
-				throw new NotSupportedException("Error scripting column " + Name +
+				throw new NotSupportedException(
+					"Error scripting column " + Name +
 					". SQL data type " + Type + " is not supported.");
 		}
 	}

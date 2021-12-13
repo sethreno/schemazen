@@ -236,7 +236,8 @@ NOGO <-- also not a GO <-- still no
 	[Fact]
 	public void TestSplitGOInComment() {
 		string[] scripts;
-		scripts = BatchSqlParser.SplitBatch(@"
+		scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1
 -- GO eff yourself
 1:2
@@ -248,7 +249,8 @@ NOGO <-- also not a GO <-- still no
 	[Fact]
 	public void TestSplitGOInQuotes() {
 		string[] scripts;
-		scripts = BatchSqlParser.SplitBatch(@"
+		scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1 ' 
 GO
 ' 1:2
@@ -260,7 +262,8 @@ GO
 	[Fact]
 	public void TestSplitGONoEndLine() {
 		string[] scripts;
-		scripts = BatchSqlParser.SplitBatch(@"
+		scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1
 1:2
 GO");
@@ -272,7 +275,8 @@ GO");
 	[Fact]
 	public void TestSplitMultipleGOs() {
 		string[] scripts;
-		scripts = BatchSqlParser.SplitBatch(@"
+		scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1
 GO
 GO
@@ -286,7 +290,8 @@ GO
 
 	[Fact]
 	public void IgnoresSlashStarInsideQuotedIdentifier() {
-		var scripts = BatchSqlParser.SplitBatch(@"
+		var scripts = BatchSqlParser.SplitBatch(
+			@"
 select 1 as ""/*""
 GO
 SET ANSI_NULLS OFF
@@ -298,7 +303,8 @@ GO
 
 	[Fact]
 	public void IgnoresGoInsideBrackets() {
-		var scripts = BatchSqlParser.SplitBatch(@"
+		var scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1
 select 1 as [GO]
 SET ANSI_NULLS OFF
@@ -309,7 +315,8 @@ GO
 
 	[Fact]
 	public void IgnoresGoInsideQuotedIdentifier() {
-		var scripts = BatchSqlParser.SplitBatch(@"
+		var scripts = BatchSqlParser.SplitBatch(
+			@"
 1:1
 select 1 as ""GO""
 SET ANSI_NULLS OFF

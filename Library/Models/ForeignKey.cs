@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class ForeignKey : INameable, IScriptable {
 	private const string _defaultRules = "NO ACTION|RESTRICT";
@@ -12,12 +12,21 @@ public class ForeignKey : INameable, IScriptable {
 		Name = name;
 	}
 
-	public ForeignKey(Table table, string name, string columns, Table refTable,
+	public ForeignKey(
+		Table table,
+		string name,
+		string columns,
+		Table refTable,
 		string refColumns)
 		: this(table, name, columns, refTable, refColumns, "", "") { }
 
-	public ForeignKey(Table table, string name, string columns, Table refTable,
-		string refColumns, string onUpdate,
+	public ForeignKey(
+		Table table,
+		string name,
+		string columns,
+		Table refTable,
+		string refColumns,
+		string onUpdate,
 		string onDelete) {
 		Table = table;
 		Name = name;

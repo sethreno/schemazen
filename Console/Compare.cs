@@ -5,7 +5,7 @@ using ManyConsole;
 using Mono.Options;
 using SchemaZen.Library.Command;
 
-namespace SchemaZen.console; 
+namespace SchemaZen.console;
 
 internal class Compare : ConsoleCommand {
 	private bool _debug;

@@ -1,13 +1,14 @@
 using System;
 using System.Text;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class UserDefinedType : INameable, IHasOwner, IScriptable {
 	private readonly short _maxLength;
 	private readonly bool _nullable;
 
-	public UserDefinedType(string owner,
+	public UserDefinedType(
+		string owner,
 		string name,
 		string baseTypeName,
 		short maxLength,

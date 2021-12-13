@@ -3,7 +3,7 @@ using System.Data.SqlClient;
 using System.IO;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.Library; 
+namespace SchemaZen.Library;
 
 public class DBHelper {
 	public static bool EchoSql { get; set; } = false;
@@ -48,7 +48,8 @@ public class DBHelper {
 
 		if (DbExists(cnBuilder.ToString())) {
 			cnBuilder.InitialCatalog = "master";
-			ExecSql(cnBuilder.ToString(),
+			ExecSql(
+				cnBuilder.ToString(),
 				"ALTER DATABASE " + dbName + " SET SINGLE_USER WITH ROLLBACK IMMEDIATE");
 			ExecSql(cnBuilder.ToString(), "drop database " + dbName);
 

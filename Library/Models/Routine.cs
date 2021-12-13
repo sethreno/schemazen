@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace SchemaZen.Library.Models; 
+namespace SchemaZen.Library.Models;
 
 public class Routine : INameable, IHasOwner, IScriptable {
 	public enum RoutineKind {
@@ -99,9 +99,14 @@ public class Routine : INameable, IHasOwner, IScriptable {
 
 	public string GetSQLType() {
 		var text = RoutineType.ToString();
-		return string.Join(string.Empty, text.AsEnumerable().Select(
-			(c, i) => char.IsUpper(c) || i == 0 ? " " + char.ToUpper(c) : c.ToString()
-		).ToArray()).Trim();
+		return string.Join(
+				string.Empty,
+				text.AsEnumerable()
+					.Select(
+						(c, i) => char.IsUpper(c) || i == 0 ? " " + char.ToUpper(c) : c.ToString()
+					)
+					.ToArray())
+			.Trim();
 	}
 
 	public string ScriptDrop() {
@@ -114,9 +119,10 @@ public class Routine : INameable, IHasOwner, IScriptable {
 			var match = regex.Match(Text);
 			var group = match.Groups[1];
 			if (group.Success)
-				return ScriptBase(db,
-					Text.Substring(0, @group.Index) + "ALTER" +
-					Text.Substring(@group.Index + @group.Length));
+				return ScriptBase(
+					db,
+					Text.Substring(0, group.Index) + "ALTER" +
+					Text.Substring(group.Index + group.Length));
 		}
 
 		throw new Exception($"Unable to script routine {RoutineType} {Owner}.{Name} as ALTER");
@@ -127,7 +133,8 @@ public class Routine : INameable, IHasOwner, IScriptable {
 			yield return "Script definition could not be retrieved.";
 		} else {
 			// check if the name is correct
-			var regex = new Regex(string.Format(_sqlCreateWithNameRegex, GetSQLTypeForRegEx()),
+			var regex = new Regex(
+				string.Format(_sqlCreateWithNameRegex, GetSQLTypeForRegEx()),
 				RegexOptions.IgnoreCase | RegexOptions.Singleline);
 			var match = regex.Match(Text);
 

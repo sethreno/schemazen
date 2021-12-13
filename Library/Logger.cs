@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 
-namespace SchemaZen.Library; 
+namespace SchemaZen.Library;
 
 public class Logger : ILogger {
 	private readonly bool _verbose;

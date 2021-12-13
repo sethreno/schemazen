@@ -77,10 +77,11 @@ public class TableTest {
 
 	[Fact]
 	public void TestScriptNonSupportedColumn() {
-		Assert.Throws<NotSupportedException>(() => {
-			var t = new Table("dbo", "bla");
-			t.Columns.Add(new Column("a", "madeuptype", true, null));
-			t.ScriptCreate();
-		});
+		Assert.Throws<NotSupportedException>(
+			() => {
+				var t = new Table("dbo", "bla");
+				t.Columns.Add(new Column("a", "madeuptype", true, null));
+				t.ScriptCreate();
+			});
 	}
 }

@@ -161,15 +161,17 @@ public class TableTest {
 	public async Task TestLargeAmountOfRowsImportAndExport() {
 		var t = new Table("dbo", "TestData");
 		t.Columns.Add(new Column("test_field", "int", false, null));
-		t.AddConstraint(new Constraint("PK_TestData", "PRIMARY KEY", "test_field") {
-			IndexType = "NONCLUSTERED"
-		});
-		t.AddConstraint(new Constraint("IX_TestData_PK", "INDEX", "test_field") {
-			// clustered index is required to ensure the row order is the same as what we import
-			IndexType = "CLUSTERED",
-			Table = t,
-			Unique = true
-		});
+		t.AddConstraint(
+			new Constraint("PK_TestData", "PRIMARY KEY", "test_field") {
+				IndexType = "NONCLUSTERED"
+			});
+		t.AddConstraint(
+			new Constraint("IX_TestData_PK", "INDEX", "test_field") {
+				// clustered index is required to ensure the row order is the same as what we import
+				IndexType = "CLUSTERED",
+				Table = t,
+				Unique = true
+			});
 
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 		await testDb.ExecSqlAsync(t.ScriptCreate());
@@ -188,7 +190,8 @@ public class TableTest {
 		writer.Close();
 
 		var dataIn = sb.ToString();
-		Assert.Equal(dataIn,
+		Assert.Equal(
+			dataIn,
 			File.ReadAllText(
 				filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
@@ -233,8 +236,13 @@ public class TableTest {
 		t.Columns.Add(new Column("x", "uniqueidentifier", false, null));
 		t.Columns.Add(new Column("y", "varbinary", 50, false, null));
 		t.Columns.Add(new Column("z", "varbinary", -1, false, null));
-		t.Columns.Add(new Column("aa", "varchar", 50, true,
-			new Default("DF_AllTypesTest_aa", "'asdf'", false)));
+		t.Columns.Add(
+			new Column(
+				"aa",
+				"varchar",
+				50,
+				true,
+				new Default("DF_AllTypesTest_aa", "'asdf'", false)));
 		t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 		t.Columns.Add(new Column("cc", "xml", true, null));
 		t.Columns.Add(new Column("dd", "hierarchyid", false, null));

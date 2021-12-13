@@ -4,12 +4,15 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace SchemaZen.Library.Command; 
+namespace SchemaZen.Library.Command;
 
 public class ScriptCommand : BaseCommand {
-	public void Execute(Dictionary<string, string> namesAndSchemas, string dataTablesPattern,
+	public void Execute(
+		Dictionary<string, string> namesAndSchemas,
+		string dataTablesPattern,
 		string dataTablesExcludePattern,
-		string tableHint, List<string> filteredTypes) {
+		string tableHint,
+		List<string> filteredTypes) {
 		if (!Overwrite && Directory.Exists(ScriptDir)) {
 			var message = $"{ScriptDir} already exists - you must set overwrite to true";
 			throw new InvalidOperationException(message);
@@ -32,16 +35,21 @@ public class ScriptCommand : BaseCommand {
 
 		db.ScriptToDir(tableHint, Logger.Log);
 
-		Logger.Log(TraceLevel.Info,
+		Logger.Log(
+			TraceLevel.Info,
 			$"{Environment.NewLine}Snapshot successfully created at {db.Dir}");
-		var routinesWithWarnings = db.Routines.Select(r => new {
-			Routine = r,
-			Warnings = r.Warnings().ToList()
-		}).Where(r => r.Warnings.Any()).ToList();
+		var routinesWithWarnings = db.Routines.Select(
+				r => new {
+					Routine = r,
+					Warnings = r.Warnings().ToList()
+				})
+			.Where(r => r.Warnings.Any())
+			.ToList();
 		if (routinesWithWarnings.Any()) {
 			Logger.Log(TraceLevel.Info, "With the following warnings:");
-			var warnings = routinesWithWarnings.SelectMany(r => r.Warnings.Select(
-				w => $"- {r.Routine.RoutineType} [{r.Routine.Owner}].[{r.Routine.Name}]: {w}"));
+			var warnings = routinesWithWarnings.SelectMany(
+				r => r.Warnings.Select(
+					w => $"- {r.Routine.RoutineType} [{r.Routine.Owner}].[{r.Routine.Name}]: {w}"));
 			foreach (var warning in warnings) Logger.Log(TraceLevel.Warning, warning);
 		}
 	}

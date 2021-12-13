@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using ManyConsole;
 
-namespace SchemaZen.console; 
+namespace SchemaZen.console;
 
 internal class Program {
 	private static int Main(string[] args) {
 		try {
 			return ConsoleCommandDispatcher.DispatchCommand(
-				GetCommands(), args, Console.Out);
+				GetCommands(),
+				args,
+				Console.Out);
 		} catch (Exception ex) {
 			Console.WriteLine(ex.Message);
 			Console.WriteLine(ex.StackTrace);

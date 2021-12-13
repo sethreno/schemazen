@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Data.SqlClient;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.Library.Command; 
+namespace SchemaZen.Library.Command;
 
 public abstract class BaseCommand {
 	public string Server { get; set; }

@@ -81,9 +81,10 @@ public class DatabaseTester {
 		var t1 = new Table("dbo", "t1");
 		t1.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
 		t1.Columns.Add(new Column("col2", "int", false, null) { Position = 2 });
-		t1.AddConstraint(new Constraint("pk_t1", "PRIMARY KEY", "col1,col2") {
-			IndexType = "CLUSTERED"
-		});
+		t1.AddConstraint(
+			new Constraint("pk_t1", "PRIMARY KEY", "col1,col2") {
+				IndexType = "CLUSTERED"
+			});
 
 		var t2 = new Table("dbo", "t2");
 		t2.Columns.Add(new Column("col1", "int", false, null) { Position = 1 });
@@ -93,14 +94,16 @@ public class DatabaseTester {
 		t2.Columns.Add(col2);
 
 		t2.Columns.Add(new Column("col3", "int", false, null) { Position = 3 });
-		t2.AddConstraint(new Constraint("pk_t2", "PRIMARY KEY", "col1") {
-			IndexType = "CLUSTERED"
-		});
+		t2.AddConstraint(
+			new Constraint("pk_t2", "PRIMARY KEY", "col1") {
+				IndexType = "CLUSTERED"
+			});
 		t2.AddConstraint(
 			Constraint.CreateCheckedConstraint("ck_col2", true, false, "([col2]>(0))"));
-		t2.AddConstraint(new Constraint("IX_col3", "UNIQUE", "col3") {
-			IndexType = "NONCLUSTERED"
-		});
+		t2.AddConstraint(
+			new Constraint("IX_col3", "UNIQUE", "col3") {
+				IndexType = "NONCLUSTERED"
+			});
 
 		db.ForeignKeys.Add(new ForeignKey(t2, "fk_t2_t1", "col2,col3", t1, "col1,col2"));
 
@@ -366,7 +369,8 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		var script = db.ScriptCreate();
 
 		Assert.DoesNotContain(
-			"INSERTEDENABLE", script);
+			"INSERTEDENABLE",
+			script);
 	}
 
 	[Fact]
@@ -374,10 +378,11 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		var policy = new Table("dbo", "Policy");
 		policy.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
 		policy.Columns.Add(new Column("form", "tinyint", false, null) { Position = 2 });
-		policy.AddConstraint(new Constraint("PK_Policy", "PRIMARY KEY", "id") {
-			IndexType = "CLUSTERED",
-			Unique = true
-		});
+		policy.AddConstraint(
+			new Constraint("PK_Policy", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 		policy.Columns.Items[0].Identity = new Identity(1, 1);
 
 		var loc = new Table("dbo", "Location");
@@ -385,37 +390,42 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		loc.Columns.Add(new Column("policyId", "int", false, null) { Position = 2 });
 		loc.Columns.Add(new Column("storage", "bit", false, null) { Position = 3 });
 		loc.Columns.Add(new Column("category", "int", false, null) { Position = 4 });
-		loc.AddConstraint(new Constraint("PK_Location", "PRIMARY KEY", "id") {
-			IndexType = "CLUSTERED",
-			Unique = true
-		});
+		loc.AddConstraint(
+			new Constraint("PK_Location", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 		loc.Columns.Items[0].Identity = new Identity(1, 1);
 
 		var formType = new Table("dbo", "FormType");
 		formType.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
 		formType.Columns.Add(new Column("desc", "varchar", 10, false, null) { Position = 2 });
-		formType.AddConstraint(new Constraint("PK_FormType", "PRIMARY KEY", "code") {
-			IndexType = "CLUSTERED",
-			Unique = true
-		});
+		formType.AddConstraint(
+			new Constraint("PK_FormType", "PRIMARY KEY", "code") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 		formType.AddConstraint(
 			Constraint.CreateCheckedConstraint("CK_FormType", false, false, "([code]<(5))"));
 
 		var categoryType = new Table("dbo", "CategoryType");
 		categoryType.Columns.Add(new Column("id", "int", false, null) { Position = 1 });
-		categoryType.Columns.Add(new Column("Category", "varchar", 10, false, null)
-			{ Position = 2 });
-		categoryType.AddConstraint(new Constraint("PK_CategoryType", "PRIMARY KEY", "id") {
-			IndexType = "CLUSTERED",
-			Unique = true
-		});
+		categoryType.Columns.Add(
+			new Column("Category", "varchar", 10, false, null)
+				{ Position = 2 });
+		categoryType.AddConstraint(
+			new Constraint("PK_CategoryType", "PRIMARY KEY", "id") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 
 		var emptyTable = new Table("dbo", "EmptyTable");
 		emptyTable.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
-		emptyTable.AddConstraint(new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") {
-			IndexType = "CLUSTERED",
-			Unique = true
-		});
+		emptyTable.AddConstraint(
+			new Constraint("PK_EmptyTable", "PRIMARY KEY", "code") {
+				IndexType = "CLUSTERED",
+				Unique = true
+			});
 
 		var fk_policy_formType = new ForeignKey("FK_Policy_FormType");
 		fk_policy_formType.Table = policy;
@@ -444,11 +454,13 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		var tt_codedesc = new Table("dbo", "CodeDesc");
 		tt_codedesc.IsType = true;
 		tt_codedesc.Columns.Add(new Column("code", "tinyint", false, null) { Position = 1 });
-		tt_codedesc.Columns.Add(new Column("desc", "varchar", 10, false, null)
-			{ Position = 2 });
-		tt_codedesc.AddConstraint(new Constraint("PK_CodeDesc", "PRIMARY KEY", "code") {
-			IndexType = "NONCLUSTERED"
-		});
+		tt_codedesc.Columns.Add(
+			new Column("desc", "varchar", 10, false, null)
+				{ Position = 2 });
+		tt_codedesc.AddConstraint(
+			new Constraint("PK_CodeDesc", "PRIMARY KEY", "code") {
+				IndexType = "NONCLUSTERED"
+			});
 
 		var db = new Database("ScriptToDirTest");
 		db.Tables.Add(policy);
@@ -491,7 +503,8 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		await using var testDb = _dbHelper.CreateTestDb(db);
 		db.Connection = testDb.GetConnString();
 
-		DBHelper.ExecSql(db.Connection,
+		DBHelper.ExecSql(
+			db.Connection,
 			"  insert into formType ([code], [desc]) values (1, 'DP-1')\n"
 			+ "insert into formType ([code], [desc]) values (2, 'DP-2')\n"
 			+ "insert into formType ([code], [desc]) values (3, 'DP-3')");
@@ -535,8 +548,9 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		foreach (var t in db.TableTypes)
 			Assert.True(File.Exists(db.Name + "/table_types/TYPE_" + t.Name + ".sql"));
 
-		foreach (var expected in db.ForeignKeys.Select(fk =>
-			         db.Name + "/foreign_keys/" + fk.Table.Name + ".sql"))
+		foreach (var expected in db.ForeignKeys.Select(
+			         fk =>
+				         db.Name + "/foreign_keys/" + fk.Table.Name + ".sql"))
 			Assert.True(File.Exists(expected), "File does not exist" + expected);
 
 		// Test that the foreign keys are ordered in the file
