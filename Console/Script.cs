@@ -8,7 +8,7 @@ using SchemaZen.Library;
 using SchemaZen.Library.Command;
 using SchemaZen.Library.Models;
 
-namespace SchemaZen.console;
+namespace SchemaZen.Console;
 
 public class Script : BaseCommand {
 	private Logger _logger;

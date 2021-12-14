@@ -1,23 +1,24 @@
 ﻿using System;
+using SystemConsole = System.Console;
 
-namespace SchemaZen.console;
+namespace SchemaZen.Console;
 
 public static class ConsoleQuestion {
 	// ReSharper disable once InconsistentNaming
 	public static bool AskYN(string question) {
-		Console.Write($"{question} (Y/N)? ");
+		SystemConsole.Write($"{question} (Y/N)? ");
 
 		ConsoleKeyInfo key;
 		do {
-			key = Console.ReadKey();
+			key = SystemConsole.ReadKey();
 		} while (key.Key != ConsoleKey.Y && key.Key != ConsoleKey.N);
 
-		Console.WriteLine();
+		SystemConsole.WriteLine();
 		return key.Key == ConsoleKey.Y;
 	}
 
 	public static void WaitForKeyPress() {
-		Console.WriteLine("Press any key to continue...");
-		Console.ReadKey(true);
+		SystemConsole.WriteLine("Press any key to continue...");
+		SystemConsole.ReadKey(true);
 	}
 }

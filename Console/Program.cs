@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using ManyConsole;
+using SystemConsole = System.Console;
 
-namespace SchemaZen.console;
+namespace SchemaZen.Console;
 
 internal class Program {
 	private static int Main(string[] args) {
@@ -11,10 +12,10 @@ internal class Program {
 			return ConsoleCommandDispatcher.DispatchCommand(
 				GetCommands(),
 				args,
-				Console.Out);
+				SystemConsole.Out);
 		} catch (Exception ex) {
-			Console.WriteLine(ex.Message);
-			Console.WriteLine(ex.StackTrace);
+			SystemConsole.WriteLine(ex.Message);
+			SystemConsole.WriteLine(ex.StackTrace);
 			return -1;
 		} finally {
 #if DEBUG

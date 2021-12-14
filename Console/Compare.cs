@@ -4,8 +4,9 @@ using System.IO;
 using ManyConsole;
 using Mono.Options;
 using SchemaZen.Library.Command;
+using SystemConsole = System.Console;
 
-namespace SchemaZen.console;
+namespace SchemaZen.Console;
 
 internal class Compare : ConsoleCommand {
 	private bool _debug;
@@ -48,7 +49,7 @@ internal class Compare : ConsoleCommand {
 	public override int Run(string[] remainingArguments) {
 		if (_debug) Debugger.Launch();
 		if (!string.IsNullOrEmpty(_outDiff)) {
-			Console.WriteLine();
+			SystemConsole.WriteLine();
 			if (!_overwrite && File.Exists(_outDiff)) {
 				var question = $"{_outDiff} already exists - do you want to replace it";
 				if (!ConsoleQuestion.AskYN(question)) return 1;

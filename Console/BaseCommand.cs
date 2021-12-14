@@ -1,7 +1,7 @@
 ﻿using ManyConsole;
 using Mono.Options;
 
-namespace SchemaZen.console;
+namespace SchemaZen.Console;
 
 public abstract class BaseCommand : ConsoleCommand {
 	protected BaseCommand(string command, string oneLineDescription) {
