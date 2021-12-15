@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Data.SqlClient;
 using System.IO;
+using System.Threading.Tasks;
 using SchemaZen.Library.Models;
 
 namespace SchemaZen.Library;
@@ -29,6 +30,27 @@ public class DBHelper {
 					cm.CommandText = script;
 					try {
 						cm.ExecuteNonQuery();
+					} catch (SqlException ex) {
+						throw new SqlBatchException(ex, prevLines);
+					}
+
+					prevLines += script.Split('\n').Length;
+					prevLines += 1; // add one line for GO statement
+				}
+			}
+		}
+	}
+
+	public static async Task ExecBatchSqlAsync(string conn, string sql) {
+		var prevLines = 0;
+		using (var cn = new SqlConnection(conn)) {
+			await cn.OpenAsync();
+			using (var cm = cn.CreateCommand()) {
+				foreach (var script in BatchSqlParser.SplitBatch(sql)) {
+					if (EchoSql) Console.WriteLine(script);
+					cm.CommandText = script;
+					try {
+						await cm.ExecuteNonQueryAsync();
 					} catch (SqlException ex) {
 						throw new SqlBatchException(ex, prevLines);
 					}

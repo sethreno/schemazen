@@ -35,6 +35,6 @@ END
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 
 		// script includes GO so use ExecBatch
-		testDb.ExecBatchSql(f.ScriptCreate());
+		await testDb.ExecBatchSqlAsync(f.ScriptCreate());
 	}
 }

@@ -110,7 +110,7 @@ public class DatabaseTester {
 		db.Tables.Add(t1);
 		db.Tables.Add(t2);
 
-		await using var testDb = _dbHelper.CreateTestDb(db);
+		await using var testDb = await _dbHelper.CreateTestDb(db);
 
 		var db2 = new Database();
 		db2.Connection = testDb.GetConnString();
@@ -500,7 +500,7 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		db.FindProp("DATE_CORRELATION_OPTIMIZATION").Value = "ON";
 
 		await _dbHelper.DropDbAsync(db.Name);
-		await using var testDb = _dbHelper.CreateTestDb(db);
+		await using var testDb = await _dbHelper.CreateTestDb(db);
 		db.Connection = testDb.GetConnString();
 
 		DBHelper.ExecSql(
@@ -573,7 +573,7 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 
 		var copy = new Database("ScriptToDirTestCopy");
 		await _dbHelper.DropDbAsync("ScriptToDirTestCopy");
-		await using var testDb2 = _dbHelper.CreateTestDb(copy);
+		await using var testDb2 = await _dbHelper.CreateTestDb(copy);
 		copy.Dir = db.Dir;
 		copy.Connection = testDb2.GetConnString();
 		copy.CreateFromDir(true);
@@ -586,7 +586,7 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 	public async Task TestScriptToDirOnlyCreatesNecessaryFolders() {
 		var db = new Database("TestEmptyDB");
 		await _dbHelper.DropDbAsync(db.Name);
-		await using var testDb = _dbHelper.CreateTestDb(db);
+		await using var testDb = await _dbHelper.CreateTestDb(db);
 
 		db.Connection = testDb.GetConnString();
 		db.Dir = db.Name;

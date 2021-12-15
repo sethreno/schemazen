@@ -66,14 +66,14 @@ public class CheckTestSchemas {
 		//create the db from sql script
 		_logger.LogInformation($"creating db {sourceDbName}");
 		await _dbHelper.CreateDbAsync(sourceDbName);
-		_dbHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), sourceDbName);
+		await _dbHelper.ExecBatchSqlAsync(File.ReadAllText(pathToSchemaScript), sourceDbName);
 
 		//load the model from newly created db and create a copy
 		var copy = new Database(destDbName);
 		copy.Connection = _dbHelper.GetConnString(sourceDbName);
 		copy.Load();
 		var scripted = copy.ScriptCreate();
-		_dbHelper.ExecBatchSql(scripted);
+		await _dbHelper.ExecBatchSqlAsync(scripted);
 
 		//compare the dbs to make sure they are the same
 		var source = new Database(sourceDbName) {

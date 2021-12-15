@@ -23,8 +23,8 @@ public class TestDbHelper {
 		return new TestDb(dbName, this);
 	}
 
-	public TestDb CreateTestDb(Database db) {
-		ExecBatchSql(db.ScriptCreate());
+	public async Task<TestDb> CreateTestDb(Database db) {
+		await ExecBatchSqlAsync(db.ScriptCreate());
 		return new TestDb(db.Name, this);
 	}
 
@@ -48,11 +48,11 @@ public class TestDbHelper {
 		await cm.ExecuteNonQueryAsync();
 	}
 
-	public void ExecBatchSql(string sql, string? dbName = null) {
+	public async Task ExecBatchSqlAsync(string sql, string? dbName = null) {
 		// todo make async version
 		// low priority: currently referenced by 5 tests 
 		dbName = dbName ?? _masterDbName;
-		DBHelper.ExecBatchSql(GetConnString(dbName), sql);
+		await DBHelper.ExecBatchSqlAsync(GetConnString(dbName), sql);
 	}
 
 	public async Task CreateDbAsync(string dbName) {
@@ -98,8 +98,8 @@ public sealed class TestDb : IAsyncDisposable {
 		await _helper.ExecSqlAsync(sql, DbName);
 	}
 
-	public void ExecBatchSql(string sql) {
-		_helper.ExecBatchSql(sql, DbName);
+	public async Task ExecBatchSqlAsync(string sql) {
+		await _helper.ExecBatchSqlAsync(sql, DbName);
 	}
 
 	public string GetConnString() {

@@ -37,6 +37,6 @@ AS
 
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 		await testDb.ExecSqlAsync(t.ScriptCreate());
-		testDb.ExecBatchSql(getAddress.ScriptCreate());
+		await testDb.ExecBatchSqlAsync(getAddress.ScriptCreate());
 	}
 }
