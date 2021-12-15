@@ -63,12 +63,9 @@ public class CheckTestSchemas {
 		var sourceDbName = $"CopySchemaSource_{dbSuffix}";
 		var destDbName = $"CopySchemaDest_{dbSuffix}";
 
-		await _dbHelper.DropDbAsync(sourceDbName);
-		await _dbHelper.DropDbAsync(destDbName);
-
 		//create the db from sql script
 		_logger.LogInformation($"creating db {sourceDbName}");
-		await _dbHelper.ExecSqlAsync($"CREATE DATABASE {sourceDbName}");
+		await _dbHelper.CreateDbAsync(sourceDbName);
 		_dbHelper.ExecBatchSql(File.ReadAllText(pathToSchemaScript), sourceDbName);
 
 		//load the model from newly created db and create a copy
@@ -84,6 +81,10 @@ public class CheckTestSchemas {
 		};
 		source.Load();
 		copy.Load();
+
+		await _dbHelper.DropDbAsync(sourceDbName);
+		await _dbHelper.DropDbAsync(destDbName);
+
 		Assert.False(source.Compare(copy).IsDiff);
 
 		return copy;
