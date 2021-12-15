@@ -1,10 +1,24 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <LangVersion>10.0</LangVersion>
+    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>SchemaZen.Library</RootNamespace>
     <AssemblyName>SchemaZen.Library</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <Version>2.0.0</Version>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>SchemaZen.Library</PackageId>
+    <PackageVersion>2.0.0</PackageVersion>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/sethreno/schemazen</RepositoryUrl>
+    <Authors>Seth Reno</Authors>
+    <PackageDescription>Script and create SQL Server objects quickly.</PackageDescription>
+    <Copyright>Copyright 2020 Seth Reno</Copyright>
+    <PackageTags>.net;c#;sql;mssqlserver;</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />

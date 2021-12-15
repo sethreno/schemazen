@@ -4,7 +4,7 @@
 
 ### script
 
-    SchemaZen.exe script --server localhost --database db --scriptDir c:\somedir
+    dotnet schemazen script --server localhost --database db --scriptDir c:\somedir
 
 This will generate sql scripts for all objects in the database in a
 directory structure that looks something like:
@@ -21,26 +21,42 @@ c:\somedir\
 
 ### create
 
-    SchemaZen.exe create --server localhost --database db --scriptDir c:\somedir
+    dotnet schemazen create --server localhost --database db --scriptDir c:\somedir
 
 This will create a database named db from the sql scripts in c:\somedir.
 
 
 ### compare
 
-	SchemaZen.exe compare --source "server=dev;database=db" --target "server=qa;database=db" --outFile diff.sql
+	dotnet schemazen compare --source "server=dev;database=db" --target "server=qa;database=db" --outFile diff.sql
 
 This will compare the databases named `db` between `dev` and `qa` and
 create a sql script called `diff.sql` that can be run on `qa` to make it's
 schema identical to `dev`.
 
 
-See ```SchemaZen.exe help [command]``` for more information and options on each command.
+See ```dotnet schemazen help [command]``` for more information and options on each command.
 
 <br><br>
 
-## Download
-The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
+## Quick Start
+
+If you don't already have a tool manifest in your project
+
+    dotnet new tool-manifest
+
+Install SchemaZen
+
+    dotnet tool install SchemaZen
+
+Script your database to disk
+
+    dotnet schemazen script --server localhost --database db --scriptDir c:\somedir
+
+
+## 1.x versions
+SchemaZen was changed to a cross platform dotnet tool in version 2.0. Older 1.x
+releases can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
 ## Contributing
 Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.

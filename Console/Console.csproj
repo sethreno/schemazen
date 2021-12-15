@@ -1,13 +1,27 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <PublishTrimmed>true</PublishTrimmed>
+    <LangVersion>10.0</LangVersion>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+  </PropertyGroup>
+  <PropertyGroup>
+    <PackAsTool>true</PackAsTool>
+    <PackageId>SchemaZen</PackageId>
+    <PackageVersion>2.0.0</PackageVersion>
+    <ToolCommandName>schemazen</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/sethreno/schemazen</RepositoryUrl>
+    <Authors>Seth Reno</Authors>
+    <PackageDescription>Script and create SQL Server objects quickly.</PackageDescription>
+    <Copyright>Copyright 2020 Seth Reno</Copyright>
+    <PackageTags>.net;c#;sql;mssqlserver;</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\Library\Library.csproj" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="ILMerge" Version="3.0.41" />
     <PackageReference Include="ManyConsole" Version="2.0.1" />
     <PackageReference Include="Mono.Options" Version="5.3.0" />
   </ItemGroup>
