@@ -26,11 +26,10 @@ public class DatabaseTester {
 		await testDb.ExecSqlAsync(@"create nonclustered index MyIndex on MyTable (Id desc)");
 		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
-		var result = db.ScriptCreate();
 
-		Assert.Contains(
-			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id] DESC)",
-			result);
+		var index = db.FindConstraint("MyIndex");
+		Assert.NotNull(index);
+		Assert.True(index.Columns[0].Desc);
 	}
 
 	[Fact]
@@ -45,11 +44,10 @@ public class DatabaseTester {
 
 		var db = new Database("TEST") { Connection = testDb.GetConnString() };
 		db.Load();
-		var result = db.ScriptCreate();
 
-		Assert.Contains(
-			"CREATE NONCLUSTERED INDEX [MyIndex] ON [dbo].[MyTable] ([Id]) WHERE ([EndDate] IS NULL)",
-			result);
+		var index = db.FindConstraint("MyIndex");
+		Assert.NotNull(index);
+		Assert.Equal("([EndDate] IS NULL)", index.Filter);
 	}
 
 	[Fact]
@@ -68,11 +66,10 @@ public class DatabaseTester {
 
 		var db = new Database("TEST") { Connection = testDb.GetConnString() };
 		db.Load();
-		var result = db.ScriptCreate();
 
-		Assert.Contains(
-			"CREATE UNIQUE CLUSTERED INDEX [MyIndex] ON [dbo].[MyView] ([Id], [Name])",
-			result);
+
+		var index = db.FindViewIndex("MyIndex");
+		Assert.NotNull(index);
 	}
 
 	[Fact]
@@ -139,13 +136,16 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 		db.Load();
 
 		Assert.Single(db.TableTypes);
-		Assert.Equal(250, db.TableTypes[0].Columns.Items[0].Length);
-		Assert.Equal(1, db.TableTypes[0].Columns.Items[1].Scale);
-		Assert.Equal(5, db.TableTypes[0].Columns.Items[1].Precision);
-		Assert.Equal(-1, db.TableTypes[0].Columns.Items[2].Length);
-		Assert.Equal("MyTableType", db.TableTypes[0].Name);
+		var tt = db.TableTypes.FirstOrDefault();
+		if (tt == null) throw new Exception("impossible due to Assert.Single");
 
-		var result = db.ScriptCreate();
+		Assert.Equal(250, tt.Columns.Items[0].Length);
+		Assert.Equal(1, tt.Columns.Items[1].Scale);
+		Assert.Equal(5, tt.Columns.Items[1].Precision);
+		Assert.Equal(-1, tt.Columns.Items[2].Length);
+		Assert.Equal("MyTableType", tt.Name);
+
+		var result = tt.ScriptCreate();
 		Assert.Contains(
 			"CREATE TYPE [dbo].[MyTableType] AS TABLE",
 			result);
@@ -171,12 +171,14 @@ PRIMARY KEY CLUSTERED
 		db.Load();
 
 		Assert.Single(db.TableTypes);
-		Assert.Single(db.TableTypes[0].PrimaryKey.Columns);
-		Assert.Equal("ID", db.TableTypes[0].PrimaryKey.Columns[0].ColumnName);
-		Assert.Equal(50, db.TableTypes[0].Columns.Items[1].Length);
-		Assert.Equal("MyTableType", db.TableTypes[0].Name);
+		var tt = db.TableTypes.FirstOrDefault();
+		if (tt == null) throw new Exception("impossible due to Assert.Single");
+		Assert.Single(tt.PrimaryKey.Columns);
+		Assert.Equal("ID", tt.PrimaryKey.Columns[0].ColumnName);
+		Assert.Equal(50, tt.Columns.Items[1].Length);
+		Assert.Equal("MyTableType", tt.Name);
 
-		var result = db.ScriptCreate();
+		var result = tt.ScriptCreate();
 		Assert.Contains("PRIMARY KEY", result);
 	}
 
@@ -195,10 +197,12 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 		db.Load();
 
 		Assert.Single(db.TableTypes);
-		Assert.Equal(3, db.TableTypes[0].Columns.Items.Count());
-		Assert.Equal("ComputedValue", db.TableTypes[0].Columns.Items[2].Name);
-		Assert.Equal("([VALUE1]+[VALUE2])", db.TableTypes[0].Columns.Items[2].ComputedDefinition);
-		Assert.Equal("MyTableType", db.TableTypes[0].Name);
+		var tt = db.TableTypes.FirstOrDefault();
+		if (tt == null) throw new Exception("impossible due to Assert.Single");
+		Assert.Equal(3, tt.Columns.Items.Count());
+		Assert.Equal("ComputedValue", tt.Columns.Items[2].Name);
+		Assert.Equal("([VALUE1]+[VALUE2])", tt.Columns.Items[2].ComputedDefinition);
+		Assert.Equal("MyTableType", tt.Name);
 	}
 
 	[Fact]
@@ -216,8 +220,10 @@ CREATE TYPE [dbo].[MyTableType] AS TABLE(
 		db.Load();
 
 		Assert.Single(db.TableTypes);
-		Assert.Single(db.TableTypes[0].Constraints);
-		var constraint = db.TableTypes[0].Constraints.First();
+		var tt = db.TableTypes.FirstOrDefault();
+		if (tt == null) throw new Exception("impossible due to Assert.Single");
+		Assert.Single(tt.Constraints);
+		var constraint = tt.Constraints.First();
 		Assert.Equal("([Value]>(0))", constraint.CheckConstraintExpression);
 		Assert.Equal("MyTableType", db.TableTypes[0].Name);
 	}
@@ -278,9 +284,6 @@ CONSTRAINT [FKName] FOREIGN KEY ([a]) REFERENCES [s2].[t2a] ([a]) ON DELETE CASC
 		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 
-		// Required in order to expose the exception
-		db.ScriptCreate();
-
 		Assert.Equal(2, db.ForeignKeys.Count());
 		Assert.Equal(db.ForeignKeys[0].Name, db.ForeignKeys[1].Name);
 		Assert.NotEqual(db.ForeignKeys[0].Table.Owner, db.ForeignKeys[1].Table.Owner);
@@ -323,9 +326,6 @@ DELETE FROM [dbo].[t1] FROM [dbo].[t1] INNER JOIN DELETED ON DELETED.a = [dbo].[
 		var db = new Database("test") { Connection = testDb.GetConnString() };
 		db.Load();
 
-		// Required in order to expose the exception
-		db.ScriptCreate();
-
 		var triggers = db.Routines.Where(x => x.RoutineType == Routine.RoutineKind.Trigger)
 			.ToList();
 
@@ -366,7 +366,8 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		db.FindProp("QUOTED_IDENTIFIER").Value = "ON";
 		db.FindProp("ANSI_NULLS").Value = "ON";
 
-		var script = db.ScriptCreate();
+		var trigger = db.FindRoutine("TR_1", "dbo");
+		var script = trigger.ScriptCreate();
 
 		Assert.DoesNotContain(
 			"INSERTEDENABLE",
@@ -588,8 +589,6 @@ AS INSERT INTO [dbo].[t2](a) SELECT a FROM INSERTED";
 		await _dbHelper.DropDbAsync(db.Name);
 		await using var testDb = await _dbHelper.CreateTestDb(db);
 
-		db.Connection = testDb.GetConnString();
-		db.Dir = db.Name;
 		db.Load();
 
 		if (Directory.Exists(db.Dir))

@@ -24,7 +24,17 @@ public class TestDbHelper {
 	}
 
 	public async Task<TestDb> CreateTestDb(Database db) {
-		await ExecBatchSqlAsync(db.ScriptCreate());
+		if (string.IsNullOrEmpty(db.Dir)) db.Dir = db.Name;
+		if (string.IsNullOrEmpty(db.Connection))
+			db.Connection = GetConnString(db.Name);
+
+		// todo make async ScriptToDir and get rid of Task.Run
+		await Task.Run(
+			() => {
+				db.ScriptToDir();
+				db.CreateFromDir(false); // no overwrite - db should not exist
+			});
+
 		return new TestDb(db.Name, this);
 	}
 

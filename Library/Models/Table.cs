@@ -9,25 +9,6 @@ using System.Text;
 
 namespace SchemaZen.Library.Models;
 
-public class Schema : INameable, IHasOwner, IScriptable {
-	public Schema(string name, string owner) {
-		Owner = owner;
-		Name = name;
-	}
-
-	public string Owner { get; set; }
-	public string Name { get; set; }
-
-	public string ScriptCreate() {
-		return $@"
-if not exists(select s.schema_id from sys.schemas s where s.name = '{Name}') 
-	and exists(select p.principal_id from sys.database_principals p where p.name = '{Owner}') begin
-	exec sp_executesql N'create schema [{Name}] authorization [{Owner}]'
-end
-";
-	}
-}
-
 public class Table : INameable, IHasOwner, IScriptable {
 	private const string _tab = "\t";
 	private const string _escapeTab = "--SchemaZenTAB--";

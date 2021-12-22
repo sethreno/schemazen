@@ -72,8 +72,11 @@ public class CheckTestSchemas {
 		var copy = new Database(destDbName);
 		copy.Connection = _dbHelper.GetConnString(sourceDbName);
 		copy.Load();
-		var scripted = copy.ScriptCreate();
-		await _dbHelper.ExecBatchSqlAsync(scripted);
+
+		// script to dir and create from dir to simulate what happens from the cli
+		copy.Dir = destDbName;
+		copy.ScriptToDir();
+		copy.CreateFromDir(true);
 
 		//compare the dbs to make sure they are the same
 		var source = new Database(sourceDbName) {
