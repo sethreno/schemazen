@@ -56,14 +56,28 @@ GO
 
 	[Fact]
 	public async Task TestScriptUserAssignedToSchema() {
+		// todo - fix the bug causing this test to fail
+		// I think Roles need to be updated in order to fix this.
+		// Currently they execute as one big script with all their permissions
+		//
+		// or maybe users need to be updated so they don't reference roles
+		// the problem here appears a circular dependency...
+		// user depends on role
+		// schema depends on user
+		// view depends on schema
+		// role depends on view
+		//
+		//   .>  role  -,
+		//   |          v
+		// user       view
+		//   ^          |
+		//    \ schema <
+		//
+		// Maybe create a new object Permissions that gets scripted in a seprate
+		// stage similar to foreign_keys
 		var testSchema = @"
-CREATE VIEW a_view AS SELECT 1 AS N
-GO
 
 CREATE ROLE [MyRole]
-GO
-
-GRANT SELECT ON [dbo].[a_view] TO [MyRole]
 GO
 
 IF SUSER_ID('usr') IS NULL BEGIN
@@ -73,21 +87,31 @@ exec sp_addrolemember 'MyRole', 'usr'
 exec sp_addrolemember 'db_datareader', 'usr'
 GO
 
+create schema [TestSchema] authorization [usr]
+GO
+
+CREATE VIEW TestSchema.a_view AS SELECT 1 AS N
+GO
+
+GRANT SELECT ON [TestSchema].[a_view] TO [MyRole]
+GO
         ";
 
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
-
 		await testDb.ExecBatchSqlAsync(testSchema);
 
-		var db = new Database(_dbHelper.MakeTestDbName());
+		var db = new Database(_dbHelper.MakeTestDbName(), logger: _logger);
 		db.Connection = testDb.GetConnString();
 		db.Load();
 		db.Dir = db.Name;
 		db.ScriptToDir();
 
-		db.Load();
-
 		var ex = Record.Exception(() => db.CreateFromDir(true));
 		Assert.Null(ex);
+
+		Assert.NotNull(db.Routines.FirstOrDefault(x => x.Name == "a_view"));
+		Assert.NotNull(db.Roles.FirstOrDefault(x => x.Name == "MyRole"));
+		Assert.NotNull(db.Users.FirstOrDefault(x => x.Name == "usr"));
+		Assert.NotNull(db.Schemas.FirstOrDefault(x => x.Name == "TestSchema"));
 	}
 }

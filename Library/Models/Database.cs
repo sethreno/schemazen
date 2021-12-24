@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 using SchemaZen.Library.Models.Comparers;
 
 namespace SchemaZen.Library.Models;
@@ -155,40 +156,27 @@ public class Database {
 
 	#region " Constructors "
 
-	public Database(IList<string> filteredTypes = null) {
-		Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
-		Props.Add(new DbProp("COLLATE", ""));
-		Props.Add(new DbProp("AUTO_CLOSE", ""));
-		Props.Add(new DbProp("AUTO_SHRINK", ""));
-		Props.Add(new DbProp("ALLOW_SNAPSHOT_ISOLATION", ""));
-		Props.Add(new DbProp("READ_COMMITTED_SNAPSHOT", ""));
-		Props.Add(new DbProp("RECOVERY", ""));
-		Props.Add(new DbProp("PAGE_VERIFY", ""));
-		Props.Add(new DbProp("AUTO_CREATE_STATISTICS", ""));
-		Props.Add(new DbProp("AUTO_UPDATE_STATISTICS", ""));
-		Props.Add(new DbProp("AUTO_UPDATE_STATISTICS_ASYNC", ""));
-		Props.Add(new DbProp("ANSI_NULL_DEFAULT", ""));
-		Props.Add(new DbProp("ANSI_NULLS", ""));
-		Props.Add(new DbProp("ANSI_PADDING", ""));
-		Props.Add(new DbProp("ANSI_WARNINGS", ""));
-		Props.Add(new DbProp("ARITHABORT", ""));
-		Props.Add(new DbProp("CONCAT_NULL_YIELDS_NULL", ""));
-		Props.Add(new DbProp("NUMERIC_ROUNDABORT", ""));
-		Props.Add(new DbProp("QUOTED_IDENTIFIER", ""));
-		Props.Add(new DbProp("RECURSIVE_TRIGGERS", ""));
-		Props.Add(new DbProp("CURSOR_CLOSE_ON_COMMIT", ""));
-		Props.Add(new DbProp("CURSOR_DEFAULT", ""));
-		Props.Add(new DbProp("TRUSTWORTHY", ""));
-		Props.Add(new DbProp("DB_CHAINING", ""));
-		Props.Add(new DbProp("PARAMETERIZATION", ""));
-		Props.Add(new DbProp("DATE_CORRELATION_OPTIMIZATION", ""));
+	private readonly Microsoft.Extensions.Logging.ILogger _logger;
+
+	public Database(
+		IList<string> filteredTypes = null,
+		Microsoft.Extensions.Logging.ILogger logger = null
+	) {
+		// todo - make logger not nullable
+		_logger = logger;
+		ResetProps();
+
 
 		filteredTypes = filteredTypes ?? new List<string>();
 		foreach (var filteredType in filteredTypes) Dirs.Remove(filteredType);
 	}
 
-	public Database(string name, IList<string> filteredTypes = null)
-		: this(filteredTypes) {
+	public Database(
+		string name,
+		IList<string> filteredTypes = null,
+		Microsoft.Extensions.Logging.ILogger logger = null
+	)
+		: this(filteredTypes, logger) {
 		Name = name;
 	}
 
@@ -308,10 +296,13 @@ public class Database {
 	#region Load
 
 	public void Load() {
+		ResetProps();
+		Schemas.Clear();
 		Tables.Clear();
+		UserDefinedTypes.Clear();
 		TableTypes.Clear();
-		Routines.Clear();
 		ForeignKeys.Clear();
+		Routines.Clear();
 		DataTables.Clear();
 		ViewIndexes.Clear();
 		Assemblies.Clear();
@@ -343,6 +334,37 @@ public class Database {
 				LoadPermissions(cm);
 			}
 		}
+	}
+
+	private void ResetProps() {
+		Props.Clear();
+
+		Props.Add(new DbProp("COMPATIBILITY_LEVEL", ""));
+		Props.Add(new DbProp("COLLATE", ""));
+		Props.Add(new DbProp("AUTO_CLOSE", ""));
+		Props.Add(new DbProp("AUTO_SHRINK", ""));
+		Props.Add(new DbProp("ALLOW_SNAPSHOT_ISOLATION", ""));
+		Props.Add(new DbProp("READ_COMMITTED_SNAPSHOT", ""));
+		Props.Add(new DbProp("RECOVERY", ""));
+		Props.Add(new DbProp("PAGE_VERIFY", ""));
+		Props.Add(new DbProp("AUTO_CREATE_STATISTICS", ""));
+		Props.Add(new DbProp("AUTO_UPDATE_STATISTICS", ""));
+		Props.Add(new DbProp("AUTO_UPDATE_STATISTICS_ASYNC", ""));
+		Props.Add(new DbProp("ANSI_NULL_DEFAULT", ""));
+		Props.Add(new DbProp("ANSI_NULLS", ""));
+		Props.Add(new DbProp("ANSI_PADDING", ""));
+		Props.Add(new DbProp("ANSI_WARNINGS", ""));
+		Props.Add(new DbProp("ARITHABORT", ""));
+		Props.Add(new DbProp("CONCAT_NULL_YIELDS_NULL", ""));
+		Props.Add(new DbProp("NUMERIC_ROUNDABORT", ""));
+		Props.Add(new DbProp("QUOTED_IDENTIFIER", ""));
+		Props.Add(new DbProp("RECURSIVE_TRIGGERS", ""));
+		Props.Add(new DbProp("CURSOR_CLOSE_ON_COMMIT", ""));
+		Props.Add(new DbProp("CURSOR_DEFAULT", ""));
+		Props.Add(new DbProp("TRUSTWORTHY", ""));
+		Props.Add(new DbProp("DB_CHAINING", ""));
+		Props.Add(new DbProp("PARAMETERIZATION", ""));
+		Props.Add(new DbProp("DATE_CORRELATION_OPTIMIZATION", ""));
 	}
 
 	private void LoadSynonyms(SqlCommand cm) {
@@ -392,6 +414,10 @@ public class Database {
 	}
 
 	private void LoadRoles(SqlCommand cm) {
+		// todo fix this
+		// this solution basically writes the create script here during the load
+		// it would be nicer if it loaded a model and let the Role.ScriptCreate
+		// do it's job
 		//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
 		cm.CommandText = @"
 create table #ScriptedRoles (
@@ -1054,8 +1080,11 @@ order by fk.name, fkc.constraint_column_id
 			using (var dr = cm.ExecuteReader()) {
 				LoadColumnsBase(dr, TableTypes);
 			}
-		} catch (SqlException) {
-			// SQL server version doesn't support table types, nothing to do
+		} catch (SqlException ex) {
+			// todo - research when this catch was added and why
+			_logger.LogError(
+				"Assuming sql server version doesn't support table types because"
+				+ $"the followign error occurred: {ex.Message}");
 		}
 	}
 
@@ -1500,18 +1529,17 @@ where name = @dbname
 		if (log == null) log = (tl, s) => { };
 
 		if (DBHelper.DbExists(Connection)) {
-			log(TraceLevel.Verbose, "Dropping existing database...");
+			_logger?.LogTrace("Dropping existing database...");
 			DBHelper.DropDb(Connection);
-			log(TraceLevel.Verbose, "Existing database dropped.");
+			_logger?.LogTrace("Existing database dropped.");
 		}
 
-		log(TraceLevel.Info, "Creating database...");
-		//create database
+		_logger?.LogTrace("Creating database...");
 		DBHelper.CreateDb(Connection, databaseFilesPath);
 
 		//run scripts
 		if (File.Exists(Dir + "/props.sql")) {
-			log(TraceLevel.Verbose, "Setting database properties...");
+			_logger?.LogTrace("Setting database properties...");
 			try {
 				DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/props.sql"));
 			} catch (SqlBatchException ex) {
@@ -1523,106 +1551,92 @@ where name = @dbname
 			DBHelper.ClearPool(Connection);
 		}
 
-		// users
-		if (Directory.Exists(Dir + "/users")) {
-			log(TraceLevel.Info, "Adding users...");
-			foreach (var f in Directory.GetFiles(Dir + "/users", "*.sql"))
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
-				} catch (SqlBatchException ex) {
-					throw new SqlFileException(f, ex);
-				}
-		}
+		// stage 0: everything not in another stage
+		// stage 1: after_data & foreign keys
+		_logger?.LogTrace("Creating database objects...");
+		var stages = GetScriptStages();
+		for (var i = 0; i < stages.Count; i++) {
+			if (i == 2) ImportData(log); // load data before stage 2
 
-		if (File.Exists(Dir + "/schemas.sql")) {
-			log(TraceLevel.Verbose, "Creating database schemas...");
-			try {
-				DBHelper.ExecBatchSql(Connection, File.ReadAllText(Dir + "/schemas.sql"));
-			} catch (SqlBatchException ex) {
-				throw new SqlFileException(Dir + "/schemas.sql", ex);
+			_logger?.LogTrace($"running stage {i}");
+			var errors = RunStage(GetScripts(stages[i]));
+
+			if (errors.Count > 0) {
+				_logger?.LogCritical("Aborting due to unresolved errors");
+				var ex = new BatchSqlFileException {
+					Exceptions = errors
+				};
+				throw ex;
 			}
 		}
+	}
 
-		log(TraceLevel.Info, "Creating database objects...");
-		// create db objects
+	private List<HashSet<string>> GetScriptStages() {
+		//var stage0 = new HashSet<string> { "roles", "users", "schemas.sql" };
+		var stage0 = new HashSet<string>();
+		var stage2 = new HashSet<string> { "after_data", "foreign_keys" };
+		var stage1 = Dirs.Except(stage0).Except(stage2).ToHashSet();
 
+		var itemsByStage = new List<HashSet<string>> { stage0, stage1, stage2 };
+
+		foreach (var stage in itemsByStage)
+			stage.RemoveWhere(
+				x => {
+					var path = Path.Combine(Dir, x);
+					return !Directory.Exists(path) && !File.Exists(path);
+				});
+
+		return itemsByStage;
+	}
+
+	private List<string> GetScripts(HashSet<string> items) {
+		var scripts = new List<string>();
+		foreach (var item in items) {
+			var path = Path.Combine(Dir, item);
+			if (item.EndsWith(".sql"))
+				scripts.Add(path);
+			else
+				scripts.AddRange(Directory.GetFiles(path, "*.sql"));
+		}
+
+		return scripts;
+	}
+
+	private List<SqlFileException> RunStage(List<string> scripts) {
 		// resolve dependencies by trying over and over
 		// if the number of failures stops decreasing then give up
-		var scripts = GetScripts();
 		var errors = new List<SqlFileException>();
 		var prevCount = -1;
+		var attempt = 1;
 		while (scripts.Count > 0 && (prevCount == -1 || errors.Count < prevCount)) {
 			if (errors.Count > 0) {
 				prevCount = errors.Count;
-				log(TraceLevel.Info, $"{errors.Count} errors occurred, retrying...");
+				attempt++;
+				_logger?.LogTrace($"{errors.Count} errors occurred, retrying...");
 			}
 
 			errors.Clear();
 			var index = 0;
 			var total = scripts.Count;
 			foreach (var f in scripts.ToArray()) {
-				log(
-					TraceLevel.Verbose,
+				_logger?.LogTrace(
 					$"Executing script {++index} of {total}...{(index < total ? "\r" : string.Empty)}");
+				_logger?.LogTrace($"file name: {f}");
 				try {
 					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
 					scripts.Remove(f);
 				} catch (SqlBatchException ex) {
+					_logger?.LogTrace($"attempt {attempt}: {f}@{ex.LineNumber} {ex.Message}");
 					errors.Add(new SqlFileException(f, ex));
 				}
 			}
 		}
 
-		if (prevCount > 0)
-			log(
-				TraceLevel.Info,
-				errors.Any()
-					? $"{prevCount} errors unresolved. Details will follow later."
-					: "All errors resolved, were probably dependency issues...");
+		if (errors.Any())
+			foreach (var error in errors)
+				_logger?.LogError(error.Message);
 
-		log(TraceLevel.Info, string.Empty);
-
-		ImportData(log); // load data
-
-		if (Directory.Exists(Dir + "/after_data")) {
-			log(TraceLevel.Verbose, "Executing after-data scripts...");
-			foreach (var f in Directory.GetFiles(Dir + "/after_data", "*.sql"))
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
-				} catch (SqlBatchException ex) {
-					errors.Add(new SqlFileException(f, ex));
-				}
-		}
-
-		// foreign keys
-		if (Directory.Exists(Dir + "/foreign_keys")) {
-			log(TraceLevel.Info, "Adding foreign key constraints...");
-			foreach (var f in Directory.GetFiles(Dir + "/foreign_keys", "*.sql"))
-				try {
-					DBHelper.ExecBatchSql(Connection, File.ReadAllText(f));
-				} catch (SqlBatchException ex) {
-					//throw new SqlFileException(f, ex);
-					errors.Add(new SqlFileException(f, ex));
-				}
-		}
-
-		if (errors.Count > 0) {
-			var ex = new BatchSqlFileException {
-				Exceptions = errors
-			};
-			throw ex;
-		}
-	}
-
-	private List<string> GetScripts() {
-		var scripts = new List<string>();
-		foreach (
-			var dirPath in Dirs.Where(dir => dir != "foreign_keys" && dir != "users")
-				.Select(dir => Dir + "/" + dir)
-				.Where(Directory.Exists))
-			scripts.AddRange(Directory.GetFiles(dirPath, "*.sql"));
-
-		return scripts;
+		return errors;
 	}
 
 	#endregion
