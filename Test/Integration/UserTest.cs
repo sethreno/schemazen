@@ -56,12 +56,8 @@ GO
 
 	[Fact]
 	public async Task TestScriptUserAssignedToSchema() {
-		// todo - fix the bug causing this test to fail
-		// I think Roles need to be updated in order to fix this.
-		// Currently they execute as one big script with all their permissions
-		//
-		// or maybe users need to be updated so they don't reference roles
-		// the problem here appears a circular dependency...
+		// when this test was written it would fail 
+		// because of a circular dependency...
 		// user depends on role
 		// schema depends on user
 		// view depends on schema
@@ -73,8 +69,6 @@ GO
 		//   ^          |
 		//    \ schema <
 		//
-		// Maybe create a new object Permissions that gets scripted in a seprate
-		// stage similar to foreign_keys
 		var testSchema = @"
 
 CREATE ROLE [MyRole]

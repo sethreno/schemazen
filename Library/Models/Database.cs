@@ -368,67 +368,49 @@ public class Database {
 	}
 
 	private void LoadSynonyms(SqlCommand cm) {
-		try {
-			// get synonyms
-			cm.CommandText = @"
-						select object_schema_name(object_id) as schema_name, name as synonym_name, base_object_name
-						from sys.synonyms";
-			using (var dr = cm.ExecuteReader()) {
-				while (dr.Read()) {
-					var synonym = new Synonym(
-						(string)dr["synonym_name"],
-						(string)dr["schema_name"]);
-					synonym.BaseObjectName = (string)dr["base_object_name"];
-					Synonyms.Add(synonym);
-				}
+		cm.CommandText = @"
+					select
+						object_schema_name(object_id) as schema_name,
+						name as synonym_name,
+						base_object_name
+					from sys.synonyms";
+		using (var dr = cm.ExecuteReader()) {
+			while (dr.Read()) {
+				var synonym = new Synonym(
+					(string)dr["synonym_name"],
+					(string)dr["schema_name"]);
+				synonym.BaseObjectName = (string)dr["base_object_name"];
+				Synonyms.Add(synonym);
 			}
-		} catch (SqlException) {
-			// SQL server version doesn't support synonyms, nothing to do here
 		}
 	}
 
 	private void LoadPermissions(SqlCommand cm) {
-		try {
-			// get permissions
-			// based on http://sql-articles.com/scripts/script-to-retrieve-security-information-sql-server-2005-and-above/
-			cm.CommandText = @"
-						select 
-								U.name as user_name, 
-								O.name as object_name,  
-								permission_name as permission
-						from sys.database_permissions
-						join sys.sysusers U on grantee_principal_id = uid 
-						join sys.sysobjects O on major_id = id ";
-			using (var dr = cm.ExecuteReader()) {
-				while (dr.Read()) {
-					var permission = new Permission(
-						(string)dr["user_name"],
-						(string)dr["object_name"],
-						(string)dr["permission"]);
-					Permissions.Add(permission);
-				}
+		cm.CommandText = @"
+					select
+							u.name as user_name,
+							object_schema_name(o.id) as object_owner,
+							o.name as object_name,
+							p.permission_name as permission
+					from sys.database_permissions p
+					join sys.sysusers u on p.grantee_principal_id = u.uid
+					join sys.sysobjects o on p.major_id = o.id ";
+		using (var dr = cm.ExecuteReader()) {
+			while (dr.Read()) {
+				var permission = new Permission(
+					(string)dr["user_name"],
+					(string)dr["object_owner"],
+					(string)dr["object_name"],
+					(string)dr["permission"]);
+				Permissions.Add(permission);
 			}
-		} catch (SqlException) {
-			// SQL server version doesn't support synonyms, nothing to do here
 		}
 	}
 
 	private void LoadRoles(SqlCommand cm) {
-		// todo fix this
-		// this solution basically writes the create script here during the load
-		// it would be nicer if it loaded a model and let the Role.ScriptCreate
-		// do it's job
-		//Roles are complicated.  This was adapted from https://dbaeyes.wordpress.com/2013/04/19/fully-script-out-a-mssql-database-role/
 		cm.CommandText = @"
-create table #ScriptedRoles (
-	name nvarchar(255) not null
-,	script nvarchar(max)
-)
-
-insert into #ScriptedRoles
-select 
+select
 	name
-,	null as script 
 from sys.database_principals
 where type = 'R'
 	and name not in (
@@ -444,89 +426,12 @@ where type = 'R'
 	,	'db_securityadmin'
 	,	'public'
 	)
-
-while(exists(select 1 from #ScriptedRoles where script is null))
-begin
-
-	DECLARE @RoleName VARCHAR(255)
-	SET @RoleName = (select top 1 name from #ScriptedRoles where script is null)
-
-	-- Script out the Role
-	DECLARE @roleDesc VARCHAR(MAX), @crlf VARCHAR(2)
-	SET @crlf = CHAR(13) + CHAR(10)
-	SET @roleDesc = 'CREATE ROLE [' + @roleName + ']' + @crlf + 'GO' + @crlf + @crlf
-
-	SELECT    @roleDesc = @roleDesc +
-			CASE dp.state
-				WHEN 'D' THEN 'DENY '
-				WHEN 'G' THEN 'GRANT '
-				WHEN 'R' THEN 'REVOKE '
-				WHEN 'W' THEN 'GRANT '
-			END + 
-			dp.permission_name + ' ' +
-			CASE dp.class
-				WHEN 0 THEN ''
-				WHEN 1 THEN --table or column subset on the table
-					CASE WHEN dp.major_id < 0 THEN
-						+ 'ON [sys].[' + OBJECT_NAME(dp.major_id) + '] '
-					ELSE
-						+ 'ON [' +
-						(SELECT SCHEMA_NAME(schema_id) + '].[' + name FROM sys.objects WHERE object_id = dp.major_id)
-							+ -- optionally concatenate column names
-						CASE WHEN MAX(dp.minor_id) > 0 
-							 THEN '] ([' + REPLACE(
-											(SELECT name + '], [' 
-											 FROM sys.columns 
-											 WHERE object_id = dp.major_id 
-												AND column_id IN (SELECT minor_id 
-																  FROM sys.database_permissions 
-																  WHERE major_id = dp.major_id
-																	AND USER_NAME(grantee_principal_id) IN (@roleName)
-																 )
-											 FOR XML PATH('')
-											) --replace final square bracket pair
-										+ '])', ', []', '')
-							 ELSE ']'
-						END + ' '
-					END
-				WHEN 3 THEN 'ON SCHEMA::[' + SCHEMA_NAME(dp.major_id) + '] '
-				WHEN 4 THEN 'ON ' + (SELECT RIGHT(type_desc, 4) + '::[' + name FROM sys.database_principals WHERE principal_id = dp.major_id) + '] '
-				WHEN 5 THEN 'ON ASSEMBLY::[' + (SELECT name FROM sys.assemblies WHERE assembly_id = dp.major_id) + '] '
-				WHEN 6 THEN 'ON TYPE::[' + (SELECT name FROM sys.types WHERE user_type_id = dp.major_id) + '] '
-				WHEN 10 THEN 'ON XML SCHEMA COLLECTION::[' + (SELECT SCHEMA_NAME(schema_id) + '.' + name FROM sys.xml_schema_collections WHERE xml_collection_id = dp.major_id) + '] '
-				WHEN 15 THEN 'ON MESSAGE TYPE::[' + (SELECT name FROM sys.service_message_types WHERE message_type_id = dp.major_id) + '] '
-				WHEN 16 THEN 'ON CONTRACT::[' + (SELECT name FROM sys.service_contracts WHERE service_contract_id = dp.major_id) + '] '
-				WHEN 17 THEN 'ON SERVICE::[' + (SELECT name FROM sys.services WHERE service_id = dp.major_id) + '] '
-				WHEN 18 THEN 'ON REMOTE SERVICE BINDING::[' + (SELECT name FROM sys.remote_service_bindings WHERE remote_service_binding_id = dp.major_id) + '] '
-				WHEN 19 THEN 'ON ROUTE::[' + (SELECT name FROM sys.routes WHERE route_id = dp.major_id) + '] '
-				WHEN 23 THEN 'ON FULLTEXT CATALOG::[' + (SELECT name FROM sys.fulltext_catalogs WHERE fulltext_catalog_id = dp.major_id) + '] '
-				WHEN 24 THEN 'ON SYMMETRIC KEY::[' + (SELECT name FROM sys.symmetric_keys WHERE symmetric_key_id = dp.major_id) + '] '
-				WHEN 25 THEN 'ON CERTIFICATE::[' + (SELECT name FROM sys.certificates WHERE certificate_id = dp.major_id) + '] '
-				WHEN 26 THEN 'ON ASYMMETRIC KEY::[' + (SELECT name FROM sys.asymmetric_keys WHERE asymmetric_key_id = dp.major_id) + '] '
-			 END COLLATE SQL_Latin1_General_CP1_CI_AS
-			 + 'TO [' + @roleName + ']' + 
-			 CASE dp.state WHEN 'W' THEN ' WITH GRANT OPTION' ELSE '' END + @crlf
-	FROM    sys.database_permissions dp
-	WHERE    USER_NAME(dp.grantee_principal_id) IN (@roleName)
-	GROUP BY dp.state, dp.major_id, dp.permission_name, dp.class
-
-	update #ScriptedRoles 
-	set script = @roleDesc
-	where name = @RoleName
-
-end
-
-select 
-    name
-,   script
-from #ScriptedRoles
 ";
 		Role r = null;
 		using (var dr = cm.ExecuteReader()) {
 			while (dr.Read()) {
 				r = new Role {
-					Name = (string)dr["name"],
-					Script = (string)dr["script"]
+					Name = (string)dr["name"]
 				};
 				Roles.Add(r);
 			}
@@ -571,8 +476,10 @@ from #ScriptedRoles
 						u.PasswordHash = (byte[])dr["password_hash"];
 				}
 			}
-		} catch (SqlException) {
-			// SQL server version (i.e. Azure) doesn't support logins, nothing to do here
+		} catch (SqlException ex) {
+			// todo detect this before query and get rid of try catch
+			_logger?.LogWarning("assumed logins not supported by sql version, ignored ex:");
+			_logger?.LogWarning(ex.Message);
 		}
 	}
 
@@ -601,8 +508,10 @@ from #ScriptedRoles
 						Assemblies.Add(a);
 				}
 			}
-		} catch (SqlException) {
-			// SQL server version doesn't support CLR assemblies, nothing to do here
+		} catch (SqlException ex) {
+			// todo detect this before query and get rid of try catch
+			_logger?.LogWarning("assumed assemblies not supported by sql version, ignored ex:");
+			_logger?.LogWarning(ex.Message);
 		}
 	}
 
@@ -631,8 +540,10 @@ from #ScriptedRoles
 					Routines.Add(r);
 				}
 			}
-		} catch (SqlException) {
-			// SQL server version doesn't support XML schemas, nothing to do here
+		} catch (SqlException ex) {
+			// todo detect this before query and get rid of try catch
+			_logger?.LogWarning("assumed xml schemas not supported by sql version, ignored ex:");
+			_logger?.LogWarning(ex.Message);
 		}
 	}
 
@@ -1081,7 +992,7 @@ order by fk.name, fkc.constraint_column_id
 				LoadColumnsBase(dr, TableTypes);
 			}
 		} catch (SqlException ex) {
-			// todo - research when this catch was added and why
+			// todo - detect this before query and get rid of try catch
 			_logger.LogError(
 				"Assuming sql server version doesn't support table types because"
 				+ $"the followign error occurred: {ex.Message}");
@@ -1131,30 +1042,25 @@ order by fk.name, fkc.constraint_column_id
 	private void LoadTables(SqlCommand cm) {
 		//get tables
 		cm.CommandText = @"
-				select 
-					TABLE_SCHEMA, 
-					TABLE_NAME 
+				select
+					TABLE_SCHEMA,
+					TABLE_NAME
 				from INFORMATION_SCHEMA.TABLES
 				where TABLE_TYPE = 'BASE TABLE'";
 		using (var dr = cm.ExecuteReader()) {
 			LoadTablesBase(dr, false, Tables);
 		}
 
-		//get table types
-		try {
-			cm.CommandText = @"
-				select 
-					s.name as TABLE_SCHEMA,
-					tt.name as TABLE_NAME
-				from sys.table_types tt
-				inner join sys.schemas s on tt.schema_id = s.schema_id
-				where tt.is_user_defined = 1
-				order by s.name, tt.name";
-			using (var dr = cm.ExecuteReader()) {
-				LoadTablesBase(dr, true, TableTypes);
-			}
-		} catch (SqlException) {
-			// SQL server version doesn't support table types, nothing to do here
+		cm.CommandText = @"
+			select
+				s.name as TABLE_SCHEMA,
+				tt.name as TABLE_NAME
+			from sys.table_types tt
+			inner join sys.schemas s on tt.schema_id = s.schema_id
+			where tt.is_user_defined = 1
+			order by s.name, tt.name";
+		using (var dr = cm.ExecuteReader()) {
+			LoadTablesBase(dr, true, TableTypes);
 		}
 	}
 
@@ -1321,7 +1227,7 @@ where name = @dbname
 		}
 
 		WritePropsScript(log);
-		WriteSchemaScript(log);
+		WriteScriptDir("schemas", Schemas.ToArray(), log);
 		WriteScriptDir("tables", Tables.ToArray(), log);
 		foreach (var table in Tables) {
 			WriteScriptDir(
@@ -1365,17 +1271,6 @@ where name = @dbname
 		text.AppendLine("GO");
 		text.AppendLine();
 		File.WriteAllText($"{Dir}/props.sql", text.ToString());
-	}
-
-	private void WriteSchemaScript(Action<TraceLevel, string> log) {
-		if (!Dirs.Contains("schemas")) return;
-		log(TraceLevel.Verbose, "Scripting database schemas...");
-		var text = new StringBuilder();
-		foreach (var schema in Schemas) text.Append(schema.ScriptCreate());
-
-		text.AppendLine("GO");
-		text.AppendLine();
-		File.WriteAllText($"{Dir}/schemas.sql", text.ToString());
 	}
 
 	private void WriteScriptDir(
@@ -1572,12 +1467,23 @@ where name = @dbname
 	}
 
 	private List<HashSet<string>> GetScriptStages() {
-		//var stage0 = new HashSet<string> { "roles", "users", "schemas.sql" };
-		var stage0 = new HashSet<string>();
-		var stage2 = new HashSet<string> { "after_data", "foreign_keys" };
-		var stage1 = Dirs.Except(stage0).Except(stage2).ToHashSet();
+		// stage zero objects must never have dependencies
+		var stage0 = new HashSet<string> { "roles" };
 
-		var itemsByStage = new List<HashSet<string>> { stage0, stage1, stage2 };
+		// runs after most objects have been created
+		// permissions are inlcued here because they tie a user to another object
+		var stage2 = new HashSet<string> { "permissions" };
+
+		// stage3 runs after data has been imported
+		var stage3 = new HashSet<string> { "after_data", "foreign_keys" };
+
+		var stage1 = Dirs
+			.Except(stage0)
+			.Except(stage2)
+			.Except(stage3)
+			.ToHashSet();
+
+		var itemsByStage = new List<HashSet<string>> { stage0, stage1, stage2, stage3 };
 
 		foreach (var stage in itemsByStage)
 			stage.RemoveWhere(
