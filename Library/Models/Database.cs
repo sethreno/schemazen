@@ -939,26 +939,86 @@ order by fk.name, fkc.constraint_column_id
 	private void LoadColumns(SqlCommand cm) {
 		//get columns
 		cm.CommandText = @"
-				select 
-					t.TABLE_SCHEMA,
-					c.TABLE_NAME,
-					c.COLUMN_NAME,
-					c.DATA_TYPE,
-					c.ORDINAL_POSITION,
-					c.IS_NULLABLE,
-					c.CHARACTER_MAXIMUM_LENGTH,
-					c.NUMERIC_PRECISION,
-					c.NUMERIC_SCALE,
-					CASE WHEN COLUMNPROPERTY(OBJECT_ID(c.TABLE_SCHEMA + '.' + c.TABLE_NAME), c.COLUMN_NAME, 'IsRowGuidCol') = 1 THEN 'YES' ELSE 'NO' END AS IS_ROW_GUID_COL
-				from INFORMATION_SCHEMA.COLUMNS c
-					inner join INFORMATION_SCHEMA.TABLES t
-							on t.TABLE_NAME = c.TABLE_NAME
-								and t.TABLE_SCHEMA = c.TABLE_SCHEMA
-								and t.TABLE_CATALOG = c.TABLE_CATALOG
-				where
-					t.TABLE_TYPE = 'BASE TABLE'
-				order by t.TABLE_SCHEMA, c.TABLE_NAME, c.ORDINAL_POSITION
-";
+				SELECT 
+					SCHEMA_NAME(tb.schema_id) AS TABLE_SCHEMA
+					, tb.name AS TABLE_NAME
+					, c.name AS COLUMN_NAME
+					, CASE ca.typeName 
+						WHEN 'sysname' THEN 'nvarchar'
+						ELSE ca.typeName
+					END AS DATA_TYPE
+					, c.column_id AS ORDINAL_POSITION
+					, CASE c.is_nullable
+						WHEN 1 THEN 'YES'
+						ELSE 'NO'
+					END AS IS_NULLABLE
+					, CASE c.max_length
+						WHEN -1 THEN -1
+					ELSE 
+						CASE ca.typeName
+							WHEN 'char' THEN c.max_length
+							WHEN 'varchar' THEN c.max_length
+							WHEN 'binary' THEN c.max_length
+							WHEN 'varbinary' THEN c.max_length
+							WHEN 'nchar' THEN c.max_length / 2
+							WHEN 'nvarchar' THEN c.max_length / 2
+							WHEN 'sql_variant' THEN 0
+							WHEN 'sysname' THEN 128
+							WHEN 'hierarchyid' THEN 892
+							WHEN 'text' THEN 2147483647
+							WHEN 'ntext' THEN 2147483647
+							WHEN 'image' THEN 2147483647
+						ELSE NULL
+						END 
+					END AS CHARACTER_MAXIMUM_LENGTH
+					, CASE ca.typeName
+						WHEN 'tinyint' THEN c.precision
+						WHEN 'smallint' THEN c.precision
+						WHEN 'int' THEN c.precision
+						WHEN 'bigint' THEN c.precision
+						WHEN 'float' THEN c.precision
+						WHEN 'real' THEN c.precision
+						WHEN 'decimal' THEN c.precision
+						WHEN 'numeric' THEN c.precision
+						WHEN 'smallmoney' THEN c.precision
+						WHEN 'money' THEN c.precision
+						ELSE NULL
+					END AS NUMERIC_PRECISION
+					, CAST(CASE ca.typeName
+						WHEN 'tinyint' THEN c.scale
+						WHEN 'smallint' THEN c.scale
+						WHEN 'int' THEN c.scale
+						WHEN 'bigint' THEN c.scale
+						WHEN 'decimal' THEN c.scale
+						WHEN 'numeric' THEN c.scale
+						WHEN 'smallmoney' THEN c.scale
+						WHEN 'money' THEN c.scale
+						ELSE NULL
+					END AS int) AS NUMERIC_SCALE
+					, CASE c.is_rowguidcol
+						WHEN 1 THEN 'YES'
+						ELSE 'NO'
+					END AS IS_ROW_GUID_COL
+				FROM sys.tables AS tb 
+				JOIN sys.columns AS c
+					ON tb.object_id = c.object_id
+				JOIN sys.types AS t
+					ON c.system_type_id = t.system_type_id
+					AND c.user_type_id = t.user_type_id
+				LEFT JOIN sys.types AS st
+					ON t.user_type_id = 1
+					AND t.system_type_id = st.system_type_id
+					AND st.user_type_id = st.system_type_id
+				LEFT JOIN sys.types AS bt
+					ON t.is_user_defined = 1
+					AND bt.is_user_defined = 0
+					AND t.system_type_id = bt.system_type_id
+				CROSS APPLY 
+				(VALUES (COALESCE(bt.name, t.name))) AS ca(typeName)
+				ORDER BY 
+					TABLE_SCHEMA,
+					TABLE_NAME,
+					ORDINAL_POSITION";
 		using (var dr = cm.ExecuteReader()) {
 			LoadColumnsBase(dr, Tables);
 		}
