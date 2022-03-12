@@ -58,6 +58,9 @@ Script your database to disk
 SchemaZen was changed to a cross platform dotnet tool in version 2.0. Older 1.x
 releases can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/)](https://github.com/sethreno/schemazen/)
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/?category=cocomo)](https://github.com/sethreno/schemazen/)
+
 ## Contributing
 Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.
 
