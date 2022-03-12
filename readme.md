@@ -58,8 +58,6 @@ Script your database to disk
 SchemaZen was changed to a cross platform dotnet tool in version 2.0. Older 1.x
 releases can be downloaded [here](https://github.com/sethreno/schemazen/releases)
 
-[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/)](https://github.com/sethreno/schemazen/)
-[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/?category=cocomo)](https://github.com/sethreno/schemazen/)
 
 ## Contributing
 Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.
@@ -68,6 +66,9 @@ Pull requests are welcome and appreciated. See [contributing.md](contributing.md
 [![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ----
-If you've found Schema Zen helpful you can
-[buy me a coffee](https://www.buymeacoffee.com/sethreno) to say thanks.
-Cheers!
+Here's some stats and an estimate of what it would cost to develop this project.
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/)](https://github.com/boyter/scc/)
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/?category=cocomo&avg-wage=100000)](https://github.com/boyter/scc/)
+
+If you've found Schema Zen helpful you can [buy me a
+coffee](https://www.buymeacoffee.com/sethreno) to say thanks.  Cheers!
