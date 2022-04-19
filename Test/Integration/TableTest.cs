@@ -13,6 +13,8 @@ public class TableTest {
 
 	private readonly ILogger _logger;
 
+	private const int _timeoutSec = 30;
+
 	public TableTest(ITestOutputHelper output, TestDbHelper dbHelper) {
 		_logger = output.BuildLogger();
 		_dbHelper = dbHelper;
@@ -42,7 +44,7 @@ public class TableTest {
 		writer.Flush();
 		writer.Close();
 
-		t.ImportData(testDb.GetConnString(), filename);
+		t.ImportData(testDb.GetConnString(), _timeoutSec, filename);
 		var sw = new StringWriter();
 		t.ExportData(testDb.GetConnString(), sw);
 		Assert.Equal(dataIn, sw.ToString());
@@ -79,7 +81,7 @@ public class TableTest {
 		writer.Close();
 
 		try {
-			t.ImportData(testDb.GetConnString(), filename);
+			t.ImportData(testDb.GetConnString(), _timeoutSec, filename);
 			var sw = new StringWriter();
 			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
@@ -112,7 +114,7 @@ public class TableTest {
 		writer.Close();
 
 		try {
-			t.ImportData(testDb.GetConnString(), filename);
+			t.ImportData(testDb.GetConnString(), _timeoutSec, filename);
 			var sw = new StringWriter();
 			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
@@ -148,7 +150,7 @@ public class TableTest {
 		writer.Close();
 
 		try {
-			t.ImportData(testDb.GetConnString(), filename);
+			t.ImportData(testDb.GetConnString(), _timeoutSec, filename);
 			var sw = new StringWriter();
 			t.ExportData(testDb.GetConnString(), sw);
 			Assert.Equal(dataIn, sw.ToString());
@@ -196,7 +198,7 @@ public class TableTest {
 				filename)); // just prove that the file and the string are the same, to make the next assertion meaningful!
 
 		try {
-			t.ImportData(testDb.GetConnString(), filename);
+			t.ImportData(testDb.GetConnString(), _timeoutSec, filename);
 			var sw = new StringWriter();
 			t.ExportData(testDb.GetConnString(), sw);
 
