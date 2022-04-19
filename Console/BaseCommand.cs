@@ -1,5 +1,6 @@
 ﻿using ManyConsole;
 using Mono.Options;
+using System;
 
 namespace SchemaZen.Console;
 
@@ -30,6 +31,11 @@ public abstract class BaseCommand : ConsoleCommand {
 			"f|databaseFilesPath=",
 			"Path to database data and log files.",
 			o => DatabaseFilesPath = o);
+		HasOption(
+			"timeout=",
+			"Number of seconds for sql command timeout (default 30).",
+				o => TimeoutSec = (o == null ? 30 : Convert.ToInt32(o))
+		);
 	}
 
 	protected string Server { get; set; }
@@ -41,4 +47,5 @@ public abstract class BaseCommand : ConsoleCommand {
 	protected bool Overwrite { get; set; }
 	protected bool Verbose { get; set; }
 	protected string DatabaseFilesPath { get; set; }
+	protected int TimeoutSec { get; set; }
 }
