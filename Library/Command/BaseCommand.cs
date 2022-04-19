@@ -14,6 +14,7 @@ public abstract class BaseCommand {
 	public string ScriptDir { get; set; }
 	public ILogger Logger { get; set; }
 	public bool Overwrite { get; set; }
+	public int TimeoutSec { get; set; }
 
 	public Database CreateDatabase(IList<string> filteredTypes = null) {
 		filteredTypes = filteredTypes ?? new List<string>();
@@ -28,7 +29,8 @@ public abstract class BaseCommand {
 
 			return new Database(filteredTypes) {
 				Connection = ConnectionString,
-				Dir = ScriptDir
+				Dir = ScriptDir,
+				TimeoutSec = TimeoutSec,
 			};
 		}
 
@@ -42,7 +44,8 @@ public abstract class BaseCommand {
 			IntegratedSecurity = string.IsNullOrEmpty(User),
 			//setting up pooling false to avoid re-use of connection while using the library.
 			//http://www.c-sharpcorner.com/article/understanding-connection-pooling/
-			Pooling = false
+			Pooling = false,
+			ConnectTimeout = TimeoutSec,
 		};
 		if (!builder.IntegratedSecurity) {
 			builder.UserID = User;
@@ -51,7 +54,8 @@ public abstract class BaseCommand {
 
 		return new Database(filteredTypes) {
 			Connection = builder.ToString(),
-			Dir = ScriptDir
+			Dir = ScriptDir,
+			TimeoutSec = TimeoutSec,
 		};
 	}
 

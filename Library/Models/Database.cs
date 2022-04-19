@@ -197,6 +197,7 @@ public class Database {
 	public string Dir { get; set; } = "";
 	public List<ForeignKey> ForeignKeys { get; set; } = new();
 	public string Name { get; set; }
+	public int TimeoutSec { get; set; }
 
 	public List<DbProp> Props { get; set; } = new();
 	public List<Routine> Routines { get; set; } = new();
