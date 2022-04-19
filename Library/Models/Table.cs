@@ -195,7 +195,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 		}
 	}
 
-	public void ImportData(string conn, string filename) {
+	public void ImportData(string conn, int timeoutSec, string filename) {
 		if (IsType)
 			throw new InvalidOperationException();
 
@@ -210,6 +210,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 			       conn,
 			       SqlBulkCopyOptions.KeepIdentity | SqlBulkCopyOptions.KeepNulls |
 			       SqlBulkCopyOptions.TableLock)) {
+			bulk.BulkCopyTimeout = timeoutSec;
 			foreach (var colName in dt.Columns.OfType<DataColumn>().Select(c => c.ColumnName))
 				bulk.ColumnMappings.Add(colName, colName);
 			bulk.DestinationTableName = $"[{Owner}].[{Name}]";

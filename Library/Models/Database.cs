@@ -1407,7 +1407,7 @@ where name = @dbname
 
 			try {
 				log(TraceLevel.Verbose, $"Importing data for table {schema}.{table}...");
-				t.ImportData(Connection, fi.FullName);
+				t.ImportData(Connection, TimeoutSec, fi.FullName);
 			} catch (SqlBatchException ex) {
 				throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 			} catch (Exception ex) {
