@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <LangVersion>10.0</LangVersion>
-    <TargetFrameworks>net5.0;net6.0</TargetFrameworks>
+    <TargetFrameworks>net5.0;net6.0;net48</TargetFrameworks>
     <OutputType>Library</OutputType>
     <RootNamespace>SchemaZen.Library</RootNamespace>
     <AssemblyName>SchemaZen.Library</AssemblyName>
@@ -23,5 +23,6 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="6.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Runtime.Extensions" Version="4.3.1" />
   </ItemGroup>
 </Project>

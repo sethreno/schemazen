@@ -165,7 +165,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 							if (dr[c.Name] is DBNull)
 								data.Write(_nullValue);
 							else if (dr[c.Name] is byte[])
-								data.Write(Convert.ToHexString((byte[])dr[c.Name]));
+								data.Write(StringUtil.ToHexString((byte[])dr[c.Name]));
 							else if (dr[c.Name] is DateTime)
 								data.Write(
 									((DateTime)dr[c.Name])
@@ -311,7 +311,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 			case "binary":
 			case "varbinary":
 			case "image":
-				return Convert.FromHexString(val);
+				return StringUtil.FromHexString(val);
 			default:
 				return val;
 		}

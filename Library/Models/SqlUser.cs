@@ -20,7 +20,7 @@ public class SqlUser : INameable, IHasOwner, IScriptable {
 		var login = PasswordHash == null
 			? string.Empty
 			: $@"IF SUSER_ID('{Name}') IS NULL
-				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + Convert.ToHexString(PasswordHash)} HASHED END
+				BEGIN CREATE LOGIN {Name} WITH PASSWORD = {"0x" + StringUtil.ToHexString(PasswordHash)} HASHED END
 ";
 
 		return login +

@@ -26,12 +26,12 @@ public class SqlAssembly : INameable, IScriptable {
 			(kvp, index) => {
 				if (index == 0)
 					return $@"CREATE ASSEMBLY [{Name}]
-{string.Empty}FROM {"0x" + Convert.ToHexString(kvp.Value)}
+{string.Empty}FROM {"0x" + StringUtil.ToHexString(kvp.Value)}
 {"WITH PERMISSION_SET = " + PermissionSet}";
 
 				return
 					$@"ALTER ASSEMBLY [{Name}]
-ADD FILE FROM {"0x" + Convert.ToHexString(kvp.Value)}
+ADD FILE FROM {"0x" + StringUtil.ToHexString(kvp.Value)}
 AS N\'{kvp.Key}\'";
 			});
 
