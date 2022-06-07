@@ -367,6 +367,12 @@ public class TableDiff {
 			text.Append($"ALTER TABLE [{Owner}].[{Name}] DROP COLUMN [{c.Name}]\r\n");
 
 		foreach (var c in ColumnsDiff) {
+			if (c.OnlyPositionIsDiff) {
+				text.Append(
+					$"-- [{Owner}].[{Name}].[{c.Source.Name}] position [{c.Source.Position}] changed to [{c.Target.Position}] SchemaZen doesn't support this\r\n");
+				continue;
+			}
+			
 			if (c.DefaultIsDiff) {
 				if (c.Source.Default != null)
 					text.Append(
@@ -378,8 +384,10 @@ public class TableDiff {
 			}
 
 			if (!c.OnlyDefaultIsDiff)
+			{
 				text.Append(
 					$"ALTER TABLE [{Owner}].[{Name}] ALTER COLUMN {c.Target.ScriptAlter()}\r\n");
+			}
 		}
 
 		void ScriptUnspported(Constraint c) {

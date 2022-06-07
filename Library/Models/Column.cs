@@ -185,7 +185,8 @@ public class ColumnDiff {
 
 	private bool IsDiffBase => Source.IsNullable != Target.IsNullable ||
 		Source.Length != Target.Length ||
-		Source.Position != Target.Position || Source.Type != Target.Type ||
+		Source.Position != Target.Position || 
+		Source.Type != Target.Type ||
 		Source.Precision != Target.Precision ||
 		Source.Scale != Target.Scale ||
 		Source.ComputedDefinition != Target.ComputedDefinition ||
@@ -195,6 +196,17 @@ public class ColumnDiff {
 
 	public bool OnlyDefaultIsDiff => DefaultIsDiff && !IsDiffBase;
 
+	public bool OnlyPositionIsDiff =>  
+		Source.IsNullable == Target.IsNullable &&
+		Source.Length == Target.Length &&
+		Source.Type == Target.Type &&
+		Source.Position != Target.Position && 
+		Source.Precision == Target.Precision &&
+		Source.Scale == Target.Scale &&
+		Source.ComputedDefinition == Target.ComputedDefinition &&
+		Source.Persisted == Target.Persisted &&
+		Source.DefaultText == Target.DefaultText;
+	
 	/*public string Script() {
 		return Target.Script();
 	}*/
