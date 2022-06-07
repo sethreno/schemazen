@@ -1,48 +1,74 @@
-Schema Zen - Script and create SQL Server objects quickly
---------------------------------------------------------
+# Schema Zen - Script and create SQL Server objects quickly
 
-[![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+## Schema Zen has three main commands:
 
-Schema Zen has three main commands:
+### script
 
-## script
+    dotnet schemazen script --server localhost --database db --scriptDir c:\somedir
 
-    SchemaZen.exe script --server localhost --database db --scriptDir c:\somedir
-
-This will generate sql scripts for all objects in the database in the
-following directory structure:
+This will generate sql scripts for all objects in the database in a
+directory structure that looks something like:
 ```
 c:\somedir\
-
-	assemblies
 	data
 	foreign_keys
-	functions
 	procedures
-	synonyms
 	tables
-	triggers
-	users
 	views
-	xmlschemacollections
 	props.sql
 	schemas.sql
 ```
-See ```SchemaZen.exe help script``` for more information, including how to specify which tables to export data from (none by default).
-## create
 
-    SchemaZen.exe create --server localhost --database db --scriptDir c:\somedir
+### create
+
+    dotnet schemazen create --server localhost --database db --scriptDir c:\somedir
 
 This will create a database named db from the sql scripts in c:\somedir.
-> Note that you can put additional scripts in a folder called ```after_data```, and it will run these between importing the data and adding the foreign key constraints, allowing you to "fix" any necessary records first.  (You will need to create this directory first, and the **script** command will *not* affect it.  The scripts will be run in alphabetical order, so you may want to prefix them with numbers if you want to enforce a certain order.  i.e. ```00001 - first script.sql```, ```00002 - second script.sql```)
 
-## compare (experimental)
 
-	SchemaZen.exe compare --source "Data Source=localhost;Initial Catalog=Database1;Integrated Security=True" --target "Data Source=localhost;Initial Catalog=Database2;Integrated Security=True" --outFile c:\somedir\diff.sql
+### compare
 
-This will compare the databases named Database1 and Database2 on localhost and create a sql script called c:\somedir\diff.sql that can be run on Database2 to make it's schema identical to Database1. **Warning** this feature is experimental. Be sure to test the script it generates before running in a production environment.
+	dotnet schemazen compare --source "server=dev;database=db" --target "server=qa;database=db" --outFile diff.sql
 
----
-## download
-The latest release can be downloaded [here](https://github.com/sethreno/schemazen/releases)
+This will compare the databases named `db` between `dev` and `qa` and
+create a sql script called `diff.sql` that can be run on `qa` to make it's
+schema identical to `dev`.
 
+
+See ```dotnet schemazen help [command]``` for more information and options on each command.
+
+<br><br>
+
+## Quick Start
+
+If you don't already have a tool manifest in your project
+
+    dotnet new tool-manifest
+
+Install SchemaZen
+
+    dotnet tool install SchemaZen
+
+Script your database to disk
+
+    dotnet schemazen script --server localhost --database db --scriptDir c:\somedir
+
+
+## 1.x versions
+SchemaZen was changed to a cross platform dotnet tool in version 2.0. Older 1.x
+releases can be downloaded [here](https://github.com/sethreno/schemazen/releases)
+
+
+## Contributing
+Pull requests are welcome and appreciated. See [contributing.md](contributing.md) for guidelines.
+
+## Chat
+[![Join the chat at https://gitter.im/sethreno/schemazen](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/sethreno/schemazen?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+----
+Here's some stats and an estimate of what it would cost to develop this project.
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/)](https://github.com/boyter/scc/)
+[![Scc Count Badge](https://sloc.xyz/github/sethreno/schemazen/?category=cocomo&avg-wage=100000)](https://github.com/boyter/scc/)
+
+If you've found Schema Zen helpful you can [buy me a
+coffee](https://www.buymeacoffee.com/sethreno) to say thanks.  Cheers!
