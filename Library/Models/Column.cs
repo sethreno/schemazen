@@ -107,6 +107,7 @@ public class Column {
 			case "geography":
 			case "xml":
 			case "sysname":
+			case "geometry":
 				val.Append($" {IsNullableText}");
 				if (IncludeDefaultConstraint) val.Append(DefaultText);
 				if (Identity != null) val.Append(IdentityText);
@@ -161,6 +162,7 @@ public class Column {
 			case "binary":
 			case "varbinary":
 			case "image":
+			case "geometry":
 				return typeof(byte[]);
 			default:
 				return typeof(string);
