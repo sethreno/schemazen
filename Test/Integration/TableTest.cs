@@ -31,10 +31,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -67,10 +66,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -100,10 +98,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	2017-02-21 11:20:30.1
-2	2017-02-22 11:20:30.12
-3	2017-02-23 11:20:30.123
-";
+			@"1	2017-02-21 11:20:30.1" + Environment.NewLine +
+			@"2	2017-02-22 11:20:30.12" + Environment.NewLine +
+			@"3	2017-02-23 11:20:30.123" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -136,10 +133,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
