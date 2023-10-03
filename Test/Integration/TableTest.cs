@@ -246,8 +246,41 @@ public class TableTest {
 		t.Columns.Add(new Column("bb", "varchar", -1, true, null));
 		t.Columns.Add(new Column("cc", "xml", true, null));
 		t.Columns.Add(new Column("dd", "hierarchyid", false, null));
+		t.Columns.Add(new Column("ee", "geometry", false, null));
 
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 		await testDb.ExecSqlAsync(t.ScriptCreate());
+	}
+
+	[Fact]
+	public async Task TestImportExportGeometryData() {
+		var t = new Table("dbo", "Shape");
+		t.Columns.Add(new Column("id", "int", false, null));
+		t.Columns.Add(new Column("shape", "geometry", false, null));
+		t.Columns.Find("id").Identity = new Identity(1, 1);
+		t.AddConstraint(new Constraint("PK_Shape", "PRIMARY KEY", "id"));
+
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
+
+		var dataIn =
+			@"1	0000000001040300000000000000000059400000000000005940000000000000344000000000008066400000000000806640000000000080664001000000010000000001000000FFFFFFFF0000000002" + Environment.NewLine +
+			@"2	00000000010405000000000000000000000000000000000000000000000000C0624000000000000000000000000000C062400000000000C0624000000000000000000000000000C062400000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003" + Environment.NewLine;
+		
+		var filename = Path.GetTempFileName();
+
+		var writer = File.AppendText(filename);
+		writer.Write(dataIn);
+		writer.Flush();
+		writer.Close();
+		
+		try {
+			t.ImportData(testDb.GetConnString(), filename);
+			var sw = new StringWriter();
+			t.ExportData(testDb.GetConnString(), sw);
+			Assert.Equal(dataIn, sw.ToString());
+		} finally {
+			File.Delete(filename);
+		}
 	}
 }
