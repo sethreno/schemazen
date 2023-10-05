@@ -165,7 +165,8 @@ public class Table : INameable, IHasOwner, IScriptable {
 							var ordinal = dr.GetOrdinal(c.Name);
 							if (dr.IsDBNull(ordinal))
 								data.Write(_nullValue);
-							else if (dr.GetDataTypeName(ordinal).EndsWith(".sys.geometry"))
+							else if (dr.GetDataTypeName(ordinal).EndsWith(".sys.geometry")
+								  || dr.GetDataTypeName(ordinal).EndsWith(".sys.geography"))
 								// https://learn.microsoft.com/en-us/previous-versions/sql/sql-server-2012/ms143179(v=sql.110)?redirectedfrom=MSDN#sql-clr-data-types-geometry-geography-and-hierarchyid
 								data.Write(StringUtil.ToHexString(dr.GetSqlBytes(ordinal).Value));
 							else if (dr[c.Name] is byte[])
@@ -316,6 +317,7 @@ public class Table : INameable, IHasOwner, IScriptable {
 			case "varbinary":
 			case "image":
 			case "geometry":
+			case "geography":
 				return StringUtil.FromHexString(val);
 			default:
 				return val;
