@@ -163,6 +163,7 @@ public class Column {
 			case "varbinary":
 			case "image":
 			case "geometry":
+			case "geography":
 				return typeof(byte[]);
 			default:
 				return typeof(string);

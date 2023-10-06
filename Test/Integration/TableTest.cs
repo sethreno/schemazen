@@ -31,10 +31,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -67,10 +66,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -100,10 +98,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	2017-02-21 11:20:30.1
-2	2017-02-22 11:20:30.12
-3	2017-02-23 11:20:30.123
-";
+			@"1	2017-02-21 11:20:30.1" + Environment.NewLine +
+			@"2	2017-02-22 11:20:30.12" + Environment.NewLine +
+			@"3	2017-02-23 11:20:30.123" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -136,10 +133,9 @@ public class TableTest {
 		await testDb.ExecSqlAsync(t.ScriptCreate());
 
 		var dataIn =
-			@"1	R	Ready
-2	P	Processing
-3	F	Frozen
-";
+			@"1	R	Ready" + Environment.NewLine +
+			@"2	P	Processing" + Environment.NewLine +
+			@"3	F	Frozen" + Environment.NewLine;
 		var filename = Path.GetTempFileName();
 
 		var writer = File.AppendText(filename);
@@ -247,6 +243,7 @@ public class TableTest {
 		t.Columns.Add(new Column("cc", "xml", true, null));
 		t.Columns.Add(new Column("dd", "hierarchyid", false, null));
 		t.Columns.Add(new Column("ee", "geometry", false, null));
+		t.Columns.Add(new Column("ff", "geography", false, null));
 
 		await using var testDb = await _dbHelper.CreateTestDbAsync();
 		await testDb.ExecSqlAsync(t.ScriptCreate());
@@ -266,6 +263,37 @@ public class TableTest {
 		var dataIn =
 			@"1	0000000001040300000000000000000059400000000000005940000000000000344000000000008066400000000000806640000000000080664001000000010000000001000000FFFFFFFF0000000002" + Environment.NewLine +
 			@"2	00000000010405000000000000000000000000000000000000000000000000C0624000000000000000000000000000C062400000000000C0624000000000000000000000000000C062400000000000000000000000000000000001000000020000000001000000FFFFFFFF0000000003" + Environment.NewLine;
+		
+		var filename = Path.GetTempFileName();
+
+		var writer = File.AppendText(filename);
+		writer.Write(dataIn);
+		writer.Flush();
+		writer.Close();
+		
+		try {
+			t.ImportData(testDb.GetConnString(), filename);
+			var sw = new StringWriter();
+			t.ExportData(testDb.GetConnString(), sw);
+			Assert.Equal(dataIn, sw.ToString());
+		} finally {
+			File.Delete(filename);
+		}
+	}
+
+	[Fact]
+	public async Task TestImportExportGeographyData() {
+		var t = new Table("dbo", "PointsOfInterest");
+		t.Columns.Add(new Column("id", "int", false, null));
+		t.Columns.Add(new Column("location", "geography", false, null));
+		t.Columns.Find("id").Identity = new Identity(1, 1);
+		t.AddConstraint(new Constraint("PK_PointsOfInterest", "PRIMARY KEY", "id"));
+
+		await using var testDb = await _dbHelper.CreateTestDbAsync();
+		await testDb.ExecSqlAsync(t.ScriptCreate());
+
+		var dataIn =
+			@"1	E610000001148716D9CEF7D34740D7A3703D0A975EC08716D9CEF7D34740CBA145B6F3955EC0" + Environment.NewLine;
 		
 		var filename = Path.GetTempFileName();
 
