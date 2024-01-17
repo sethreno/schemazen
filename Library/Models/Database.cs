@@ -197,6 +197,7 @@ public class Database {
 	public string Dir { get; set; } = "";
 	public List<ForeignKey> ForeignKeys { get; set; } = new();
 	public string Name { get; set; }
+	public int TimeoutSec { get; set; }
 
 	public List<DbProp> Props { get; set; } = new();
 	public List<Routine> Routines { get; set; } = new();
@@ -1406,7 +1407,7 @@ where name = @dbname
 
 			try {
 				log(TraceLevel.Verbose, $"Importing data for table {schema}.{table}...");
-				t.ImportData(Connection, fi.FullName);
+				t.ImportData(Connection, TimeoutSec, fi.FullName);
 			} catch (SqlBatchException ex) {
 				throw new DataFileException(ex.Message, fi.FullName, ex.LineNumber);
 			} catch (Exception ex) {
